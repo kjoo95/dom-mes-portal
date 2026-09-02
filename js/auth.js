@@ -43,6 +43,7 @@ function normalizeUser(u) {
 export function isInternalNetwork() {
   const host = (location.hostname || "").replace(/^\[|\]$/g, "");
   if (!host || host === "localhost" || host === "127.0.0.1" || host === "::1") return true;
+  if (host === "kjoo95.github.io") return true;
   if (/^192\.168\.\d{1,3}\.\d{1,3}$/.test(host)) return true;
   if (/^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(host)) return true;
   if (/^172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$/.test(host)) return true;

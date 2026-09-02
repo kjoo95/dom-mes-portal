@@ -1,4 +1,4 @@
-import { getSession, logout, isInternalNetwork } from "./auth.js?v=42";
+import { getSession, logout, isInternalNetwork } from "./auth.js?v=43";
 import { loadState, saveState, uid } from "./store.js";
 import { collectStats, optimizeJob, toNc, toJson } from "./gcode.js";
 import { boot } from "./safety.js";

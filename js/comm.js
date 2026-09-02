@@ -1,4 +1,4 @@
-import { getSession, listStaff } from "./auth.js?v=42";
+import { getSession, listStaff } from "./auth.js?v=43";
 import { STAFF } from "./data.js?v=42";
 import { uid } from "./store.js?v=42";
 import { t } from "./i18n.js?v=42";
