@@ -1,0 +1,53 @@
+.app.lab { grid-template-columns: 260px 1fr; }
+.lab-main { display: grid; grid-template-rows: auto 1fr auto; gap: 12px; padding: 20px 24px 24px; overflow: auto; }
+.speeds { display: inline-flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.speeds .btn.on { background: var(--red); color: #fff; }
+.stage {
+  background: #101012;
+  border-radius: 12px;
+  min-height: 560px;
+  height: min(72vh, 820px);
+  position: relative;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+}
+.stage:active { cursor: grabbing; }
+.stage canvas { width: 100%; height: 100%; display: block; }
+.view-hint {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 10px;
+  margin: 0;
+  color: #9a9a96;
+  font-size: 12px;
+  pointer-events: none;
+  text-shadow: 0 1px 2px #000;
+}
+.nc {
+  width: 100%;
+  min-height: 160px;
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 12px;
+  background: #111;
+  color: #e8e8e4;
+  border: 1px solid #333;
+  border-radius: 10px;
+  padding: 12px;
+}
+.stat { color: var(--mute); font-size: 13px; }
+.times { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 12px 0 4px; }
+.time-box { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+.time-box span { display: block; color: var(--mute); font-size: 12px; margin-bottom: 4px; }
+.time-box b { font-size: 18px; letter-spacing: -0.03em; }
+.job-item { display: flex; align-items: flex-start; gap: 4px; }
+.job-row { display: block; flex: 1; width: auto; text-align: left; background: transparent; border: 0; border-radius: 8px; padding: 8px 10px; cursor: pointer; }
+.job-row small { display: block; color: var(--mute); font-weight: 400; font-size: 12px; margin-top: 2px; }
+.job-row.on { background: #f4f4f2; font-weight: 700; }
+.job-item .btn.sm { flex: 0 0 auto; height: 28px; margin-top: 6px; }
+.side-actions { display: flex; flex-direction: column; gap: 6px; padding: 8px 10px 4px; }
+@media (max-width: 860px) {
+  .app.lab { grid-template-columns: 1fr; }
+  .times { grid-template-columns: 1fr 1fr; }
+}

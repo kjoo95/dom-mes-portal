@@ -1,0 +1,15 @@
+{
+  "name": "디오엠 제조 운영",
+  "short_name": "디오엠",
+  "description": "디오엠(DOM) 제조 현장 운영 포털",
+  "start_url": "./portal.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f7f7f5",
+  "theme_color": "#c41e3a",
+  "lang": "ko",
+  "icons": [
+    { "src": "./assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

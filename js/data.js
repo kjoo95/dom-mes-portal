@@ -1,0 +1,375 @@
+export const STORAGE_KEY = "dom-mes-fresh-v1";
+export const CUSTOMERS = ["참테크", "인텔릭스", "준테크놀러지", "토탈솔루션", "KEK"];
+export const STAFF = [
+  { id: "harry", name: "Harry", email: "harry@domeng.co.kr" },
+  { id: "choi", name: "최우선", email: "choi@domeng.co.kr" },
+  { id: "kim", name: "김동근", email: "kim@domeng.co.kr" },
+  { id: "jo", name: "조세원", email: "jo@domeng.co.kr" },
+];
+export const MILL_SHOPS = ["디오엠", ...CUSTOMERS];
+
+export function todayISO() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+export const CNC_CHECKS = [
+  "비상정지 스위치 동작 확인",
+  "주축·이송축 이상음 / 진동 확인",
+  "윤활유 유면 및 급유 상태",
+  "절삭유 유량·농도·누유 확인",
+  "공압 압력 정상 범위",
+  "척 / 바이스 / 지그 고정 상태",
+  "공구 파손·마모·길이 보정",
+  "도어 인터록 동작",
+  "칩 컨베이어 및 칩 처리",
+  "오일쿨러 / 냉각기 작동",
+  "작업등·표시등 점등",
+  "커버·윈도우 청결",
+  "원점 복귀 이상 유무",
+  "주변 통로·누유·전선 정리",
+];
+
+export const MACHINES = [
+  { id: "long-1", group: "장축 기계", name: "장축 1호기" },
+  { id: "long-2", group: "장축 기계", name: "장축 2호기" },
+  { id: "m5-1", group: "5호기", name: "5호기-1" },
+  { id: "m5-2", group: "5호기", name: "5호기-2" },
+  { id: "m5-3", group: "5호기", name: "5호기-3" },
+  { id: "m5-4", group: "5호기", name: "5호기-4" },
+  { id: "m5-5", group: "5호기", name: "5호기-5" },
+  { id: "m6-1", group: "6호기", name: "6호기-1" },
+  { id: "m4-1", group: "4호기", name: "4호기-1" },
+];
+
+export const FIVE_S_SHOP = [
+  { group: "3정", items: [
+    { id: "s1", label: "정품: 지정 자재·공구·치구만 사용한다" },
+    { id: "s2", label: "정량: 당일 필요 수량만 작업대에 둔다" },
+    { id: "s3", label: "정위치: 도면·공구·치구가 표시 위치에 있다" },
+  ]},
+  { group: "정리", items: [
+    { id: "s4", label: "불필요 원자재·반제품·포장재를 작업장에서 제거했다" },
+    { id: "s5", label: "파손 공구·불량 칩·빈 박스를 즉시 반출했다" },
+  ]},
+  { group: "정돈", items: [
+    { id: "s6", label: "공구대·바이스·클램프가 그림자 표시와 일치한다" },
+    { id: "s7", label: "측정기·캘리퍼스가 전용 거치대에 있다" },
+    { id: "s8", label: "작업지시서와 도면이 기계 앞 홀더에 있다" },
+  ]},
+  { group: "청소", items: [
+    { id: "s9", label: "테이블·커버·칩 받이의 칩을 제거했다" },
+    { id: "s10", label: "절삭유·윤활유 누유를 닦고 원인을 표시했다" },
+    { id: "s11", label: "바닥 통로에 오일·칩이 없다" },
+  ]},
+  { group: "청결", items: [
+    { id: "s12", label: "식별 라벨(품번, LOT, 합격/대기)이 붙어 있다" },
+    { id: "s13", label: "안전 가드·인터록을 임의로 해제하지 않았다" },
+  ]},
+  { group: "습관화", items: [
+    { id: "s14", label: "교대 시 인수인계를 했다" },
+    { id: "s15", label: "이상 발견 시 즉시 보고했다" },
+  ]},
+];
+
+export const FIVE_S_LAB = [
+  { group: "3정", items: [
+    { id: "l1", label: "정품: 교정 유효 측정기만 사용한다" },
+    { id: "l2", label: "정량: 검사 시료와 게이지를 필요 수량만 꺼낸다" },
+    { id: "l3", label: "정위치: 게이지가 전용 위치에 있다" },
+  ]},
+  { group: "정리", items: [
+    { id: "l4", label: "불필요 시료·불량품을 검사대에서 제거했다" },
+    { id: "l5", label: "교정 만료·파손 측정기를 격리 표시했다" },
+  ]},
+  { group: "정돈", items: [
+    { id: "l6", label: "버니어·마이크로미터가 거치대에 있다" },
+    { id: "l7", label: "성적서·도면이 시료와 한 세트다" },
+  ]},
+  { group: "청소", items: [
+    { id: "l8", label: "정반·측정면의 칩·기름을 제거했다" },
+    { id: "l9", label: "조명 커버와 창의 먼지를 닦았다" },
+  ]},
+  { group: "청결", items: [
+    { id: "l10", label: "시료에 품번·LOT·검사상태가 표시되어 있다" },
+    { id: "l11", label: "합격/불합격 구역이 혼재되지 않는다" },
+  ]},
+  { group: "습관화", items: [
+    { id: "l12", label: "온습도·조도를 기록한 뒤 측정을 시작했다" },
+    { id: "l13", label: "이상 치수 발생 시 가공 담당에게 통보했다" },
+  ]},
+];
+
+export const FIELDS = {
+  inbound: [
+    { key: "date", label: "날짜", type: "date" },
+    { key: "supplier", label: "업체", type: "text" },
+    { key: "item", label: "자재 품명", type: "text" },
+    { key: "qty", label: "개수", type: "number" },
+    { key: "size", label: "자재 사이즈", type: "text" },
+  ],
+  process: [
+    { key: "partNo", label: "품번", type: "text" },
+    { key: "partName", label: "품명", type: "text" },
+    { key: "lot", label: "LOT 번호", type: "text" },
+    { key: "line", label: "라인", type: "text" },
+    { key: "wo", label: "작업지시", type: "text" },
+    { key: "startDate", label: "가공 시작일", type: "date" },
+    { key: "workDate", label: "최근 작업일", type: "date" },
+    { key: "endDate", label: "완료일", type: "date" },
+    { key: "progress", label: "진행률(%)", type: "number" },
+    { key: "planQty", label: "계획 수량", type: "number" },
+    { key: "doneQty", label: "가공 완료 수량", type: "number" },
+    { key: "detail", label: "완료 상세", type: "textarea" },
+    { key: "owner", label: "담당", type: "text" },
+    { key: "status", label: "상태", type: "text" },
+  ],
+  delivery: [
+    { key: "date", label: "납품일", type: "date" },
+    { key: "customer", label: "납품 회사", type: "text" },
+    { key: "partNo", label: "품번", type: "text" },
+    { key: "partName", label: "품명", type: "text" },
+    { key: "lot", label: "LOT 번호", type: "text" },
+    { key: "qty", label: "납품 수량", type: "number" },
+    { key: "status", label: "상태", type: "select", options: ["예정", "출하준비", "출하완료"] },
+    { key: "note", label: "비고", type: "textarea" },
+  ],
+  quality: [
+    { key: "date", label: "검사일", type: "date" },
+    { key: "millCompany", label: "가공 회사", type: "select", options: MILL_SHOPS },
+    { key: "customer", label: "납품처", type: "text" },
+    { key: "partNo", label: "품번", type: "text" },
+    { key: "partName", label: "품명", type: "text" },
+    { key: "lot", label: "LOT 번호", type: "text" },
+    { key: "qtyIn", label: "품질실 입고 수량", type: "number" },
+    { key: "qtyOut", label: "납품 출고 수량", type: "number" },
+    { key: "specX", label: "X 기준(mm)", type: "text" },
+    { key: "x1", label: "X 1회", type: "number" },
+    { key: "x2", label: "X 2회", type: "number" },
+    { key: "x3", label: "X 3회", type: "number" },
+    { key: "x4", label: "X 4회", type: "number" },
+    { key: "x5", label: "X 5회", type: "number" },
+    { key: "specY", label: "Y 기준(mm)", type: "text" },
+    { key: "y1", label: "Y 1회", type: "number" },
+    { key: "y2", label: "Y 2회", type: "number" },
+    { key: "y3", label: "Y 3회", type: "number" },
+    { key: "y4", label: "Y 4회", type: "number" },
+    { key: "y5", label: "Y 5회", type: "number" },
+    { key: "specZ", label: "Z 기준(mm)", type: "text" },
+    { key: "z1", label: "Z 1회", type: "number" },
+    { key: "z2", label: "Z 2회", type: "number" },
+    { key: "z3", label: "Z 3회", type: "number" },
+    { key: "z4", label: "Z 4회", type: "number" },
+    { key: "z5", label: "Z 5회", type: "number" },
+    { key: "inspector", label: "검사자", type: "text" },
+    { key: "status", label: "판정", type: "select", options: ["합격", "불합격", "보류"] },
+  ],
+  defect: [
+    { key: "date", label: "발생일", type: "date" },
+    { key: "partNo", label: "품번", type: "text" },
+    { key: "partName", label: "품명", type: "text" },
+    { key: "lot", label: "LOT 번호", type: "text" },
+    { key: "type", label: "불량 유형", type: "text" },
+    { key: "qty", label: "수량", type: "number" },
+    { key: "action", label: "수정 조치", type: "textarea" },
+    { key: "prevent", label: "재발 방지 대책", type: "textarea" },
+    { key: "status", label: "상태", type: "text" },
+  ],
+  inventory: [
+    { key: "date", label: "기준일", type: "date" },
+    { key: "kind", label: "구분", type: "text" },
+    { key: "item", label: "품명", type: "text" },
+    { key: "lot", label: "LOT 번호", type: "text" },
+    { key: "qty", label: "재고 개수", type: "number" },
+    { key: "location", label: "위치", type: "text" },
+    { key: "status", label: "상태", type: "text" },
+  ],
+  climatePoint: [
+    { key: "name", label: "위치 이름", type: "text" },
+    { key: "temp", label: "온도(°C)", type: "number" },
+    { key: "humidity", label: "습도(%)", type: "number" },
+    { key: "lux", label: "조도(lx)", type: "number" },
+    { key: "status", label: "상태", type: "text" },
+  ],
+  custom: [
+    { key: "date", label: "날짜", type: "date" },
+    { key: "item", label: "항목", type: "text" },
+    { key: "detail", label: "내용", type: "textarea" },
+    { key: "owner", label: "담당", type: "text" },
+    { key: "status", label: "상태", type: "text" },
+  ],
+};
+
+export function fieldsFor(type, compact = false) {
+  const all = FIELDS[type] || FIELDS.custom;
+  if (!compact) return all;
+  const keys = {
+    inbound: ["date", "supplier", "item", "qty", "size"],
+    process: ["partNo", "partName", "planQty", "doneQty", "progress", "status"],
+    delivery: ["customer", "partName", "qty", "status"],
+    quality: ["partNo", "partName", "inspector", "status"],
+    defect: ["partName", "type", "qty", "status"],
+    inventory: ["item", "lot", "qty", "status"],
+    custom: ["item", "owner", "status"],
+  }[type];
+  if (!keys) return all.slice(0, 5);
+  return all.filter((f) => keys.includes(f.key));
+}
+
+export function flattenChecks(groups) {
+  return groups.flatMap((g) => g.items);
+}
+
+export function badgeClass(value) {
+  const text = String(value ?? "");
+  if (["불합격", "폐기", "미결", "주의", "미달", "일부 미입고"].includes(text)) return "bad";
+  if (["보류", "대기", "가동", "출하준비", "예정"].includes(text)) return "warn";
+  return "ok";
+}
+
+export function defaultState() {
+  const today = todayISO();
+  return {
+    modules: [
+      { id: "records", title: "기록 관리", desc: "각 폴더의 기록을 수정하거나 삭제합니다.", type: "records" },
+      { id: "chat", title: "사내 메신저", desc: "카카오톡처럼 현장·검사실·개인 대화를 나눕니다.", type: "chat" },
+      { id: "mail", title: "후이즈 메일", desc: "후이즈 웹메일로 이동합니다.", type: "mail" },
+      { id: "inbound", title: "원자재 입고 관리", desc: "월 폴더에 A4 한 장으로 적습니다. 날짜, 업체, 자재 품명, 개수, 자재 사이즈 순입니다.", type: "inbound" },
+      { id: "process", title: "가공 현황", desc: "품번·품명·날짜별 완료 수량을 관리합니다.", type: "process" },
+      { id: "delivery", title: "납품 일정", desc: "날짜 폴더에서 납품 목록과 표를 봅니다.", type: "delivery" },
+      { id: "quality", title: "품질 관리 현황", desc: "가공 회사·납품처, 품번·품명·LOT, X·Y·Z 5회 측정과 사진을 기록합니다.", type: "quality" },
+      { id: "climate", title: "현장 온습도 관리", desc: "한 달 표에서 위치별로 점검 여부를 체크합니다.", type: "climate" },
+      { id: "five-s", title: "현장 3정5S 관리", desc: "한 달 표에서 항목별로 일자 점검을 체크합니다.", type: "five-s" },
+      { id: "lab-climate", title: "검사실 온습도 관리", desc: "한 달 표에서 검사실 위치 점검을 체크합니다.", type: "lab-climate" },
+      { id: "lab-5s", title: "검사실 3정5S 관리", desc: "한 달 표에서 검사실 3정5S를 일자별로 체크합니다.", type: "lab-5s" },
+      { id: "defect", title: "불량품 관리 현황", desc: "외관 사진과 재발 방지 대책을 남깁니다.", type: "defect" },
+      { id: "inventory", title: "재고 현황", desc: "재고 개수와 LOT 번호를 기입합니다.", type: "inventory" },
+      { id: "equipment", title: "설비 점검", desc: "CNC 머시닝 일일 점검표를 체크합니다.", type: "equipment" },
+      { id: "mastercam", title: "Mastercam 9.1 프로그램", desc: "Mastercam 저장 폴더를 연결하면 가공 후 저장한 프로그램이 자동으로 들어옵니다.", type: "mastercam" },
+    ],
+    dateFolders: {},
+    records: {
+      inbound: [
+        { id: "in-1", date: today, month: today.slice(0, 7), supplier: "천명스텐레스", item: "SUS304 환봉", size: "Ø50 × 3000", qty: 12 },
+        { id: "in-2", date: today, month: today.slice(0, 7), supplier: "기흥금속", item: "알루미늄 6061 판재", size: "20 × 100 × 2000", qty: 8 },
+        { id: "in-3", date: "2026-09-01", month: "2026-09", supplier: "천명스텐레스", item: "SUS316 파이프", size: "Ø34 × 6000", qty: 6 },
+      ],
+      process: [
+        { id: "pr-1", partNo: "DOM-HSG-032", partName: "모터 하우징", lot: "LOT-P-8841", line: "장축 1호기", wo: "WO-8841", startDate: "2026-08-28", workDate: today, endDate: "", progress: 82, planQty: 320, doneQty: 262, detail: "08-28 80개, 08-29 70개, 09-01 72개, 09-02 40개.", owner: "최우선", status: "가동" },
+        { id: "pr-2", partNo: "DOM-SFT-018", partName: "샤프트", lot: "LOT-P-8847", line: "5호기-1", wo: "WO-8847", startDate: "2026-09-01", workDate: today, endDate: "", progress: 46, planQty: 1000, doneQty: 460, detail: "09-01 선삭 220개, 09-02 선삭 240개.", owner: "김동근", status: "가동" },
+        { id: "pr-3", partNo: "DOM-FLN-A01", partName: "플랜지", lot: "LOT-P-8850", line: "6호기-1", wo: "WO-8850", startDate: "2026-08-25", workDate: "2026-09-01", endDate: "2026-09-01", progress: 100, planQty: 240, doneQty: 240, detail: "전량 밀링 완료.", owner: "조세원", status: "완료" },
+      ],
+      delivery: [
+        { id: "dl-1", date: today, customer: "참테크", partNo: "DOM-HSG-032", partName: "하우징", lot: "LOT-P-8841", qty: 80, status: "출하준비", note: "" },
+        { id: "dl-2", date: "2026-09-04", customer: "인텔릭스", partNo: "DOM-SFT-018", partName: "샤프트", lot: "LOT-P-8847", qty: 200, status: "예정", note: "" },
+        { id: "dl-3", date: "2026-09-05", customer: "준테크놀러지", partNo: "DOM-FLN-A01", partName: "플랜지", lot: "LOT-P-8850", qty: 120, status: "예정", note: "" },
+      ],
+      quality: [
+        { id: "qa-1", date: today, millCompany: "디오엠", customer: "참테크", partNo: "DOM-HSG-032", partName: "모터 하우징", lot: "LOT-P-8841", qtyIn: 80, qtyOut: 76, specX: "120.00±0.05", specY: "80.00±0.05", specZ: "32.00±0.02", x1: 120.01, x2: 119.99, x3: 120, x4: 120.02, x5: 119.98, y1: 80, y2: 80.02, y3: 79.98, y4: 80.01, y5: 80, z1: 32, z2: 31.99, z3: 32.01, z4: 32, z5: 31.98, inspector: "조세원", status: "합격", photos: [] },
+      ],
+      defect: [
+        { id: "df-1", date: today, partNo: "DOM-SFT-018", partName: "샤프트", lot: "LOT-P-8847", type: "외관 스크래치", qty: 4, action: "해당 LOT 선별 후 재연마", prevent: "방진 커버 장착 후 이송", status: "조치완료", photos: [] },
+      ],
+      inventory: [
+        { id: "iv-1", date: today, kind: "원자재", item: "SUS304 환봉", lot: "LOT-TM-260902-01", qty: 36, location: "W-A01", status: "정상" },
+        { id: "iv-2", date: today, kind: "완제품", item: "플랜지", lot: "LOT-P-8850", qty: 240, location: "W-C01", status: "정상" },
+      ],
+    },
+    climate: {
+      rooms: [
+        { id: "store-a", name: "원자재 창고", x: 3, y: 4, w: 34, h: 28, kind: "area" },
+        { id: "store-b", name: "완제품 창고", x: 40, y: 4, w: 28, h: 28, kind: "area" },
+        { id: "hall", name: "통로", x: 36, y: 36, w: 12, h: 38, kind: "hall" },
+        { id: "qa", name: "검사실", x: 76, y: 4, w: 21, h: 50, kind: "qa" },
+        { id: "ship", name: "출하장", x: 3, y: 78, w: 94, h: 18, kind: "area" },
+        { id: "m-long-1", name: "장축 1호기", x: 5, y: 42, w: 14, h: 16, kind: "machine" },
+        { id: "m-long-2", name: "장축 2호기", x: 20, y: 42, w: 14, h: 16, kind: "machine" },
+        { id: "m-5-1", name: "5호기-1", x: 50, y: 40, w: 12, h: 14, kind: "machine" },
+        { id: "m-5-2", name: "5호기-2", x: 63, y: 40, w: 12, h: 14, kind: "machine" },
+        { id: "m-6", name: "6호기", x: 50, y: 56, w: 12, h: 14, kind: "machine" },
+        { id: "m-4", name: "4호기", x: 63, y: 56, w: 12, h: 14, kind: "machine" },
+      ],
+      points: [
+        { id: "P1", name: "가공장 A", x: 22, y: 58 },
+        { id: "P2", name: "가공장 B", x: 56, y: 50 },
+        { id: "P3", name: "원자재 창고", x: 20, y: 18 },
+        { id: "P4", name: "완제품 창고", x: 54, y: 18 },
+        { id: "P5", name: "검사실", x: 86, y: 28 },
+        { id: "P6", name: "출하장", x: 50, y: 86 },
+      ],
+      logs: {
+        [today]: [
+          { pointId: "P1", temp: 23.1, humidity: 48, lux: 520, status: "정상" },
+          { pointId: "P2", temp: 24.8, humidity: 52, lux: 480, status: "정상" },
+          { pointId: "P3", temp: 21.4, humidity: 61, lux: 210, status: "주의" },
+          { pointId: "P4", temp: 22.0, humidity: 45, lux: 250, status: "정상" },
+          { pointId: "P5", temp: 22.6, humidity: 47, lux: 610, status: "정상" },
+          { pointId: "P6", temp: 23.4, humidity: 50, lux: 390, status: "정상" },
+        ],
+      },
+      checks: {
+        [today]: { P1: true, P2: true, P3: true, P4: true, P5: true, P6: true },
+      },
+    },
+    fiveS: {
+      dates: {
+        [today]: {
+          shop: { s1: true, s2: true, s3: true, s6: true, s9: true },
+          lab: { l1: true, l2: true, l6: true, l8: true, l12: true },
+        },
+      },
+    },
+    labClimate: {
+      rooms: [
+        { id: "lab-bench", name: "검사대", x: 6, y: 8, w: 48, h: 42, kind: "qa" },
+        { id: "lab-plate", name: "정반", x: 58, y: 8, w: 36, h: 28, kind: "area" },
+        { id: "lab-gage", name: "게이지 보관", x: 6, y: 56, w: 28, h: 36, kind: "area" },
+        { id: "lab-wait", name: "시료 대기", x: 38, y: 56, w: 28, h: 36, kind: "area" },
+        { id: "lab-door", name: "출입", x: 70, y: 56, w: 24, h: 36, kind: "hall" },
+      ],
+      points: [
+        { id: "L1", name: "검사대", x: 28, y: 28 },
+        { id: "L2", name: "정반", x: 76, y: 22 },
+        { id: "L3", name: "게이지 보관", x: 20, y: 72 },
+        { id: "L4", name: "시료 대기", x: 52, y: 72 },
+      ],
+      logs: {
+        [today]: [
+          { pointId: "L1", temp: 22.6, humidity: 47, lux: 610, status: "정상" },
+          { pointId: "L2", temp: 22.4, humidity: 46, lux: 580, status: "정상" },
+          { pointId: "L3", temp: 22.8, humidity: 48, lux: 420, status: "정상" },
+          { pointId: "L4", temp: 23.0, humidity: 49, lux: 390, status: "정상" },
+        ],
+      },
+      checks: {
+        [today]: { L1: true, L2: true, L3: true, L4: true },
+      },
+    },
+    equipment: {},
+    eqPhotos: {},
+    chat: {
+      messages: [
+        { id: "c1", room: "all", from: "choi", name: "최우선", text: "오늘 장축 1호기 하우징 우선입니다.", at: Date.now() - 3600000 },
+        { id: "c2", room: "lab", from: "jo", name: "조세원", text: "품질실 입고 80개 검사 들어왔습니다.", at: Date.now() - 1800000 },
+      ],
+    },
+    mail: {
+      address: "harry@domeng.co.kr",
+      web: "https://email.whois.co.kr/v2/",
+      drafts: [],
+    },
+    camFolder: "cam-root",
+    cam: {
+      folders: [
+        { id: "cam-root", name: "Mastercam 9.1", parent: null },
+        { id: "cam-cham", name: "참테크", parent: "cam-root" },
+        { id: "cam-intel", name: "인텔릭스", parent: "cam-root" },
+        { id: "cam-june", name: "준테크놀러지", parent: "cam-root" },
+        { id: "cam-total", name: "토탈솔루션", parent: "cam-root" },
+        { id: "cam-kek", name: "KEK", parent: "cam-root" },
+      ],
+      files: [],
+      jobs: [],
+    },
+  };
+}

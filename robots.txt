@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /portal.html
+Disallow: /cam-lab.html
+
+Sitemap: https://kjoo95.github.io/dom-mes-portal/sitemap.xml
