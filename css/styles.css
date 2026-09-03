@@ -944,46 +944,37 @@ table.checks .chk { width: 72px; text-align: center; }
   font-size: 12px;
   background: #fffef8;
 }
-.process-a4 .a4-head-corp {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  grid-template-areas:
-    "logo stamp"
-    "title title";
-  align-items: start;
-  column-gap: 8px;
-  row-gap: 2px;
-  min-height: 0;
-  padding-bottom: 8px;
+.process-head {
+  flex: 0 0 auto;
+  border-bottom: 2px solid var(--sheet-red);
+  padding-bottom: 6px;
+  margin-bottom: 6px;
 }
-.process-a4 .a4-head-corp > div:first-child {
-  grid-area: logo;
-  justify-self: start;
-  align-self: start;
-  min-width: 0;
+.process-head-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
 }
-.process-a4 .a4-logo {
-  height: 10mm;
-  max-width: 78mm;
+.process-head .a4-logo {
+  height: 11mm;
+  max-width: 92mm;
+  flex: 0 1 auto;
 }
-.process-a4 .a4-head-corp h1 {
-  grid-area: title;
+.process-head h1 {
   position: static;
-  left: auto;
-  right: auto;
-  top: auto;
-  margin: 0;
-  padding: 2px 4px 0;
+  display: block;
+  margin: 8px 0 0;
+  padding: 0;
   text-align: center;
   font-size: 18px;
-  line-height: 1.25;
-  letter-spacing: 0.14em;
-  z-index: 2;
+  line-height: 1.3;
+  letter-spacing: 0.16em;
+  pointer-events: auto;
 }
-.process-a4 .a4-stamp {
-  grid-area: stamp;
-  justify-self: end;
-  width: 68mm;
+.process-head .a4-stamp {
+  width: 62mm;
+  flex: 0 0 62mm;
 }
 .process-a4 .a4-meta {
   table-layout: fixed;
@@ -1036,12 +1027,15 @@ table.checks .chk { width: 72px; text-align: center; }
   text-align: left;
   padding: 4px 6px;
 }
-.process-a4 .detail-row textarea {
-  min-height: 14mm;
-  height: 14mm;
-  padding: 2px 4px;
-  line-height: 1.4;
+.process-a4 .name-row th,
+.process-a4 .name-row td {
+  height: 9mm;
   text-align: left;
+}
+.process-a4 .name-row td input {
+  text-align: left;
+  font-size: 14px;
+  font-weight: 700;
 }
 .a4-process-body {
   flex: 1 1 auto;

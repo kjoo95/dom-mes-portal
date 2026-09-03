@@ -1989,23 +1989,23 @@ function processPhotos(r) {
 function processA4(r) {
   return `
       <article class="a4-sheet process-a4">
-        <header class="a4-head a4-head-corp">
-          <div>
+        <header class="process-head">
+          <div class="process-head-top">
             <img class="a4-logo" src="./assets/dom-logo.png?v=4" alt="주식회사 디오엠">
+            ${processStamp(r)}
           </div>
           <h1>가공 작업 현황</h1>
-          ${processStamp(r)}
         </header>
         <div class="a4-process-body">
           <div class="a4-process-main">
             <table class="a4-meta">
-              <tr><th>품번</th><td>${fi("partNo", r.partNo)}</td><th>품명</th><td>${fi("partName", r.partName)}</td></tr>
-              <tr><th>LOT 번호</th><td>${fi("lot", r.lot)}</td><th>라인</th><td>${fi("line", r.line)}</td></tr>
-              <tr><th>작업지시</th><td>${fi("wo", r.wo)}</td><th>담당</th><td>${fi("owner", r.owner)}</td></tr>
+              <tr><th>품번</th><td>${fi("partNo", r.partNo)}</td><th>라인</th><td>${fi("line", r.line)}</td></tr>
+              <tr class="name-row"><th>품명</th><td colspan="3">${fi("partName", r.partName)}</td></tr>
+              <tr><th>LOT 번호</th><td>${fi("lot", r.lot)}</td><th>작업지시</th><td>${fi("wo", r.wo)}</td></tr>
+              <tr><th>담당</th><td>${fi("owner", r.owner)}</td><th>상태</th><td>${fi("status", r.status)}</td></tr>
               <tr><th>가공 시작일</th><td>${fi("startDate", r.startDate, "date")}</td><th>최근 작업일</th><td>${fi("workDate", r.workDate, "date")}</td></tr>
-              <tr><th>완료일</th><td>${fi("endDate", r.endDate, "date")}</td><th>상태</th><td>${fi("status", r.status)}</td></tr>
+              <tr><th>완료일</th><td>${fi("endDate", r.endDate, "date")}</td><th>진행률</th><td>${fc({ key: "progress" }, r)}</td></tr>
               <tr><th>계획 수량</th><td>${fi("planQty", r.planQty, "number")}</td><th>완료 수량</th><td>${fi("doneQty", r.doneQty, "number")}</td></tr>
-              <tr><th>진행률</th><td colspan="3">${fc({ key: "progress" }, r)}</td></tr>
               <tr class="detail-row"><th>완료 상세</th><td colspan="3">${ft("detail", r.detail)}</td></tr>
             </table>
           </div>
