@@ -631,6 +631,44 @@ table.checks .chk { width: 72px; text-align: center; }
 .a4-empty { color: #888; font-size: 12px; flex: 1; display: grid; place-items: center; border: 1px dashed #bbb; background: #fafafa; min-height: 36mm; }
 .a4-sign { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 8px; flex: 0 0 auto; }
 .a4-sign span { border: 1px solid #222; padding: 4px 0 0; text-align: center; font-size: 11px; height: 14mm; }
+.qa-a4 { overflow: hidden; }
+.qa-a4 .a4-head { margin-bottom: 5px; padding-bottom: 3px; }
+.qa-a4 .a4-meta { font-size: 11px; }
+.qa-a4 .a4-meta th, .qa-a4 .a4-meta td { padding: 2px 5px; height: 7mm; }
+.qa-a4 h2 { margin: 4px 0 3px; font-size: 11px; }
+.qa-photos {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 4px;
+  flex: 0 0 28mm;
+  height: 28mm;
+  min-height: 28mm;
+}
+.qa-shot {
+  display: grid;
+  place-items: center;
+  height: 28mm;
+  border: 1px dashed #888;
+  background: #f7f7f5;
+  cursor: pointer;
+  overflow: hidden;
+  margin: 0;
+}
+.qa-shot img { width: 100%; height: 100%; object-fit: cover; }
+.qa-shot span { color: #888; font-size: 11px; }
+.qa-meas { table-layout: fixed; font-size: 10px; flex: 1 1 auto; }
+.qa-meas th, .qa-meas td { padding: 0; height: 6.6mm; }
+.qa-meas .qa-item { width: 22mm; }
+.qa-meas th:nth-child(2), .qa-meas td:nth-child(2) { width: 32mm; }
+.qa-meas th:nth-child(3),
+.qa-meas th:nth-child(4),
+.qa-meas th:nth-child(5) { width: 16mm; }
+.qa-meas .qa-note { width: auto; }
+.qa-meas td:nth-child(2) { text-align: center; }
+.qa-meas input { height: 6.6mm; min-height: 0; text-align: center; font-size: 10px; padding: 0 3px; }
+.qa-a4 .a4-sign { margin-top: 5px; }
+.qa-a4 .a4-sign span { height: 11mm; }
+.qa-a4 { break-inside: avoid; page-break-inside: avoid; }
 .month-sheet { width: 297mm; height: 210mm; min-height: 210mm; padding: 7mm 8mm 6mm; }
 .month-sheet .a4-tools { width: min(297mm, 100%); }
 .eq-sheet {
@@ -1143,6 +1181,7 @@ table.checks .chk { width: 72px; text-align: center; }
   }
   .a4-sheet input[type="date"]::-webkit-calendar-picker-indicator { display: none; }
   .a4-sheet input[type="checkbox"] { display: none !important; }
+  .a4-sheet input[type="file"] { display: none !important; }
   .inbound-sheet {
     min-height: 273mm;
     height: 273mm;
@@ -1174,6 +1213,14 @@ table.checks .chk { width: 72px; text-align: center; }
     z-index: 1;
   }
   .eq-sheet { min-height: 194mm; height: 194mm; }
+  .qa-a4 {
+    min-height: 273mm;
+    height: 273mm;
+    overflow: hidden;
+    padding: 7mm 8mm 6mm;
+  }
+  .qa-photos, .qa-shot { height: 24mm; min-height: 24mm; }
+  .qa-meas th, .qa-meas td { height: 6.2mm; }
   .clim-ym-print {
     display: block !important;
     position: absolute;

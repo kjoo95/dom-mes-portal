@@ -76,32 +76,28 @@ export const FIVE_S_SHOP = [
 ];
 
 export const FIVE_S_LAB = [
-  { group: "3정", items: [
-    { id: "l1", label: "정품: 교정 유효 측정기만 사용한다" },
-    { id: "l2", label: "정량: 검사 시료와 게이지를 필요 수량만 꺼낸다" },
-    { id: "l3", label: "정위치: 게이지가 전용 위치에 있다" },
+  { group: "정리 정돈", items: [
+    { id: "l1", label: "용도 불명의 물건이나 불필요한 자재는 없는가?" },
+    { id: "l2", label: "불량품은 양품과 잘 구분되어 지정 장소에 보관하고 있는가?" },
+    { id: "l3", label: "통로나 작업공간에 방치된 장애물은 없는가?" },
+    { id: "l4", label: "제품 및 자재는 식별되어 지정장소에 잘 보관되어 있는가?" },
+    { id: "l5", label: "미검사품과 검사품이 식별되어 구분하고 있는가?" },
+    { id: "l6", label: "적재 및 보관상태는 위태함이 없는가?" },
+    { id: "l7", label: "치공구 및 주변 정리정돈 상태는 양호한가?" },
   ]},
-  { group: "정리", items: [
-    { id: "l4", label: "불필요 시료·불량품을 검사대에서 제거했다" },
-    { id: "l5", label: "교정 만료·파손 측정기를 격리 표시했다" },
+  { group: "청소 청결", items: [
+    { id: "l8", label: "바닥 청소 및 청결 유지상태는 양호한가?" },
+    { id: "l9", label: "제품보관대 및 작업대 청소상태는 양호한가?" },
+    { id: "l10", label: "쓰레기통은 언제나 청결하게 관리하고 있는가?" },
+    { id: "l11", label: "청소용 도구는 정위치에 청결하게 보관되어 있는가?" },
   ]},
-  { group: "정돈", items: [
-    { id: "l6", label: "버니어·마이크로미터가 거치대에 있다" },
-    { id: "l7", label: "성적서·도면이 시료와 한 세트다" },
-  ]},
-  { group: "청소", items: [
-    { id: "l8", label: "정반·측정면의 칩·기름을 제거했다" },
-    { id: "l9", label: "조명 커버와 창의 먼지를 닦았다" },
-  ]},
-  { group: "청결", items: [
-    { id: "l10", label: "시료에 품번·LOT·검사상태가 표시되어 있다" },
-    { id: "l11", label: "합격/불합격 구역이 혼재되지 않는다" },
-  ]},
-  { group: "습관화", items: [
-    { id: "l12", label: "온습도·조도를 기록한 뒤 측정을 시작했다" },
-    { id: "l13", label: "이상 치수 발생 시 가공 담당에게 통보했다" },
+  { group: "확인 결과", items: [
+    { id: "insp", label: "점검자", kind: "text" },
+    { id: "conf", label: "확인", kind: "text" },
   ]},
 ];
+
+export const QA_MEASURE_ITEMS = ["X", "Y", "Z", "홀 Ø", "홀간 거리", "챔버 모따기", "램프 깊이", "탭 깊이"];
 
 export const FIELDS = {
   inbound: [
@@ -146,24 +142,6 @@ export const FIELDS = {
     { key: "lot", label: "LOT 번호", type: "text" },
     { key: "qtyIn", label: "품질실 입고 수량", type: "number" },
     { key: "qtyOut", label: "납품 출고 수량", type: "number" },
-    { key: "specX", label: "X 기준(mm)", type: "text" },
-    { key: "x1", label: "X 1회", type: "number" },
-    { key: "x2", label: "X 2회", type: "number" },
-    { key: "x3", label: "X 3회", type: "number" },
-    { key: "x4", label: "X 4회", type: "number" },
-    { key: "x5", label: "X 5회", type: "number" },
-    { key: "specY", label: "Y 기준(mm)", type: "text" },
-    { key: "y1", label: "Y 1회", type: "number" },
-    { key: "y2", label: "Y 2회", type: "number" },
-    { key: "y3", label: "Y 3회", type: "number" },
-    { key: "y4", label: "Y 4회", type: "number" },
-    { key: "y5", label: "Y 5회", type: "number" },
-    { key: "specZ", label: "Z 기준(mm)", type: "text" },
-    { key: "z1", label: "Z 1회", type: "number" },
-    { key: "z2", label: "Z 2회", type: "number" },
-    { key: "z3", label: "Z 3회", type: "number" },
-    { key: "z4", label: "Z 4회", type: "number" },
-    { key: "z5", label: "Z 5회", type: "number" },
     { key: "inspector", label: "검사자", type: "text" },
     { key: "status", label: "판정", type: "select", options: ["합격", "불합격", "보류"] },
   ],
@@ -240,11 +218,11 @@ export function defaultState() {
       { id: "inbound", title: "원자재 입고 관리", desc: "월 폴더에 A4 한 장으로 적습니다. 날짜, 업체, 자재 품명, 개수, 자재 사이즈 순입니다.", type: "inbound" },
       { id: "process", title: "가공 현황", desc: "품번·품명·날짜별 완료 수량을 관리합니다.", type: "process" },
       { id: "delivery", title: "납품 일정", desc: "날짜 폴더에서 납품 목록과 표를 봅니다.", type: "delivery" },
-      { id: "quality", title: "품질 관리 현황", desc: "가공 회사·납품처, 품번·품명·LOT, X·Y·Z 5회 측정과 사진을 기록합니다.", type: "quality" },
+      { id: "quality", title: "품질 관리 현황", desc: "사진과 치수·비고를 성적서 한 장에 기록하고 인쇄합니다.", type: "quality" },
       { id: "climate", title: "현장 온습도 관리", desc: "생산라인 온·습도 점검 체크시트를 연·월을 바꿔 가며 작성합니다.", type: "climate" },
       { id: "five-s", title: "현장 3정5S 관리", desc: "생산라인 3정 5S 체크시트를 연·월을 바꿔 가며 작성합니다.", type: "five-s" },
-      { id: "lab-climate", title: "검사실 온습도 관리", desc: "한 달 표에서 검사실 위치 점검을 체크합니다.", type: "lab-climate" },
-      { id: "lab-5s", title: "검사실 3정5S 관리", desc: "한 달 표에서 검사실 3정5S를 일자별로 체크합니다.", type: "lab-5s" },
+      { id: "lab-climate", title: "검사실 온습도 관리", desc: "완제품 창고 온·습도 점검 체크시트를 연·월을 바꿔 가며 작성합니다.", type: "lab-climate" },
+      { id: "lab-5s", title: "검사실 3정5S 관리", desc: "검사실(완제품 창고) 3정 5S 체크시트를 연·월을 바꿔 가며 작성합니다.", type: "lab-5s" },
       { id: "defect", title: "불량품 관리 현황", desc: "외관 사진과 재발 방지 대책을 남깁니다.", type: "defect" },
       { id: "inventory", title: "재고 현황", desc: "재고 개수와 LOT 번호를 기입합니다.", type: "inventory" },
       { id: "equipment", title: "설비 점검", desc: "설비일상점검표를 연·월을 바꿔 가며 작성하고 인쇄합니다.", type: "equipment" },
@@ -268,7 +246,11 @@ export function defaultState() {
         { id: "dl-3", date: "2026-09-05", customer: "준테크놀러지", partNo: "DOM-FLN-A01", partName: "플랜지", lot: "LOT-P-8850", qty: 120, status: "예정", note: "" },
       ],
       quality: [
-        { id: "qa-1", date: today, millCompany: "디오엠", customer: "참테크", partNo: "DOM-HSG-032", partName: "모터 하우징", lot: "LOT-P-8841", qtyIn: 80, qtyOut: 76, specX: "120.00±0.05", specY: "80.00±0.05", specZ: "32.00±0.02", x1: 120.01, x2: 119.99, x3: 120, x4: 120.02, x5: 119.98, y1: 80, y2: 80.02, y3: 79.98, y4: 80.01, y5: 80, z1: 32, z2: 31.99, z3: 32.01, z4: 32, z5: 31.98, inspector: "조세원", status: "합격", photos: [] },
+        { id: "qa-1", date: today, millCompany: "디오엠", customer: "참테크", partNo: "DOM-HSG-032", partName: "모터 하우징", lot: "LOT-P-8841", qtyIn: 80, qtyOut: 76, inspector: "조세원", status: "합격", photos: [], measures: [
+          { item: "X", spec: "120.00±0.05", v1: "120.01", v2: "119.99", v3: "120.00", note: "" },
+          { item: "Y", spec: "80.00±0.05", v1: "80.00", v2: "80.02", v3: "79.98", note: "" },
+          { item: "Z", spec: "32.00±0.02", v1: "32.00", v2: "31.99", v3: "32.01", note: "" },
+        ] },
       ],
       defect: [
         { id: "df-1", date: today, partNo: "DOM-SFT-018", partName: "샤프트", lot: "LOT-P-8847", type: "외관 스크래치", qty: 4, action: "해당 LOT 선별 후 재연마", prevent: "방진 커버 장착 후 이송", status: "조치완료", photos: [] },
@@ -323,6 +305,7 @@ export function defaultState() {
         },
       },
       notes: {},
+      labNotes: {},
     },
     labClimate: {
       rooms: [
@@ -349,6 +332,7 @@ export function defaultState() {
       checks: {
         [today]: { L1: true, L2: true, L3: true, L4: true },
       },
+      sheet: {},
     },
     equipment: {},
     eqPhotos: {},

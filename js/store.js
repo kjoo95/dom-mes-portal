@@ -1,4 +1,4 @@
-import { STORAGE_KEY, defaultState, todayISO } from "./data.js?v=45";
+import { STORAGE_KEY, defaultState, todayISO } from "./data.js?v=46";
 import { seedJobs, parseProgram, toNc, looksBinaryText } from "./gcode.js?v=49";
 
 const BAK = `${STORAGE_KEY}-bak`;
@@ -52,8 +52,8 @@ function mergeModules(base, saved) {
     }
   });
   const quality = list.find((item) => item.id === "quality");
-  if (quality && quality.desc?.includes("3회")) {
-    quality.desc = "가공 회사·납품처, 품번·품명·LOT, X·Y·Z 5회 측정과 사진을 기록합니다.";
+  if (quality && (quality.desc?.includes("3회") || quality.desc?.includes("X·Y·Z"))) {
+    quality.desc = "사진과 치수·비고를 성적서 한 장에 기록하고 인쇄합니다.";
   }
   const mail = list.find((item) => item.id === "mail");
   if (mail) {
@@ -64,9 +64,14 @@ function mergeModules(base, saved) {
     inbound.desc = "월 폴더에 A4 한 장으로 적습니다. 날짜, 업체, 자재 품명, 개수, 자재 사이즈 순입니다.";
   }
   const lab5 = list.find((item) => item.id === "lab-5s");
-  if (lab5 && lab5.title === "검사실 3정5S") {
+  if (lab5) {
     lab5.title = "검사실 3정5S 관리";
-    lab5.desc = "검사실 3정5S 항목을 날짜별로 체크합니다.";
+    lab5.desc = "검사실(완제품 창고) 3정 5S 체크시트를 연·월을 바꿔 가며 작성합니다.";
+  }
+  const labClim = list.find((item) => item.id === "lab-climate");
+  if (labClim) {
+    labClim.title = "검사실 온습도 관리";
+    labClim.desc = "완제품 창고 온·습도 점검 체크시트를 연·월을 바꿔 가며 작성합니다.";
   }
   return list;
 }
@@ -98,9 +103,10 @@ function hydrate(parsed) {
       points: parsed.labClimate?.points || base.labClimate.points,
       logs: parsed.labClimate?.logs || {},
       checks: parsed.labClimate?.checks || {},
+      sheet: parsed.labClimate?.sheet || {},
     },
     dateFolders: parsed.dateFolders || {},
-    fiveS: { dates: {}, notes: {}, ...(parsed.fiveS || {}) },
+    fiveS: { dates: {}, notes: {}, labNotes: {}, ...(parsed.fiveS || {}) },
     cam,
     equipment: parsed.equipment || {},
     eqPhotos: parsed.eqPhotos || {},

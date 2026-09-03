@@ -1,15 +1,15 @@
 import { getSession, login, signup, logout, isInternalNetwork, pullUsers, isAdmin, listUsers, pendingCount, setUserStatus } from "./auth.js?v=45";
 import {
-  CUSTOMERS, MILL_SHOPS, MACHINES, FIVE_S_SHOP, FIVE_S_LAB,
+  CUSTOMERS, MILL_SHOPS, MACHINES, FIVE_S_SHOP, FIVE_S_LAB, QA_MEASURE_ITEMS,
   EQ_ITEMS, EQ_MARKS,
   fieldsFor, flattenChecks, badgeClass, todayISO,
-} from "./data.js?v=45";
-import { loadState, saveState, uid } from "./store.js?v=49";
+} from "./data.js?v=46";
+import { loadState, saveState, uid } from "./store.js?v=50";
 import { saveBlob, loadBlob, readAsDataUrl, saveDirHandle, loadDirHandle, removeBlob } from "./files.js?v=39";
 import { parseProgram, decodeCamFile, isCamFileName } from "./gcode.js?v=49";
 import { boot, showRecover } from "./safety.js?v=39";
 import { chatView, bindChat } from "./comm.js?v=50";
-import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=51";
+import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=52";
 
 const WHOIS_MAIL = "https://email.whois.co.kr/v2/";
 const root = document.getElementById("app");
@@ -137,7 +137,7 @@ function isSheetMod(mod) {
 
 function isPrintPage(mod, extra, date) {
   if (mod?.type === "equipment") return Boolean(extra) || MACHINES.some((m) => m.id === date);
-  if (mod?.type === "climate" && extra !== "map") return true;
+  if (["climate", "lab-climate", "five-s", "lab-5s"].includes(mod?.type) && extra !== "map") return true;
   if (isMonthMod(mod) && date && extra !== "map") return true;
   if (mod?.type === "inbound" && date && !extra) return true;
   if (!extra) return false;
@@ -557,8 +557,10 @@ function moduleView(mod, date, extra) {
   if (mod.type === "chat") return chatView(state, h, date);
   if (!date) {
     if (mod.type === "five-s") return shopFiveSView(mod, thisMonth());
+    if (mod.type === "lab-5s") return shopFiveSView(mod, thisMonth());
     if (mod.type === "equipment") return eqView(mod, thisMonth());
     if (mod.type === "climate") return shopClimateView(mod, thisMonth());
+    if (mod.type === "lab-climate") return shopClimateView(mod, thisMonth());
     return dateIndex(mod);
   }
   if (mod.type === "climate") {
@@ -567,10 +569,10 @@ function moduleView(mod, date, extra) {
   }
   if (mod.type === "lab-climate") {
     if (extra === "map") return climateView(mod, monthKey(date) || date);
-    return monthSheetView(mod, monthKey(date) || date);
+    return shopClimateView(mod, monthKey(date) || date);
   }
   if (mod.type === "five-s") return shopFiveSView(mod, monthKey(date) || date);
-  if (mod.type === "lab-5s") return monthSheetView(mod, monthKey(date) || date);
+  if (mod.type === "lab-5s") return shopFiveSView(mod, monthKey(date) || date);
   if (mod.type === "inbound") {
     const ym = monthKey(date) || date;
     padInboundRows(mod, ym);
@@ -776,6 +778,10 @@ function fi(name, value, type = "text") {
   return `<input name="${name}" type="${type}" value="${h(value ?? "")}">`;
 }
 
+function fm(i, k, value) {
+  return `<input data-qa-m="${i}" data-k="${k}" value="${h(value ?? "")}">`;
+}
+
 function fs(name, value, options) {
   return `<select name="${name}">${(options || []).map((o) => `<option value="${h(o)}" ${o === value ? "selected" : ""}>${h(t(o))}</option>`).join("")}</select>`;
 }
@@ -802,7 +808,7 @@ function printDocView(mod, date, id) {
     <div class="print-page">
       <div class="a4-tools no-print">
         <a class="btn ghost" href="#/${mod.id}/${back}">목록</a>
-        ${photos ? `<label class="btn">사진<input id="sheet-photos" type="file" accept="image/*" multiple hidden></label>` : ""}
+        ${photos ? `<label class="btn">사진 추가<input id="sheet-photos" type="file" accept="image/*" multiple hidden></label>` : ""}
         <button class="btn red" id="qa-print" type="button">인쇄</button>
       </div>
       <div class="a4-wrap page"><form id="sheet-form">${a4For(mod, row)}</form></div>
@@ -826,19 +832,53 @@ function a4Head(title, date, ready = false) {
         </header>`;
 }
 
+function qaMeasures(r) {
+  const blank = () => ({ item: "", spec: "", v1: "", v2: "", v3: "", note: "" });
+  const pad = (rows) => {
+    const next = rows.map((row) => ({
+      item: row.item || "",
+      spec: row.spec || "",
+      v1: row.v1 ?? "",
+      v2: row.v2 ?? "",
+      v3: row.v3 ?? "",
+      note: row.note || "",
+    }));
+    while (next.length < 14) next.push(blank());
+    return next.slice(0, 14);
+  };
+  if (Array.isArray(r.measures) && r.measures.length) {
+    r.measures = pad(r.measures);
+    return r.measures;
+  }
+  const named = QA_MEASURE_ITEMS.map((item) => blank());
+  named[0] = { item: "X", spec: r.specX || "", v1: r.x1 ?? "", v2: r.x2 ?? "", v3: r.x3 ?? "", note: "" };
+  named[1] = { item: "Y", spec: r.specY || "", v1: r.y1 ?? "", v2: r.y2 ?? "", v3: r.y3 ?? "", note: "" };
+  named[2] = { item: "Z", spec: r.specZ || "", v1: r.z1 ?? "", v2: r.z2 ?? "", v3: r.z3 ?? "", note: "" };
+  QA_MEASURE_ITEMS.forEach((item, i) => { if (!named[i].item) named[i].item = item; });
+  r.measures = pad(named);
+  return r.measures;
+}
+
+function qaPhotos(r) {
+  const pics = Array.from({ length: 3 }, (_, i) => (r.photos || [])[i] || "");
+  return `<div class="qa-photos">${pics.map((src, i) => `<label class="qa-shot">
+      ${src ? `<img src="${src}" alt="">` : `<span>사진 ${i + 1}</span>`}
+      <input data-qa-pic="${i}" type="file" accept="image/*" hidden>
+    </label>`).join("")}</div>`;
+}
+
 function qualityA4(r) {
-  const times = [1, 2, 3, 4, 5];
-  const axis = (name, specKey, key) => `
-    <tr>
-      <th>${name}</th>
-      <td>${fi(specKey, r[specKey])}</td>
-      ${times.map((n) => `<td>${fi(`${key}${n}`, r[`${key}${n}`], "number")}</td>`).join("")}
-    </tr>`;
-  const pics = (r.photos || []).length
-    ? `<div class="a4-photos">${(r.photos || []).map((s) => `<img src="${s}" alt="">`).join("")}</div>`
-    : `<p class="a4-empty">사진 없음 · 위 ‘사진’으로 첨부</p>`;
+  const rows = qaMeasures(r);
+  const body = rows.map((row, i) => `<tr>
+      <td class="qa-item">${fm(i, "item", row.item)}</td>
+      <td>${fm(i, "spec", row.spec)}</td>
+      <td>${fm(i, "v1", row.v1)}</td>
+      <td>${fm(i, "v2", row.v2)}</td>
+      <td>${fm(i, "v3", row.v3)}</td>
+      <td class="qa-note">${fm(i, "note", row.note)}</td>
+    </tr>`).join("");
   return `
-      <article class="a4-sheet">
+      <article class="a4-sheet qa-a4">
         ${a4Head("품질 검사 성적서", r.date)}
         <table class="a4-meta">
           <tr><th>가공 회사</th><td>${fs("millCompany", r.millCompany, MILL_SHOPS)}</td><th>납품처</th><td>${fs("customer", r.customer, CUSTOMERS)}</td></tr>
@@ -847,17 +887,13 @@ function qualityA4(r) {
           <tr><th>품질실 입고</th><td>${fi("qtyIn", r.qtyIn, "number")}</td><th>납품 출고</th><td>${fi("qtyOut", r.qtyOut, "number")}</td></tr>
           <tr><th>검사자</th><td>${fi("inspector", r.inspector)}</td><th>판정</th><td>${fs("status", r.status, ["합격", "불합격", "보류"])}</td></tr>
         </table>
-        <h2>치수 측정 (mm)</h2>
-        <table class="a4-meas">
-          <thead><tr><th>축</th><th>기준</th>${times.map((n) => `<th>${n}회</th>`).join("")}</tr></thead>
-          <tbody>
-            ${axis("X", "specX", "x")}
-            ${axis("Y", "specY", "y")}
-            ${axis("Z", "specZ", "z")}
-          </tbody>
-        </table>
         <h2>사진 · 외관</h2>
-        <div class="a4-grow">${pics}</div>
+        ${qaPhotos(r)}
+        <h2>치수 측정 (mm)</h2>
+        <table class="a4-meas qa-meas">
+          <thead><tr><th>항목</th><th>기준 / 공차</th><th>1회</th><th>2회</th><th>3회</th><th>비고</th></tr></thead>
+          <tbody>${body}</tbody>
+        </table>
         <div class="a4-sign">
           <span>작성</span><span>검토</span><span>승인</span>
         </div>
@@ -1134,10 +1170,11 @@ function monthSheetView(mod, ym) {
     </div>`;
 }
 
-function climPack(ym) {
-  if (!state.climate.sheet) state.climate.sheet = {};
-  if (!state.climate.sheet[ym]) state.climate.sheet[ym] = { temp: {}, hum: {}, lux: {}, inspector: "", manager: "" };
-  const p = state.climate.sheet[ym];
+function climPack(mod, ym) {
+  const bag = climateBag(mod);
+  if (!bag.sheet) bag.sheet = {};
+  if (!bag.sheet[ym]) bag.sheet[ym] = { temp: {}, hum: {}, lux: {}, inspector: "", manager: "" };
+  const p = bag.sheet[ym];
   if (!p.temp) p.temp = {};
   if (!p.hum) p.hum = {};
   if (!p.lux) p.lux = {};
@@ -1148,7 +1185,8 @@ function shopClimateView(mod, ym) {
   const month = monthKey(ym) || ym || thisMonth();
   const [year, mon] = month.split("-").map(Number);
   const n = daysInMonth(month);
-  const pack = climPack(month);
+  const pack = climPack(mod, month);
+  const lab = mod.type === "lab-climate";
   const y0 = new Date().getFullYear();
   const years = Array.from({ length: 8 }, (_, i) => y0 - 4 + i);
   if (!years.includes(year)) years.push(year);
@@ -1189,7 +1227,7 @@ function shopClimateView(mod, ym) {
       <div class="a4-wrap page">
         <article class="a4-sheet month-sheet clim-sheet">
           <header class="clim-head">
-            <h1>생산라인 온,습도 점검 CHECK SHEET</h1>
+            <h1>${lab ? "완제품 창고 온,습도 점검 CHECK SHEET" : "생산라인 온,습도 점검 CHECK SHEET"}</h1>
             <div class="clim-ym no-print">
               <select id="clim-y">${years.map((y) => `<option value="${y}" ${y === year ? "selected" : ""}>${y}</option>`).join("")}</select>
               <span>년</span>
@@ -1222,7 +1260,7 @@ function shopClimateView(mod, ym) {
               <tr>
                 <th>3</th>
                 <th>조도</th>
-                <td class="spec">[조도 SPEC] 800Lx 이상<br>[숫자 표기]</td>
+                <td class="spec">[조도 SPEC] ${lab ? "1000Lx" : "800Lx"} 이상<br>[숫자 표기]</td>
                 <th class="time">조도(Lx)</th>
                 ${luxRow}
               </tr>
@@ -1230,8 +1268,21 @@ function shopClimateView(mod, ym) {
           </table>
           <div class="clim-bottom">
             <table class="clim-cond">
-              <thead><tr><th colspan="2">생산 라인에 대한 저장조건</th></tr></thead>
+              <thead><tr><th colspan="2">${lab ? "완제품, 소모성 자재에 대한 저장조건" : "생산 라인에 대한 저장조건"}</th></tr></thead>
               <tbody>
+                ${lab ? `
+                <tr>
+                  <th>완제품</th>
+                  <td>상온 10~25℃, 상습 0~70% 이하<br>1) 직사광선을 피할 것<br>2) 기타 유해한 저장 조건이 생기지 않도록 한다.</td>
+                </tr>
+                <tr>
+                  <th>소모성</th>
+                  <td>포장 박스 등 소모성 자재. 유해한 저장 조건이 생기지 않도록 한다.</td>
+                </tr>
+                <tr>
+                  <th>조도</th>
+                  <td>2D 측정기 테이블 상면 기준 1000Lx 이상<br>1) Lux 범위 이내여야 한다<br>2) 측정 위치에서 측정한다.</td>
+                </tr>` : `
                 <tr>
                   <th>온,습도</th>
                   <td>상온 10~25℃, 상습 0~70% 이하<br>1) 직사광선을 피할 것<br>2) 기타 유해한 저장 조건이 생기지 않도록 한다.</td>
@@ -1239,7 +1290,7 @@ function shopClimateView(mod, ym) {
                 <tr>
                   <th>조도</th>
                   <td>자주검사대 상면 기준 800Lx 이상<br>1) Lux 범위 이내여야 한다<br>2) 3파장 스탠드에서 측정한다.</td>
-                </tr>
+                </tr>`}
               </tbody>
             </table>
             <table class="clim-sign">
@@ -1251,15 +1302,15 @@ function shopClimateView(mod, ym) {
               </tbody>
             </table>
           </div>
-          <p class="clim-note">* 적정 온,습도 유지 관리철저</p>
+          <p class="clim-note">${lab ? "* 적정 온,습도 유지 관리할 것" : "* 적정 온,습도 유지 관리철저"}</p>
           <p class="clim-co">(주)디오엠</p>
         </article>
       </div>
     </div>`;
 }
 
-function fiveText(iso, id) {
-  const v = state.fiveS.dates[iso]?.shop?.[id];
+function fiveText(iso, id, key = "shop") {
+  const v = state.fiveS.dates[iso]?.[key]?.[id];
   return typeof v === "string" ? v : "";
 }
 
@@ -1278,14 +1329,15 @@ function shopFiveSView(mod, ym) {
   if (!years.includes(year)) years.push(year);
   years.sort((a, b) => a - b);
   const { groups, key } = monthItems(mod);
-  const note = state.fiveS.notes?.[month] || "";
+  const lab = mod.type === "lab-5s";
+  const note = (lab ? state.fiveS.labNotes : state.fiveS.notes)?.[month] || "";
   const dayHeads = days.map((d) => `<th class="${wkClass(d)}">${String(d).padStart(2, "0")}</th>`).join("");
   const weekHeads = days.map((d) => `<th class="${wkClass(d)}">${wd[weekdayOf(month, d)]}</th>`).join("");
   const body = groups.map((g) => g.items.map((item, idx) => {
     const cells = days.map((d) => {
       const iso = isoDay(month, d);
       if (item.kind === "text") {
-        return `<td class="name ${wkClass(d)}"><input type="text" data-five-name data-iso="${iso}" data-id="${item.id}" value="${h(fiveText(iso, item.id))}" autocomplete="off"></td>`;
+        return `<td class="name ${wkClass(d)}"><input type="text" data-five-name data-iso="${iso}" data-id="${item.id}" value="${h(fiveText(iso, item.id, key))}" autocomplete="off"></td>`;
       }
       const on = monthChecked(mod, key, iso, item.id);
       return `<td class="chk ${on ? "on" : ""} ${wkClass(d)}"><label><input type="checkbox" data-iso="${iso}" data-k="${key}" data-id="${item.id}" ${on ? "checked" : ""}><span class="print-mark">${on ? "✓" : ""}</span></label></td>`;
@@ -1306,7 +1358,7 @@ function shopFiveSView(mod, ym) {
       <div class="a4-wrap page">
         <article class="a4-sheet month-sheet sheet-5s">
           <header class="sheet-5s-head">
-            <h1>생산라인 3정 5S CHECK SHEET</h1>
+            <h1>${lab ? "검사실(완제품 창고) 3정 5S CHECK SHEET" : "생산라인 3정 5S CHECK SHEET"}</h1>
             <div class="sheet-5s-ym no-print">
               <select id="five-y" aria-label="년도">${years.map((y) => `<option value="${y}" ${y === year ? "selected" : ""}>${y}</option>`).join("")}</select>
               <span>년</span>
@@ -1642,12 +1694,12 @@ function bindModule(mod, date, extra) {
     }
   ));
   if (!date) {
-    if (mod.type === "five-s") {
+    if (mod.type === "five-s" || mod.type === "lab-5s") {
       remember(mod.id, thisMonth());
       persist();
       return bindShopFiveS(mod);
     }
-    if (mod.type === "climate") {
+    if (mod.type === "climate" || mod.type === "lab-climate") {
       remember(mod.id, thisMonth());
       persist();
       return bindShopClimate(mod);
@@ -1656,16 +1708,11 @@ function bindModule(mod, date, extra) {
     return;
   }
   remember(mod.id, date); persist();
-  if (mod.type === "climate") {
+  if (mod.type === "climate" || mod.type === "lab-climate") {
     if (extra === "map") return bindClimate(mod, date);
     return bindShopClimate(mod);
   }
-  if (mod.type === "lab-climate") {
-    if (extra === "map") return bindClimate(mod, date);
-    return bindMonthGrid(mod);
-  }
-  if (mod.type === "five-s") return bindShopFiveS(mod);
-  if (mod.type === "lab-5s") return bindMonthGrid(mod);
+  if (mod.type === "five-s" || mod.type === "lab-5s") return bindShopFiveS(mod);
   if (mod.type === "inbound") return bindInboundMonth(mod, date);
   if (mod.type === "equipment") return bindEq(date, extra);
   if (mod.type === "mastercam") return bindCam(date);
@@ -1747,6 +1794,7 @@ function addBlank(mod, date) {
     row.millCompany = "디오엠";
     row.customer = CUSTOMERS[0];
     row.status = "합격";
+    qaMeasures(row);
   }
   if (mod.type === "inbound") {
     const ym = monthKey(date) || date;
@@ -1790,11 +1838,38 @@ function bindSheet(mod, id) {
   formEl?.addEventListener("change", save);
   formEl?.addEventListener("input", (e) => {
     if (mod.type === "process" && (e.target.name === "planQty" || e.target.name === "doneQty")) save();
+    if (mod.type === "quality" && e.target.dataset.qaM != null) {
+      const i = Number(e.target.dataset.qaM);
+      const k = e.target.dataset.k;
+      if (!row.measures) qaMeasures(row);
+      if (!row.measures[i]) row.measures[i] = { item: "", spec: "", v1: "", v2: "", v3: "", note: "" };
+      row.measures[i][k] = e.target.value;
+      persist();
+    }
+  });
+  root.querySelectorAll("[data-qa-pic]").forEach((el) => {
+    el.onchange = async () => {
+      if (!row || !el.files?.[0]) return;
+      const i = Number(el.dataset.qaPic);
+      row.photos = Array.from({ length: 3 }, (_, n) => (row.photos || [])[n] || "");
+      row.photos[i] = await readAsDataUrl(el.files[0]);
+      persist();
+      render();
+    };
   });
   document.getElementById("sheet-photos")?.addEventListener("change", async (e) => {
     if (!row) return;
-    row.photos = row.photos || [];
-    for (const f of e.target.files) row.photos.push(await readAsDataUrl(f));
+    if (mod.type === "quality") {
+      row.photos = Array.from({ length: 3 }, (_, n) => (row.photos || [])[n] || "");
+      for (const f of e.target.files) {
+        const slot = row.photos.findIndex((p) => !p);
+        if (slot < 0) break;
+        row.photos[slot] = await readAsDataUrl(f);
+      }
+    } else {
+      row.photos = row.photos || [];
+      for (const f of e.target.files) row.photos.push(await readAsDataUrl(f));
+    }
     persist();
     render();
   });
@@ -1882,7 +1957,7 @@ function bindShopClimate(mod) {
   document.getElementById("clim-next")?.addEventListener("click", () => go(shiftMonth(monthOf(), 1)));
   document.getElementById("clim-y")?.addEventListener("change", () => go(monthOf()));
   document.getElementById("clim-m")?.addEventListener("change", () => go(monthOf()));
-  const pack = climPack(monthOf());
+  const pack = climPack(mod, monthOf());
   root.querySelectorAll("[data-clim]").forEach((el) => {
     el.onclick = () => {
       const kind = el.dataset.clim;
@@ -1918,6 +1993,7 @@ function bindShopClimate(mod) {
 }
 
 function bindShopFiveS(mod) {
+  const { key } = monthItems(mod);
   const monthOf = () => {
     const y = document.getElementById("five-y")?.value;
     const m = document.getElementById("five-m")?.value;
@@ -1949,14 +2025,19 @@ function bindShopFiveS(mod) {
     el.onchange = () => {
       const iso = el.dataset.iso;
       if (!state.fiveS.dates[iso]) state.fiveS.dates[iso] = { shop: {}, lab: {} };
-      if (!state.fiveS.dates[iso].shop) state.fiveS.dates[iso].shop = {};
-      state.fiveS.dates[iso].shop[el.dataset.id] = el.value;
+      if (!state.fiveS.dates[iso][key]) state.fiveS.dates[iso][key] = {};
+      state.fiveS.dates[iso][key][el.dataset.id] = el.value;
       persist();
     };
   });
   root.querySelector("[data-five-note]")?.addEventListener("change", (e) => {
-    if (!state.fiveS.notes) state.fiveS.notes = {};
-    state.fiveS.notes[monthOf()] = e.target.value;
+    if (key === "lab") {
+      if (!state.fiveS.labNotes) state.fiveS.labNotes = {};
+      state.fiveS.labNotes[monthOf()] = e.target.value;
+    } else {
+      if (!state.fiveS.notes) state.fiveS.notes = {};
+      state.fiveS.notes[monthOf()] = e.target.value;
+    }
     persist();
   });
 }
