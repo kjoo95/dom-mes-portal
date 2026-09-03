@@ -999,9 +999,9 @@ function processA4(r) {
         <header class="a4-head a4-head-corp">
           <div>
             <b>DOM</b><span>${ht("디오엠")}</span>
-            <h1>가공 작업 현황</h1>
             <p>FORM-PR-01 · A4 · ${h(r.workDate || r.startDate || "")}</p>
           </div>
+          <h1>가공 작업 현황</h1>
           ${processStamp(r)}
         </header>
         <div class="a4-process-body">

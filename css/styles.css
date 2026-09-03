@@ -372,8 +372,21 @@ table.checks .chk { width: 72px; text-align: center; }
 
 .app.print-mode { grid-template-columns: 1fr; }
 .app.print-mode .side { display: none; }
-.app.print-mode main { background: #ececec; padding: 20px 16px 64px; overflow: auto; }
-.a4-wrap.page { justify-content: center; padding-bottom: 24px; }
+.app.print-mode main {
+  background: #ececec;
+  padding: 20px 16px 64px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.print-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+.a4-wrap.page { justify-content: center; padding-bottom: 24px; width: 100%; }
 .eq-thumb {
   width: 48px;
   height: 36px;
@@ -442,40 +455,83 @@ table.checks .chk { width: 72px; text-align: center; }
   margin: 0 auto 12px;
   width: min(210mm, 100%);
 }
-.a4-wrap { display: flex; justify-content: center; }
+.a4-wrap { display: flex; justify-content: center; width: 100%; }
 .a4-sheet {
   width: 210mm;
   height: 297mm;
   min-height: 297mm;
   max-height: 297mm;
+  margin: 0 auto;
   background: #fff;
   color: #111;
-  padding: 8mm 9mm 7mm;
+  padding: 8mm 10mm 8mm;
   box-shadow: 0 8px 28px rgba(0,0,0,.25);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  font-size: 13px;
 }
-.a4-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; border-bottom: 2px solid #c41e3a; padding-bottom: 5px; margin-bottom: 8px; flex: 0 0 auto; }
+.a4-head {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+  border-bottom: 2px solid #c41e3a;
+  padding-bottom: 6px;
+  margin-bottom: 8px;
+  min-height: 12mm;
+  flex: 0 0 auto;
+}
 .a4-head b { color: #c41e3a; font-size: 22px; letter-spacing: -0.06em; }
-.a4-head > div span { color: #666; font-size: 11px; margin-left: 8px; }
-.a4-head h1 { margin: 0; font-size: 16px; }
-.a4-head p { margin: 0; color: #666; font-size: 11px; }
+.a4-head > div span { color: #666; font-size: 12px; margin-left: 8px; }
+.a4-head h1 {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 6px;
+  margin: 0;
+  text-align: center;
+  font-size: 20px;
+  letter-spacing: 0.08em;
+  pointer-events: none;
+}
+.a4-head p { margin: 0; color: #666; font-size: 12px; z-index: 1; }
+.a4-head > div { z-index: 1; }
 .a4-head-corp {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: stretch;
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   gap: 8px;
   border-bottom: 2px solid #111;
   padding-bottom: 6px;
   margin-bottom: 6px;
+  min-height: 24mm;
 }
 .a4-head-corp b { color: #111; letter-spacing: 0.08em; }
-.a4-head-corp h1 { margin: 6px 0 2px; font-size: 18px; }
+.a4-head-corp h1 {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 6px;
+  bottom: auto;
+  margin: 0;
+  text-align: center;
+  font-size: 20px;
+  letter-spacing: 0.08em;
+  pointer-events: none;
+}
+.a4-head-corp > div p {
+  display: block;
+  margin: 6px 0 0;
+  font-size: 12px;
+}
+.a4-head-corp .a4-stamp { z-index: 1; }
 .a4-stamp {
   border-collapse: collapse;
   width: 84mm;
-  font-size: 10px;
+  font-size: 11px;
   outline: 1px solid #111;
   outline-offset: 2px;
   box-shadow: 0 0 0 1px #111;
@@ -493,13 +549,13 @@ table.checks .chk { width: 72px; text-align: center; }
   font-weight: 700;
   height: 7mm;
   letter-spacing: 0.22em;
-  font-size: 11px;
+  font-size: 12px;
 }
 .a4-stamp .stamp-side {
   width: 8mm;
   background: #e8eef5;
   color: #173a63;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.18em;
   writing-mode: vertical-rl;
@@ -519,14 +575,14 @@ table.checks .chk { width: 72px; text-align: center; }
   border: 1.6px solid #c41e3a;
   border-radius: 50%;
   color: #c41e3a;
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 800;
   opacity: 0.38;
 }
 .a4-stamp input {
   height: 7mm;
   text-align: center;
-  font-size: 11px;
+  font-size: 12px;
   background: #fffef8;
 }
 .process-a4 .a4-meta th,
@@ -599,8 +655,8 @@ table.checks .chk { width: 72px; text-align: center; }
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
-.a4-sheet h2 { margin: 8px 0 4px; font-size: 12px; flex: 0 0 auto; }
-.a4-meta, .a4-meas { width: 100%; border-collapse: collapse; font-size: 12px; }
+.a4-sheet h2 { margin: 8px 0 4px; font-size: 14px; flex: 0 0 auto; }
+.a4-meta, .a4-meas { width: 100%; border-collapse: collapse; font-size: 13px; }
 .a4-meta th, .a4-meta td, .a4-meas th, .a4-meas td { border: 1px solid #222; padding: 5px 6px; }
 .a4-meta th { width: 16%; background: #f4f4f2; text-align: left; font-weight: 700; }
 .a4-meas th { background: #f4f4f2; text-align: center; }
@@ -632,12 +688,12 @@ table.checks .chk { width: 72px; text-align: center; }
 }
 .a4-empty { color: #888; font-size: 12px; flex: 1; display: grid; place-items: center; border: 1px dashed #bbb; background: #fafafa; min-height: 20mm; }
 .a4-sign { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 6px; flex: 0 0 auto; }
-.a4-sign span { border: 1px solid #222; padding: 3px 0 0; text-align: center; font-size: 11px; height: 12mm; }
+.a4-sign span { border: 1px solid #222; padding: 3px 0 0; text-align: center; font-size: 12px; height: 12mm; }
 .qa-a4 { overflow: hidden; }
 .qa-a4 .a4-head { margin-bottom: 5px; padding-bottom: 3px; }
-.qa-a4 .a4-meta { font-size: 11px; }
-.qa-a4 .a4-meta th, .qa-a4 .a4-meta td { padding: 2px 5px; height: 7mm; }
-.qa-a4 h2 { margin: 4px 0 3px; font-size: 11px; }
+.qa-a4 .a4-meta { font-size: 13px; }
+.qa-a4 .a4-meta th, .qa-a4 .a4-meta td { padding: 2px 5px; height: 7.2mm; }
+.qa-a4 h2 { margin: 5px 0 3px; font-size: 14px; }
 .qa-photos {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
@@ -657,9 +713,9 @@ table.checks .chk { width: 72px; text-align: center; }
   margin: 0;
 }
 .qa-shot img { width: 100%; height: 100%; object-fit: cover; }
-.qa-shot span { color: #888; font-size: 11px; }
-.qa-meas { table-layout: fixed; font-size: 10px; flex: 1 1 auto; }
-.qa-meas th, .qa-meas td { padding: 0; height: 6.6mm; }
+.qa-shot span { color: #888; font-size: 12px; }
+.qa-meas { table-layout: fixed; font-size: 12px; flex: 1 1 auto; }
+.qa-meas th, .qa-meas td { padding: 0; height: 6.8mm; }
 .qa-meas .qa-item { width: 22mm; }
 .qa-meas th:nth-child(2), .qa-meas td:nth-child(2) { width: 32mm; }
 .qa-meas th:nth-child(3),
@@ -667,17 +723,17 @@ table.checks .chk { width: 72px; text-align: center; }
 .qa-meas th:nth-child(5) { width: 16mm; }
 .qa-meas .qa-note { width: auto; }
 .qa-meas td:nth-child(2) { text-align: center; }
-.qa-meas input { height: 6.6mm; min-height: 0; text-align: center; font-size: 10px; padding: 0 3px; }
+.qa-meas input { height: 6.8mm; min-height: 0; text-align: center; font-size: 12px; padding: 0 3px; }
 .qa-a4 .a4-sign { margin-top: 5px; }
 .qa-a4 .a4-sign span { height: 11mm; }
 .qa-a4 { break-inside: avoid; page-break-inside: avoid; }
-.month-sheet { width: 297mm; height: 210mm; min-height: 210mm; max-height: 210mm; padding: 5mm 6mm 4mm; overflow: hidden; }
+.month-sheet { width: 297mm; height: 210mm; min-height: 210mm; max-height: 210mm; padding: 6mm 8mm 5mm; overflow: hidden; }
 .month-sheet .a4-tools { width: min(297mm, 100%); }
 .eq-sheet {
   display: flex;
   flex-direction: column;
   gap: 3px;
-  font-size: 11px;
+  font-size: 12px;
 }
 .eq-sheet table { width: 100%; border-collapse: collapse; }
 .eq-sheet th, .eq-sheet td { border: 1px solid #111; padding: 2px 3px; }
@@ -741,7 +797,7 @@ table.checks .chk { width: 72px; text-align: center; }
 }
 .eq-guide td { width: 16.66%; vertical-align: top; text-align: center; padding: 3px; }
 .eq-guide b { display: block; }
-.eq-guide p { margin: 2px 0 0; font-size: 9px; line-height: 1.3; }
+.eq-guide p { margin: 2px 0 0; font-size: 10px; line-height: 1.3; }
 .eq-shot {
   display: grid;
   place-items: center;
@@ -753,11 +809,11 @@ table.checks .chk { width: 72px; text-align: center; }
   overflow: hidden;
 }
 .eq-shot img { width: 100%; height: 100%; object-fit: cover; }
-.eq-shot span { color: #888; font-size: 10px; }
-.eq-grid { table-layout: fixed; font-size: 10px; }
+.eq-shot span { color: #888; font-size: 11px; }
+.eq-grid { table-layout: fixed; font-size: 11px; }
 .eq-grid th { background: #fafafa; font-weight: 700; }
 .eq-grid td.item { text-align: left; padding-left: 4px; }
-.eq-grid td.cyc { width: 18mm; font-size: 9px; }
+.eq-grid td.cyc { width: 18mm; font-size: 10px; }
 .eq-grid th.off, .eq-grid td.off { background: #ececec; }
 .eq-mark {
   cursor: pointer;
@@ -781,15 +837,15 @@ table.checks .chk { width: 72px; text-align: center; }
   border-bottom: 0;
   padding: 3px 8px;
   font-weight: 700;
-  font-size: 11px;
+  font-size: 12px;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
-.eq-hist-h span { font-weight: 400; font-size: 10px; }
+.eq-hist-h span { font-weight: 400; font-size: 11px; }
 .eq-hist table { flex: 1; }
-.eq-hist th { background: #fafafa; font-size: 10px; }
+.eq-hist th { background: #fafafa; font-size: 11px; }
 .eq-hist td { padding: 0; height: 6.6mm; }
-.eq-legend { margin: 4px 0 2px; font-size: 11px; }
+.eq-legend { margin: 4px 0 2px; font-size: 12px; }
 .eq-foot-fields { display: grid; grid-template-columns: 1fr 2fr; gap: 8px; align-items: center; }
 .eq-foot-fields label { display: flex; gap: 6px; align-items: center; margin: 0; }
 .eq-foot-fields input { border-bottom: 1px solid #111; }
@@ -804,7 +860,7 @@ table.checks .chk { width: 72px; text-align: center; }
 .eq-machine b {
   background: #f4d56a;
   padding: 3px 8px;
-  font-size: 11px;
+  font-size: 12px;
   border-bottom: 1px solid #111;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
@@ -812,7 +868,7 @@ table.checks .chk { width: 72px; text-align: center; }
 .eq-machine img { flex: 1; width: 100%; min-height: 22mm; object-fit: cover; }
 .eq-machine span { flex: 1; display: grid; place-items: center; color: #888; min-height: 22mm; }
 .month-scroll { overflow: auto; flex: 1; min-height: 0; }
-.month-grid { width: 100%; height: 100%; border-collapse: collapse; font-size: 10px; }
+.month-grid { width: 100%; height: 100%; border-collapse: collapse; font-size: 11px; }
 .month-grid th, .month-grid td { border: 1px solid #222; padding: 2px 1px; text-align: center; }
 .month-grid td.item { text-align: left; padding-left: 4px; min-width: 32mm; width: 32mm; }
 .month-grid th:first-child { width: 14mm; }
@@ -825,8 +881,8 @@ table.checks .chk { width: 72px; text-align: center; }
 }
 .sheet-5s-head h1 {
   margin: 0;
-  font-size: 18px;
-  letter-spacing: 0.02em;
+  font-size: 20px;
+  letter-spacing: 0.08em;
 }
 .sheet-5s-ym {
   position: absolute;
@@ -853,7 +909,7 @@ table.checks .chk { width: 72px; text-align: center; }
 }
 .sheet-5s td.item {
   text-align: left;
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1.35;
   min-width: 58mm;
   width: 58mm;
@@ -888,7 +944,7 @@ table.checks .chk { width: 72px; text-align: center; }
   min-height: 22px;
   border: 0;
   background: transparent;
-  font-size: 9px;
+  font-size: 11px;
   text-align: center;
   padding: 0 1px;
 }
@@ -903,7 +959,7 @@ table.checks .chk { width: 72px; text-align: center; }
   display: block;
   background: #c5e4f3;
   padding: 3px 8px;
-  font-size: 11px;
+  font-size: 12px;
   border-bottom: 1px solid #111;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
@@ -915,12 +971,12 @@ table.checks .chk { width: 72px; text-align: center; }
   border: 0;
   padding: 4px 8px;
   resize: none;
-  font-size: 11px;
+  font-size: 12px;
 }
 .sheet-5s-rule {
   border-left: 1px solid #111;
   padding: 6px 10px;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.55;
 }
 .sheet-5s-rule p { margin: 0 0 2px; }
@@ -933,7 +989,7 @@ table.checks .chk { width: 72px; text-align: center; }
 .clim-sheet {
   display: flex;
   flex-direction: column;
-  font-size: 11px;
+  font-size: 12px;
 }
 .clim-head {
   position: relative;
@@ -943,8 +999,8 @@ table.checks .chk { width: 72px; text-align: center; }
 }
 .clim-head h1 {
   margin: 0;
-  font-size: 18px;
-  letter-spacing: 0.04em;
+  font-size: 20px;
+  letter-spacing: 0.08em;
 }
 .clim-ym {
   position: absolute;
@@ -966,7 +1022,7 @@ table.checks .chk { width: 72px; text-align: center; }
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
-  font-size: 9px;
+  font-size: 10px;
   flex: 1 1 auto;
 }
 .clim-grid th, .clim-grid td {
@@ -983,12 +1039,12 @@ table.checks .chk { width: 72px; text-align: center; }
 .clim-grid .spec {
   width: 34mm;
   text-align: left;
-  font-size: 9px;
+  font-size: 10px;
   line-height: 1.35;
   padding: 2px 5px;
   font-weight: 700;
 }
-.clim-grid .time { width: 16mm; font-size: 10px; white-space: nowrap; }
+.clim-grid .time { width: 16mm; font-size: 11px; white-space: nowrap; }
 .clim-grid th.off, .clim-grid td.off { background: #ececec; }
 .clim-x {
   cursor: pointer;
@@ -1008,7 +1064,7 @@ table.checks .chk { width: 72px; text-align: center; }
   border: 0;
   background: transparent;
   text-align: center;
-  font-size: 8px;
+  font-size: 10px;
   padding: 0;
 }
 .clim-bottom {
@@ -1022,13 +1078,13 @@ table.checks .chk { width: 72px; text-align: center; }
 .clim-cond th, .clim-cond td, .clim-sign th, .clim-sign td {
   border: 1px solid #111;
   padding: 3px 6px;
-  font-size: 10px;
+  font-size: 11px;
   vertical-align: top;
 }
 .clim-cond thead th, .clim-sign thead th {
   background: #f3f3f3;
   text-align: center;
-  font-size: 11px;
+  font-size: 12px;
 }
 .clim-cond tbody th, .clim-sign tbody th {
   width: 22mm;
@@ -1046,7 +1102,7 @@ table.checks .chk { width: 72px; text-align: center; }
 }
 .clim-note {
   margin: 4px 0 0;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
 }
 .clim-co {
@@ -1073,9 +1129,9 @@ table.checks .chk { width: 72px; text-align: center; }
   background: transparent;
   font: inherit;
 }
-.inbound-month input[type="date"] { font-size: 11px; min-height: 22px; }
+.inbound-month input[type="date"] { font-size: 12px; min-height: 22px; }
 .inbound-month input[type="number"] { text-align: center; }
-.a4-sub { margin: 0 0 4px; font-size: 11px; color: #555; }
+.a4-sub { margin: 0 0 4px; font-size: 12px; color: #555; }
 
 .talk {
   display: grid;
@@ -1178,7 +1234,10 @@ table.checks .chk { width: 72px; text-align: center; }
     overflow: hidden !important;
   }
   .app.print-mode main {
-    display: block !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
     background: #fff !important;
     margin: 0 !important;
     padding: 0 !important;
@@ -1186,11 +1245,14 @@ table.checks .chk { width: 72px; text-align: center; }
   }
   .app:not(.print-mode) > main { display: none !important; }
   .print-page, .a4-wrap, .a4-wrap.page, .mask.a4-mask {
-    display: block !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
     position: static !important;
-    margin: 0 !important;
+    margin: 0 auto !important;
     padding: 0 !important;
-    width: auto !important;
+    width: 100% !important;
     height: auto !important;
     overflow: hidden !important;
     background: #fff !important;
@@ -1218,7 +1280,8 @@ table.checks .chk { width: 72px; text-align: center; }
     height: 297mm !important;
     min-height: 297mm !important;
     max-height: 297mm !important;
-    padding: 8mm 9mm 7mm !important;
+    margin: 0 auto !important;
+    padding: 8mm 10mm !important;
     overflow: hidden !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
@@ -1231,7 +1294,7 @@ table.checks .chk { width: 72px; text-align: center; }
     height: 210mm !important;
     min-height: 210mm !important;
     max-height: 210mm !important;
-    padding: 5mm 6mm 4mm !important;
+    padding: 6mm 8mm !important;
   }
   .inbound-sheet,
   .qa-a4,
@@ -1261,7 +1324,7 @@ table.checks .chk { width: 72px; text-align: center; }
   .month-scroll { overflow: hidden !important; }
   .eq-sheet { overflow: hidden !important; }
   .qa-photos, .qa-shot { height: 22mm; min-height: 22mm; flex-basis: 22mm; }
-  .qa-meas th, .qa-meas td { height: 6mm; }
+  .qa-meas th, .qa-meas td { height: 6.8mm; }
   .clim-ym-print {
     display: block !important;
     position: absolute;
@@ -1274,7 +1337,7 @@ table.checks .chk { width: 72px; text-align: center; }
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
-  .clim-grid td.lux input { font-size: 8px !important; }
+  .clim-grid td.lux input { font-size: 10px !important; }
 }
 #modal {
   position: fixed;
