@@ -1430,22 +1430,57 @@ function shopFiveSView(mod, ym) {
     </div>`;
 }
 
+function roomBoxStyle(r) {
+  const rot = Number(r.rot) || 0;
+  return `left:${r.x}%;top:${r.y}%;width:${r.w}%;height:${r.h}%;transform:rotate(${rot}deg)`;
+}
+
+function applyRoomBox(el, r) {
+  el.style.left = `${r.x}%`;
+  el.style.top = `${r.y}%`;
+  el.style.width = `${r.w}%`;
+  el.style.height = `${r.h}%`;
+  el.style.transform = `rotate(${Number(r.rot) || 0}deg)`;
+}
+
+function removeClimatePoint(mod, id) {
+  const bag = climateBag(mod);
+  bag.points = (bag.points || []).filter((p) => p.id !== id);
+  Object.keys(bag.logs || {}).forEach((d) => {
+    bag.logs[d] = (bag.logs[d] || []).filter((x) => x.pointId !== id);
+  });
+  Object.keys(bag.checks || {}).forEach((d) => {
+    if (bag.checks[d]) delete bag.checks[d][id];
+  });
+}
+
 function climateView(mod, date) {
   const bag = climateBag(mod);
-  const rooms = (bag.rooms || []).map((r) => `<button class="room ${r.kind}" data-room="${r.id}" type="button" style="left:${r.x}%;top:${r.y}%;width:${r.w}%;height:${r.h}%">${h(r.name)}</button>`).join("");
-  const pins = (bag.points || []).map((p) => `<button class="pin ok" data-pin="${p.id}" type="button" style="left:${p.x}%;top:${p.y}%">${h(p.id)}</button>`).join("");
+  const rooms = (bag.rooms || []).map((r) => `<div class="room ${h(r.kind || "")}" data-room="${h(r.id)}" style="${roomBoxStyle(r)}">
+      <span class="room-name">${h(r.name)}</span>
+      <button class="room-rot" data-room-rot type="button" title="회전"></button>
+      <span class="room-h nw" data-room-rs="nw"></span>
+      <span class="room-h ne" data-room-rs="ne"></span>
+      <span class="room-h sw" data-room-rs="sw"></span>
+      <span class="room-h se" data-room-rs="se"></span>
+    </div>`).join("");
+  const pins = (bag.points || []).map((p) => `<div class="pin-wrap" data-pin="${h(p.id)}" style="left:${p.x}%;top:${p.y}%">
+      <button class="pin ok" type="button">${h(p.id)}</button>
+      <button class="pin-del" data-pin-del="${h(p.id)}" type="button" title="위치 빼기">×</button>
+    </div>`).join("");
   const lab = mod.type === "lab-climate";
   const ym = monthKey(date) || date;
   return `
-    <div class="head"><div><h1>${h(mod.title)}</h1><p>${h(monthLabel(ym))} 평면도 · 구역을 끌어서 배치를 바꿉니다.</p></div>
+    <div class="head"><div><h1>${h(mod.title)}</h1><p>${h(monthLabel(ym))} 평면도 · 구역을 끌어서 옮기고, 모서리로 크기·위쪽 점으로 회전합니다.</p></div>
       <div class="no-print"><a class="btn ghost" href="#/${mod.id}/${ym}">월간 표</a>
         <a class="btn ghost" href="#/${mod.id}">월 목록</a></div></div>
     <section class="panel">
       <div class="bar"><b>${lab ? "검사실 평면도" : "현장 평면도"}</b>
         <button class="btn sm" id="add-room" type="button">구역 추가</button>
-        ${lab ? `<button class="btn sm" id="add-p" type="button">측정 위치 추가</button>` : `<button class="btn sm" id="add-m" type="button">기계 추가</button>`}</div>
+        ${lab ? "" : `<button class="btn sm" id="add-m" type="button">기계 추가</button>`}
+        <button class="btn sm" id="add-p" type="button">측정 위치 추가</button></div>
       <div class="plan" id="plan">${rooms}${pins}</div>
-      <p class="mute pad">${lab ? "검사대·정반·시료 위치를 드래그하세요." : "기계·통로·검사실을 드래그하세요."} 점검은 월간 표에서 체크합니다.</p>
+      <p class="mute pad">구역을 누르면 모서리·회전점이 나옵니다. 측정 위치는 끌어 옮기고, ×로 뺍니다. 점검은 월간 표에서 합니다.</p>
     </section>`;
 }
 
@@ -2424,16 +2459,27 @@ function ensureCamWatch() {
 function bindClimate(mod, date) {
   const bag = climateBag(mod);
   document.getElementById("add-room")?.addEventListener("click", () => {
-    bag.rooms.push({ id: uid("rm"), name: "새 구역", x: 40, y: 40, w: 18, h: 16, kind: mod.type === "lab-climate" ? "qa" : "area" });
+    bag.rooms.push({ id: uid("rm"), name: "새 구역", x: 40, y: 40, w: 18, h: 16, rot: 0, kind: mod.type === "lab-climate" ? "qa" : "area" });
     persist(); render();
   });
   document.getElementById("add-m")?.addEventListener("click", () => {
-    bag.rooms.push({ id: uid("rm"), name: "새 기계", x: 42, y: 44, w: 12, h: 14, kind: "machine" });
+    bag.rooms.push({ id: uid("rm"), name: "새 기계", x: 42, y: 44, w: 12, h: 14, rot: 0, kind: "machine" });
     persist(); render();
   });
   document.getElementById("add-p")?.addEventListener("click", () => {
     bag.points.push({ id: uid("p").slice(0, 6).toUpperCase(), name: "새 위치", x: 50, y: 50 });
     persist(); render();
+  });
+  root.querySelectorAll("[data-pin-del]").forEach((b) => {
+    b.onpointerdown = (e) => e.stopPropagation();
+    b.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!confirm("이 측정 위치를 뺄까요?")) return;
+      removeClimatePoint(mod, b.dataset.pinDel);
+      persist();
+      render();
+    };
   });
   root.querySelectorAll("[data-rec]").forEach((b) => b.onclick = () => recPoint(mod, date, b.dataset.rec));
   drag(mod, date);
@@ -2441,48 +2487,191 @@ function bindClimate(mod, date) {
 
 function drag(mod, date) {
   const bag = climateBag(mod);
-  const plan = document.getElementById("plan"); if (!plan) return;
-  let act = null, moved = false, n = 0;
-  const bind = (sel, kind) => plan.querySelectorAll(sel).forEach((el) => {
-    el.onpointerdown = (e) => { act = { el, kind, id: el.dataset.room || el.dataset.pin, x: e.clientX, y: e.clientY }; moved = false; el.setPointerCapture(e.pointerId); };
+  const plan = document.getElementById("plan");
+  if (!plan) return;
+  let act = null;
+  let moved = false;
+  let clicks = 0;
+  const selectRoom = (id) => {
+    plan.querySelectorAll("[data-room]").forEach((el) => el.classList.toggle("on", el.dataset.room === id));
+  };
+  const pctOf = (e) => {
+    const box = plan.getBoundingClientRect();
+    return {
+      x: ((e.clientX - box.left) / box.width) * 100,
+      y: ((e.clientY - box.top) / box.height) * 100,
+    };
+  };
+  const copyRoom = (r) => ({ x: r.x, y: r.y, w: r.w, h: r.h, rot: Number(r.rot) || 0 });
+  const resizeRoom = (room, handle, start, lx, ly) => {
+    const dw = handle.includes("e") ? lx : handle.includes("w") ? -lx : 0;
+    const dh = handle.includes("s") ? ly : handle.includes("n") ? -ly : 0;
+    const w = clamp(start.w + dw, 6, 92);
+    const h = clamp(start.h + dh, 6, 92);
+    const a = ((start.rot || 0) * Math.PI) / 180;
+    const fix = { se: [-0.5, -0.5], sw: [0.5, -0.5], ne: [-0.5, 0.5], nw: [0.5, 0.5] }[handle] || [-0.5, -0.5];
+    const cx0 = start.x + start.w / 2;
+    const cy0 = start.y + start.h / 2;
+    const wx = cx0 + fix[0] * start.w * Math.cos(a) - fix[1] * start.h * Math.sin(a);
+    const wy = cy0 + fix[0] * start.w * Math.sin(a) + fix[1] * start.h * Math.cos(a);
+    const cx = wx - fix[0] * w * Math.cos(a) + fix[1] * h * Math.sin(a);
+    const cy = wy - fix[0] * w * Math.sin(a) - fix[1] * h * Math.cos(a);
+    room.w = w;
+    room.h = h;
+    room.x = cx - w / 2;
+    room.y = cy - h / 2;
+  };
+  plan.addEventListener("pointerdown", (e) => {
+    if (e.target === plan) selectRoom("");
+  });
+  plan.querySelectorAll("[data-room]").forEach((el) => {
+    const roomOf = () => bag.rooms.find((r) => r.id === el.dataset.room);
+    el.onpointerdown = (e) => {
+      if (e.target.closest("[data-room-rs], [data-room-rot]")) return;
+      const room = roomOf();
+      if (!room) return;
+      selectRoom(room.id);
+      act = { type: "move", kind: "room", el, id: room.id, x: e.clientX, y: e.clientY, start: copyRoom(room) };
+      moved = false;
+      el.setPointerCapture(e.pointerId);
+    };
     el.onpointermove = (e) => {
-      if (!act || act.el !== el) return;
-      if (Math.hypot(e.clientX - act.x, e.clientY - act.y) > 5) moved = true;
+      if (!act || act.el !== el || act.type !== "move") return;
+      if (Math.hypot(e.clientX - act.x, e.clientY - act.y) > 4) moved = true;
       if (!moved) return;
+      const room = roomOf();
+      if (!room) return;
       const box = plan.getBoundingClientRect();
-      el.style.left = `${clamp(((e.clientX - box.left) / box.width) * 100, 1, 97)}%`;
-      el.style.top = `${clamp(((e.clientY - box.top) / box.height) * 100, 1, 97)}%`;
+      room.x = clamp(act.start.x + ((e.clientX - act.x) / box.width) * 100, 0, 94);
+      room.y = clamp(act.start.y + ((e.clientY - act.y) / box.height) * 100, 0, 94);
+      applyRoomBox(el, room);
     };
     el.onpointerup = () => {
-      if (!act) return;
+      if (!act || act.el !== el || act.type !== "move") return;
+      if (moved) persist();
+      else {
+        clicks += 1;
+        setTimeout(() => { clicks = 0; }, 280);
+        if (clicks >= 2) editRoom(mod, act.id);
+      }
+      act = null;
+    };
+    el.querySelectorAll("[data-room-rs]").forEach((h) => {
+      h.onpointerdown = (e) => {
+        e.stopPropagation();
+        const room = roomOf();
+        if (!room) return;
+        selectRoom(room.id);
+        act = { type: "rs", el, handle: h.dataset.roomRs, id: room.id, px: e.clientX, py: e.clientY, start: copyRoom(room) };
+        h.setPointerCapture(e.pointerId);
+      };
+      h.onpointermove = (e) => {
+        if (!act || act.type !== "rs" || act.el !== el) return;
+        const room = roomOf();
+        if (!room) return;
+        const box = plan.getBoundingClientRect();
+        const dx = ((e.clientX - act.px) / box.width) * 100;
+        const dy = ((e.clientY - act.py) / box.height) * 100;
+        const a = -((act.start.rot || 0) * Math.PI) / 180;
+        const lx = dx * Math.cos(a) - dy * Math.sin(a);
+        const ly = dx * Math.sin(a) + dy * Math.cos(a);
+        resizeRoom(room, act.handle, act.start, lx, ly);
+        applyRoomBox(el, room);
+      };
+      h.onpointerup = () => {
+        if (act?.type === "rs") persist();
+        act = null;
+      };
+    });
+    const rot = el.querySelector("[data-room-rot]");
+    if (rot) {
+      rot.onpointerdown = (e) => {
+        e.stopPropagation();
+        const room = roomOf();
+        if (!room) return;
+        selectRoom(room.id);
+        act = { type: "rot", el, id: room.id };
+        rot.setPointerCapture(e.pointerId);
+      };
+      rot.onpointermove = (e) => {
+        if (!act || act.type !== "rot" || act.el !== el) return;
+        const room = roomOf();
+        if (!room) return;
+        const p = pctOf(e);
+        const cx = room.x + room.w / 2;
+        const cy = room.y + room.h / 2;
+        const ang = (Math.atan2(p.y - cy, p.x - cx) * 180) / Math.PI + 90;
+        room.rot = ((Math.round(ang / 5) * 5) % 360 + 360) % 360;
+        applyRoomBox(el, room);
+      };
+      rot.onpointerup = () => {
+        if (act?.type === "rot") persist();
+        act = null;
+      };
+    }
+  });
+  plan.querySelectorAll("[data-pin]").forEach((el) => {
+    el.onpointerdown = (e) => {
+      if (e.target.closest("[data-pin-del]")) return;
+      selectRoom("");
+      act = { type: "move", kind: "pin", el, id: el.dataset.pin, x: e.clientX, y: e.clientY };
+      moved = false;
+      el.setPointerCapture(e.pointerId);
+    };
+    el.onpointermove = (e) => {
+      if (!act || act.el !== el || act.kind !== "pin") return;
+      if (Math.hypot(e.clientX - act.x, e.clientY - act.y) > 4) moved = true;
+      if (!moved) return;
+      const box = plan.getBoundingClientRect();
+      el.style.left = `${clamp(((e.clientX - box.left) / box.width) * 100, 2, 98)}%`;
+      el.style.top = `${clamp(((e.clientY - box.top) / box.height) * 100, 2, 98)}%`;
+    };
+    el.onpointerup = () => {
+      if (!act || act.el !== el || act.kind !== "pin") return;
       if (moved) {
-        const left = parseFloat(el.style.left), top = parseFloat(el.style.top);
-        if (kind === "room") Object.assign(bag.rooms.find((r) => r.id === act.id), { x: left, y: top });
-        else Object.assign(bag.points.find((p) => p.id === act.id), { x: left, y: top });
+        const p = bag.points.find((x) => x.id === act.id);
+        if (p) Object.assign(p, { x: parseFloat(el.style.left), y: parseFloat(el.style.top) });
         persist();
-      } else if (kind === "pin") recPoint(mod, date, act.id);
-      else { n += 1; setTimeout(() => { n = 0; }, 280); if (n >= 2) editRoom(mod, act.id); }
+      } else recPoint(mod, date, act.id);
       act = null;
     };
   });
-  bind("[data-room]", "room");
-  bind("[data-pin]", "pin");
 }
 
 function editRoom(mod, id) {
   const bag = climateBag(mod);
   const room = bag.rooms.find((r) => r.id === id);
+  if (!room) return;
   form("구역 수정", [
     { key: "name", label: "이름", type: "text" },
     { key: "w", label: "가로(%)", type: "number" },
     { key: "h", label: "세로(%)", type: "number" },
+    { key: "rot", label: "회전(도)", type: "number" },
     { key: "kind", label: "종류 area/hall/qa/machine", type: "text" },
-  ], room, (v) => { Object.assign(room, { name: v.name, w: Number(v.w), h: Number(v.h), kind: v.kind || room.kind }); persist(); render(); });
+  ], { ...room, rot: Number(room.rot) || 0 }, (v) => {
+    Object.assign(room, {
+      name: v.name,
+      w: Number(v.w),
+      h: Number(v.h),
+      rot: Number(v.rot) || 0,
+      kind: v.kind || room.kind,
+    });
+    persist();
+    render();
+  }, `<button class="btn ghost" id="del-room" type="button">구역 빼기</button>`);
+  document.getElementById("del-room")?.addEventListener("click", () => {
+    if (!confirm("이 구역을 뺄까요?")) return;
+    bag.rooms = bag.rooms.filter((r) => r.id !== id);
+    document.getElementById("modal").innerHTML = "";
+    persist();
+    render();
+  });
 }
 
 function recPoint(mod, date, id) {
   const bag = climateBag(mod);
   const p = bag.points.find((x) => x.id === id);
+  if (!p) return;
   const cur = (bag.logs[date] || []).find((x) => x.pointId === id) || { name: p.name, temp: "", humidity: "", lux: "", status: "정상" };
   cur.name = cur.name || p.name;
   form(`${p.id} 기록`, fieldsFor("climatePoint"), cur, (v) => {
@@ -2493,6 +2682,13 @@ function recPoint(mod, date, id) {
     const next = { pointId: id, temp: Number(v.temp), humidity: Number(v.humidity), lux: Number(v.lux), status: v.status || "정상" };
     if (i >= 0) list[i] = next; else list.push(next);
     persist(); render();
+  }, `<button class="btn ghost" id="del-point" type="button">위치 빼기</button>`);
+  document.getElementById("del-point")?.addEventListener("click", () => {
+    if (!confirm("이 측정 위치를 뺄까요?")) return;
+    removeClimatePoint(mod, id);
+    document.getElementById("modal").innerHTML = "";
+    persist();
+    render();
   });
 }
 
