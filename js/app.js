@@ -3,13 +3,13 @@ import {
   CUSTOMERS, MILL_SHOPS, MACHINES, FIVE_S_SHOP, FIVE_S_LAB, QA_MEASURE_ITEMS,
   EQ_ITEMS, EQ_MARKS, DOM_SUPPLIER,
   fieldsFor, flattenChecks, badgeClass, todayISO,
-} from "./data.js?v=52";
-import { loadState, saveState, uid } from "./store.js?v=58";
+} from "./data.js?v=53";
+import { loadState, saveState, uid } from "./store.js?v=59";
 import { saveBlob, loadBlob, readAsDataUrl, saveDirHandle, loadDirHandle, removeBlob } from "./files.js?v=39";
 import { parseProgram, decodeCamFile, mayBeCamFile } from "./gcode.js?v=52";
 import { boot, showRecover } from "./safety.js?v=39";
 import { chatView, bindChat } from "./comm.js?v=51";
-import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=61";
+import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=62";
 
 const WHOIS_MAIL = "https://email.whois.co.kr/v2/";
 
@@ -148,24 +148,24 @@ function isoDay(ym, day) {
 function datesOf(mod) {
   const set = new Set(state.dateFolders[mod.id] || []);
   (state.records[mod.id] || []).forEach((r) => recDate(r, mod.type) && set.add(recDate(r, mod.type)));
-  if (mod.type === "climate") {
-    Object.keys(state.climate.logs || {}).forEach((d) => set.add(d));
-    Object.keys(state.climate.checks || {}).forEach((d) => set.add(d));
-  }
-  if (mod.type === "lab-climate") {
-    Object.keys(state.labClimate?.logs || {}).forEach((d) => set.add(d));
-    Object.keys(state.labClimate?.checks || {}).forEach((d) => set.add(d));
+  if (mod.type === "climate" || mod.type === "lab-climate") {
+    const bag = climateBag(mod);
+    Object.keys(bag.logs || {}).forEach((d) => set.add(d));
+    Object.keys(bag.checks || {}).forEach((d) => set.add(d));
+    Object.keys(bag.sheet || {}).forEach((d) => set.add(d));
   }
   if (mod.type === "equipment") Object.keys(state.equipment || {}).forEach((d) => set.add(d));
   if (mod.type === "five-s") {
     Object.entries(state.fiveS.dates || {}).forEach(([d, pack]) => {
       if (pack?.shop && Object.keys(pack.shop).length) set.add(d);
     });
+    Object.keys(state.fiveS.notes || {}).forEach((d) => set.add(d));
   }
   if (mod.type === "lab-5s") {
     Object.entries(state.fiveS.dates || {}).forEach(([d, pack]) => {
-      if (pack?.lab && Object.keys(pack.lab).some((k) => k.startsWith("l"))) set.add(d);
+      if (pack?.lab && Object.keys(pack.lab).some((k) => k.startsWith("l") || k === "insp" || k === "conf")) set.add(d);
     });
+    Object.keys(state.fiveS.labNotes || {}).forEach((d) => set.add(d));
   }
   if (mod.type === "mastercam") (state.cam.files || []).forEach((f) => f.date && set.add(f.date));
   if (isMonthFolder(mod)) {
@@ -190,7 +190,6 @@ function isSheetMod(mod) {
 function isPrintPage(mod, extra, date) {
   if (mod?.type === "records" && extra) return true;
   if (mod?.type === "equipment") return Boolean(extra) || MACHINES.some((m) => m.id === date);
-  if (["climate", "lab-climate", "five-s", "lab-5s"].includes(mod?.type) && extra !== "map") return true;
   if (isMonthMod(mod) && date && extra !== "map") return true;
   if (mod?.type === "inbound" && date && !extra) return true;
   if (mod?.type === "delivery" && date) return true;
@@ -333,8 +332,7 @@ function recCount(mod) {
   if (mod.type === "records") {
     return recordMods().reduce((n, m) => n + recCount(m), 0);
   }
-  if (mod.type === "climate") return Object.keys(state.climate.checks || {}).length || Object.keys(state.climate.logs || {}).length;
-  if (mod.type === "lab-climate") return Object.keys(state.labClimate?.checks || {}).length || Object.keys(state.labClimate?.logs || {}).length;
+  if (mod.type === "climate" || mod.type === "lab-climate") return datesOf(mod).length;
   if (mod.type === "equipment") return Object.keys(state.equipment || {}).length;
   if (mod.type === "five-s") return Object.values(state.fiveS.dates || {}).filter((p) => p?.shop && Object.keys(p.shop).length).length;
   if (mod.type === "lab-5s") return Object.values(state.fiveS.dates || {}).filter((p) => p?.lab && Object.keys(p.lab).some((k) => k.startsWith("l"))).length;
@@ -777,11 +775,8 @@ function moduleView(mod, date, extra) {
     return camView(mod);
   }
   if (!date) {
-    if (mod.type === "five-s") return shopFiveSView(mod, thisMonth());
-    if (mod.type === "lab-5s") return shopFiveSView(mod, thisMonth());
     if (mod.type === "equipment") return eqView(mod, thisMonth());
-    if (mod.type === "climate") return shopClimateView(mod, thisMonth());
-    if (mod.type === "lab-climate") return shopClimateView(mod, thisMonth());
+    if (isMonthMod(mod)) return monthSheetBrowse(mod);
     if (mod.type === "inbound") return inboundBrowse(mod);
     if (mod.type === "delivery") return deliveryBrowse(mod);
     return folderBrowse(mod);
@@ -886,6 +881,97 @@ function inboundBrowse(mod) {
     ${blocks || `<section class="panel"><p class="mute pad">${ht("아직 기록이 없습니다. 이번 달 표에서 적으세요.")}</p></section>`}`;
 }
 
+function climVal(obj, d) {
+  const v = obj?.[d] ?? obj?.[String(d)];
+  return v == null || v === "" ? "" : v;
+}
+
+function monthFilledDays(mod, ym) {
+  const month = monthKey(ym) || ym;
+  const n = daysInMonth(month);
+  const days = [];
+  if (mod.type === "climate" || mod.type === "lab-climate") {
+    const pack = climateBag(mod).sheet?.[month];
+    if (!pack) return days;
+    for (let d = 1; d <= n; d++) {
+      if (climVal(pack.temp, d) !== "" || climVal(pack.hum, d) !== "" || String(climVal(pack.lux, d)).trim()) days.push(d);
+    }
+    return days;
+  }
+  const { groups, key } = monthItems(mod);
+  const items = flattenChecks(groups);
+  for (let d = 1; d <= n; d++) {
+    const pack = state.fiveS.dates[isoDay(month, d)]?.[key] || {};
+    if (
+      items.some((i) => pack[i.id] === true || (typeof pack[i.id] === "string" && String(pack[i.id]).trim()))
+      || String(pack.insp || "").trim()
+      || String(pack.conf || "").trim()
+    ) days.push(d);
+  }
+  return days;
+}
+
+function monthSheetBrowse(mod) {
+  const months = datesOf(mod);
+  const climate = mod.type === "climate" || mod.type === "lab-climate";
+  const blocks = months.map((ym) => {
+    const days = monthFilledDays(mod, ym);
+    const pack = climate ? climateBag(mod).sheet?.[ym] : null;
+    const key = climate ? "" : monthItems(mod).key;
+    const checks = climate ? [] : flattenChecks(monthItems(mod).groups);
+    const body = days.map((d) => {
+      const iso = isoDay(ym, d);
+      if (climate) {
+        const temp = climVal(pack?.temp, d);
+        const hum = climVal(pack?.hum, d);
+        const lux = climVal(pack?.lux, d);
+        return `<tr>
+          <td>${h(camDay(iso))}</td>
+          <td>${temp === "" ? "—" : `${h(temp)}℃`}</td>
+          <td>${hum === "" ? "—" : `${h(hum)}%`}</td>
+          <td>${lux === "" ? "—" : h(lux)}</td>
+          <td class="act"><a class="btn sm" href="#/${mod.id}/${ym}">${ht("수정")}</a></td>
+        </tr>`;
+      }
+      const cell = state.fiveS.dates[iso]?.[key] || {};
+      const on = checks.filter((i) => cell[i.id] === true).length;
+      return `<tr>
+        <td>${h(camDay(iso))}</td>
+        <td>${on}/${checks.length}</td>
+        <td>${h(cell.insp || "—")}</td>
+        <td>${h(cell.conf || "—")}</td>
+        <td class="act"><a class="btn sm" href="#/${mod.id}/${ym}">${ht("수정")}</a></td>
+      </tr>`;
+    }).join("");
+    const heads = climate
+      ? `<th>${ht("날짜")}</th><th>${ht("온도")}</th><th>${ht("습도")}</th><th>${ht("조도")}</th><th></th>`
+      : `<th>${ht("날짜")}</th><th>${ht("점검")}</th><th>${ht("점검자")}</th><th>${ht("확인")}</th><th></th>`;
+    return `<section class="panel rec-pack">
+      <div class="bar compact-bar">
+        <b>${h(monthLabel(ym))}</b>
+        <span class="mute">${count(mod, ym)}</span>
+        <a class="btn sm red" href="#/${mod.id}/${ym}">${ht("표 열기")}</a>
+      </div>
+      <div class="scroll"><table class="rows rec-table"><thead><tr>${heads}</tr></thead>
+      <tbody>${body || `<tr><td colspan="5">${ht("이 달에 적힌 점검이 없습니다.")}</td></tr>`}</tbody></table></div>
+    </section>`;
+  }).join("");
+  return `
+    <div class="page-head">
+      <div>
+        <h1>${h(t(mod.title))}</h1>
+        <p>${h(t(mod.desc))}</p>
+      </div>
+      <div class="head-actions">
+        ${saveNote()}
+        <button class="btn" id="folder-save" type="button">${ht("저장")}</button>
+        <button class="btn sm" id="open-month" type="button">${ht("월 열기")}</button>
+        <a class="btn red sm" href="#/${mod.id}/${thisMonth()}">${ht("이번 달 표")}</a>
+      </div>
+    </div>
+    ${blocks || `<section class="panel"><p class="mute pad">${ht("아직 기록이 없습니다. 이번 달 표에서 적으세요.")}</p></section>`}`;
+}
+
 function deliveryBrowse(mod) {
   const dates = datesOf(mod);
   const blocks = dates.map((d) => {
@@ -943,18 +1029,7 @@ function dateIndex(mod) {
 }
 
 function count(mod, date) {
-  if (isMonthMod(mod)) {
-    const ym = monthKey(date) || date;
-    const n = daysInMonth(ym);
-    const { groups, key } = monthItems(mod);
-    const items = flattenChecks(groups);
-    let days = 0;
-    for (let d = 1; d <= n; d++) {
-      const iso = isoDay(ym, d);
-      if (items.some((i) => monthChecked(mod, key, iso, i.id))) days += 1;
-    }
-    return t("{n}일 점검", { n: days });
-  }
+  if (isMonthMod(mod)) return t("{n}일 점검", { n: monthFilledDays(mod, date).length });
   if (mod.type === "inbound") return t("{n}건", { n: rowsOn(mod, date).filter(inboundUsed).length });
   if (mod.type === "delivery") return t("{n}건", { n: rowsOn(mod, date).filter(deliveryUsed).length });
   if (mod.type === "mastercam") return t("{n}개 파일", { n: (state.cam.files || []).filter((f) => f.date === date).length });
@@ -1713,7 +1788,7 @@ function shopClimateView(mod, ym) {
   }).join("");
   return `
     <div class="print-page">
-      ${a4Tools("", `
+      ${a4Tools(`#/${mod.id}`, `
         <button class="btn ghost" id="clim-prev" type="button">${ht("이전달")}</button>
         <button class="btn ghost" id="clim-next" type="button">${ht("다음달")}</button>
         <a class="btn" href="#/${mod.id}/${month}/map">${ht("평면도")}</a>
@@ -1847,7 +1922,7 @@ function shopFiveSView(mod, ym) {
   }).join("")).join("");
   return `
     <div class="print-page">
-      ${a4Tools("", `
+      ${a4Tools(`#/${mod.id}`, `
         <button class="btn ghost" id="five-prev" type="button">${ht("이전달")}</button>
         <button class="btn ghost" id="five-next" type="button">${ht("다음달")}</button>
       `)}
@@ -2325,15 +2400,21 @@ function bindModule(mod, date, extra) {
     }
   ));
   if (!date) {
-    if (mod.type === "five-s" || mod.type === "lab-5s") {
-      remember(mod.id, thisMonth());
-      persist();
-      return bindShopFiveS(mod);
-    }
-    if (mod.type === "climate" || mod.type === "lab-climate") {
-      remember(mod.id, thisMonth());
-      persist();
-      return bindShopClimate(mod);
+    if (isMonthMod(mod)) {
+      document.getElementById("open-month")?.addEventListener("click", () => form(
+        "월 폴더",
+        [{ key: "date", label: "연월", type: "month" }],
+        { date: thisMonth() },
+        (v) => {
+          const key = monthKey(v.date) || v.date;
+          remember(mod.id, key);
+          persist();
+          location.hash = `#/${mod.id}/${key}`;
+          render();
+        }
+      ));
+      bindSaveButton();
+      return;
     }
     if (mod.type === "equipment") return bindEq(thisMonth(), "");
     if (mod.type === "inbound") {
