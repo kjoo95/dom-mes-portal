@@ -1355,9 +1355,10 @@ function shopFiveSView(mod, ym) {
   const month = monthKey(ym) || ym || thisMonth();
   const [year, mon] = month.split("-").map(Number);
   const n = daysInMonth(month);
-  const days = Array.from({ length: n }, (_, i) => i + 1);
+  const days = Array.from({ length: 31 }, (_, i) => i + 1);
   const wd = ["일", "월", "화", "수", "목", "금", "토"];
   const wkClass = (d) => {
+    if (d > n) return "off";
     const w = weekdayOf(month, d);
     return w === 0 ? "sun" : w === 6 ? "sat" : "";
   };
@@ -1369,9 +1370,10 @@ function shopFiveSView(mod, ym) {
   const lab = mod.type === "lab-5s";
   const note = (lab ? state.fiveS.labNotes : state.fiveS.notes)?.[month] || "";
   const dayHeads = days.map((d) => `<th class="${wkClass(d)}">${String(d).padStart(2, "0")}</th>`).join("");
-  const weekHeads = days.map((d) => `<th class="${wkClass(d)}">${wd[weekdayOf(month, d)]}</th>`).join("");
+  const weekHeads = days.map((d) => `<th class="${wkClass(d)}">${d > n ? "" : wd[weekdayOf(month, d)]}</th>`).join("");
   const body = groups.map((g) => g.items.map((item, idx) => {
     const cells = days.map((d) => {
+      if (d > n) return `<td class="off"></td>`;
       const iso = isoDay(month, d);
       if (item.kind === "text") {
         return `<td class="name ${wkClass(d)}"><input type="text" data-five-name data-iso="${iso}" data-id="${item.id}" value="${h(fiveText(iso, item.id, key))}" autocomplete="off"></td>`;
@@ -1404,8 +1406,13 @@ function shopFiveSView(mod, ym) {
             </div>
             <p class="sheet-5s-ym-print">${year} 년 ${mon} 월</p>
           </header>
-          <div class="a4-grow month-scroll">
+          <div class="a4-grow sheet-5s-body">
             <table class="month-grid sheet-5s-grid">
+              <colgroup>
+                <col class="c-g">
+                <col class="c-item">
+                ${days.map(() => `<col class="c-day">`).join("")}
+              </colgroup>
               <thead>
                 <tr><th rowspan="2">${ht("구분")}</th><th rowspan="2">${ht("점검사항")}</th>${dayHeads}</tr>
                 <tr>${weekHeads}</tr>

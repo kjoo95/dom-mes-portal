@@ -1009,6 +1009,35 @@ table.checks .chk { width: 72px; text-align: center; }
 .month-grid td.item { text-align: left; padding-left: 4px; min-width: 32mm; width: 32mm; }
 .month-grid th:first-child { width: 14mm; }
 .month-grid input[type="checkbox"] { width: 13px; height: 13px; }
+.sheet-5s {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.sheet-5s-body {
+  overflow: hidden;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.sheet-5s-grid {
+  table-layout: fixed;
+  width: 100%;
+  height: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  font-size: 10px;
+}
+.sheet-5s-grid col.c-g { width: 13mm; }
+.sheet-5s-grid col.c-item { width: 46mm; }
+.sheet-5s-grid col.c-day { width: auto; }
+.sheet-5s-grid th, .sheet-5s-grid td {
+  overflow: hidden;
+  padding: 1px 0;
+}
+.sheet-5s-grid thead th { height: 5.2mm; font-size: 10px; }
+.sheet-5s-grid tbody th, .sheet-5s-grid tbody td { height: 6.2mm; }
 .sheet-5s-head {
   position: relative;
   text-align: center;
@@ -1039,23 +1068,25 @@ table.checks .chk { width: 72px; text-align: center; }
 .sheet-5s th.g {
   background: #c5e4f3;
   font-weight: 700;
-  width: 16mm;
+  width: 13mm;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
 .sheet-5s td.item {
   text-align: left;
-  font-size: 11px;
-  line-height: 1.35;
-  min-width: 58mm;
-  width: 58mm;
-  padding: 2px 6px;
+  font-size: 10px;
+  line-height: 1.2;
+  min-width: 0;
+  width: auto;
+  padding: 1px 4px;
 }
 .sheet-5s th.sun, .sheet-5s td.sun { color: #c41e3a; }
 .sheet-5s th.sat, .sheet-5s td.sat { color: #1d4ed8; }
+.sheet-5s th.off, .sheet-5s td.off { background: #ececec; }
 .sheet-5s td.chk {
   cursor: pointer;
   padding: 0;
+  width: auto;
 }
 .sheet-5s td.chk label {
   display: flex;
@@ -1063,12 +1094,12 @@ table.checks .chk { width: 72px; text-align: center; }
   justify-content: center;
   width: 100%;
   height: 100%;
-  min-height: 22px;
+  min-height: 0;
   cursor: pointer;
 }
 .sheet-5s td.chk input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
+  width: 12px;
+  height: 12px;
   accent-color: #c41e3a;
   cursor: pointer;
 }
@@ -1077,12 +1108,12 @@ table.checks .chk { width: 72px; text-align: center; }
   width: 100%;
   min-width: 0;
   height: 100%;
-  min-height: 22px;
+  min-height: 0;
   border: 0;
   background: transparent;
-  font-size: 11px;
+  font-size: 10px;
   text-align: center;
-  padding: 0 1px;
+  padding: 0;
 }
 .sheet-5s-foot {
   display: grid;
@@ -1102,8 +1133,8 @@ table.checks .chk { width: 72px; text-align: center; }
 }
 .sheet-5s-note textarea {
   width: 100%;
-  min-height: 12mm;
-  height: 12mm;
+  min-height: 10mm;
+  height: 10mm;
   border: 0;
   padding: 4px 8px;
   resize: none;
@@ -1459,6 +1490,7 @@ table.checks .chk { width: 72px; text-align: center; }
     margin: 0;
   }
   .sheet-5s td.chk label .print-mark { display: inline !important; }
+  .sheet-5s, .sheet-5s-body { overflow: hidden !important; }
   .eq-ym-print {
     display: block !important;
     z-index: 1;
