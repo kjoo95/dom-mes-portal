@@ -241,7 +241,7 @@ export function defaultState() {
       { id: "process", title: "가공 현황", desc: "품번·품명·날짜별 완료 수량을 관리합니다.", type: "process" },
       { id: "delivery", title: "납품 일정", desc: "날짜 폴더에서 납품 목록과 표를 봅니다.", type: "delivery" },
       { id: "quality", title: "품질 관리 현황", desc: "가공 회사·납품처, 품번·품명·LOT, X·Y·Z 5회 측정과 사진을 기록합니다.", type: "quality" },
-      { id: "climate", title: "현장 온습도 관리", desc: "한 달 표에서 위치별로 점검 여부를 체크합니다.", type: "climate" },
+      { id: "climate", title: "현장 온습도 관리", desc: "생산라인 온·습도 점검 체크시트를 연·월을 바꿔 가며 작성합니다.", type: "climate" },
       { id: "five-s", title: "현장 3정5S 관리", desc: "생산라인 3정 5S 체크시트를 연·월을 바꿔 가며 작성합니다.", type: "five-s" },
       { id: "lab-climate", title: "검사실 온습도 관리", desc: "한 달 표에서 검사실 위치 점검을 체크합니다.", type: "lab-climate" },
       { id: "lab-5s", title: "검사실 3정5S 관리", desc: "한 달 표에서 검사실 3정5S를 일자별로 체크합니다.", type: "lab-5s" },
@@ -313,6 +313,7 @@ export function defaultState() {
       checks: {
         [today]: { P1: true, P2: true, P3: true, P4: true, P5: true, P6: true },
       },
+      sheet: {},
     },
     fiveS: {
       dates: {

@@ -9,7 +9,7 @@ import { saveBlob, loadBlob, readAsDataUrl, saveDirHandle, loadDirHandle, remove
 import { parseProgram, decodeCamFile, isCamFileName } from "./gcode.js?v=49";
 import { boot, showRecover } from "./safety.js?v=39";
 import { chatView, bindChat } from "./comm.js?v=50";
-import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=50";
+import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=51";
 
 const WHOIS_MAIL = "https://email.whois.co.kr/v2/";
 const root = document.getElementById("app");
@@ -137,6 +137,7 @@ function isSheetMod(mod) {
 
 function isPrintPage(mod, extra, date) {
   if (mod?.type === "equipment") return Boolean(extra) || MACHINES.some((m) => m.id === date);
+  if (mod?.type === "climate" && extra !== "map") return true;
   if (isMonthMod(mod) && date && extra !== "map") return true;
   if (mod?.type === "inbound" && date && !extra) return true;
   if (!extra) return false;
@@ -557,9 +558,14 @@ function moduleView(mod, date, extra) {
   if (!date) {
     if (mod.type === "five-s") return shopFiveSView(mod, thisMonth());
     if (mod.type === "equipment") return eqView(mod, thisMonth());
+    if (mod.type === "climate") return shopClimateView(mod, thisMonth());
     return dateIndex(mod);
   }
-  if (mod.type === "climate" || mod.type === "lab-climate") {
+  if (mod.type === "climate") {
+    if (extra === "map") return climateView(mod, monthKey(date) || date);
+    return shopClimateView(mod, monthKey(date) || date);
+  }
+  if (mod.type === "lab-climate") {
     if (extra === "map") return climateView(mod, monthKey(date) || date);
     return monthSheetView(mod, monthKey(date) || date);
   }
@@ -1128,6 +1134,130 @@ function monthSheetView(mod, ym) {
     </div>`;
 }
 
+function climPack(ym) {
+  if (!state.climate.sheet) state.climate.sheet = {};
+  if (!state.climate.sheet[ym]) state.climate.sheet[ym] = { temp: {}, hum: {}, lux: {}, inspector: "", manager: "" };
+  const p = state.climate.sheet[ym];
+  if (!p.temp) p.temp = {};
+  if (!p.hum) p.hum = {};
+  if (!p.lux) p.lux = {};
+  return p;
+}
+
+function shopClimateView(mod, ym) {
+  const month = monthKey(ym) || ym || thisMonth();
+  const [year, mon] = month.split("-").map(Number);
+  const n = daysInMonth(month);
+  const pack = climPack(month);
+  const y0 = new Date().getFullYear();
+  const years = Array.from({ length: 8 }, (_, i) => y0 - 4 + i);
+  if (!years.includes(year)) years.push(year);
+  years.sort((a, b) => a - b);
+  const days = Array.from({ length: 31 }, (_, i) => i + 1);
+  const temps = [40, 35, 30, 25, 20, 15, 10, 5];
+  const hums = [80, 70, 60, 50, 40, 30, 20, 10];
+  const dayHeads = days.map((d) => `<th class="${d > n ? "off" : ""}">${String(d).padStart(2, "0")}</th>`).join("");
+  const band = (kind, levels, unit) => levels.map((lv, i) => {
+    const cells = days.map((d) => {
+      if (d > n) return `<td class="off"></td>`;
+      const stored = pack[kind][d] ?? pack[kind][String(d)];
+      const on = stored !== "" && stored != null && Number(stored) === lv;
+      return `<td class="clim-x ${kind}${on ? " on" : ""}" data-clim="${kind}" data-day="${d}" data-val="${lv}">${on ? "X" : ""}</td>`;
+    }).join("");
+    const head = i === 0
+      ? `<th rowspan="${levels.length}">${kind === "temp" ? "1" : "2"}</th>
+         <th rowspan="${levels.length}">${kind === "temp" ? "온도" : "습도"}</th>
+         <td class="spec" rowspan="${levels.length}">${kind === "temp"
+           ? "[관리 SPEC] 18℃~25℃<br>[적색 표기]"
+           : "[습도 SPEC] 70% 이하<br>[흑색 표기]"}</td>`
+      : "";
+    return `<tr>${head}<th class="time">${lv}${unit}</th>${cells}</tr>`;
+  }).join("");
+  const luxRow = days.map((d) => {
+    if (d > n) return `<td class="off"></td>`;
+    const v = pack.lux[d] ?? pack.lux[String(d)] ?? "";
+    return `<td class="lux"><input data-clim-lux data-day="${d}" value="${h(v)}" inputmode="numeric"></td>`;
+  }).join("");
+  return `
+    <div class="print-page">
+      <div class="a4-tools no-print">
+        <button class="btn ghost" id="clim-prev" type="button">이전달</button>
+        <button class="btn ghost" id="clim-next" type="button">다음달</button>
+        <a class="btn" href="#/${mod.id}/${month}/map">${ht("평면도")}</a>
+        <button class="btn red" id="qa-print" type="button">${ht("인쇄")}</button>
+      </div>
+      <div class="a4-wrap page">
+        <article class="a4-sheet month-sheet clim-sheet">
+          <header class="clim-head">
+            <h1>생산라인 온,습도 점검 CHECK SHEET</h1>
+            <div class="clim-ym no-print">
+              <select id="clim-y">${years.map((y) => `<option value="${y}" ${y === year ? "selected" : ""}>${y}</option>`).join("")}</select>
+              <span>년</span>
+              <select id="clim-m">${Array.from({ length: 12 }, (_, i) => i + 1).map((m) => `<option value="${m}" ${m === mon ? "selected" : ""}>${m}</option>`).join("")}</select>
+              <span>월</span>
+            </div>
+            <p class="clim-ym-print">${year} 년 ${mon} 월</p>
+          </header>
+          <table class="clim-grid">
+            <colgroup>
+              <col class="c-no">
+              <col class="c-kind">
+              <col class="c-spec">
+              <col class="c-time">
+              ${days.map(() => `<col class="c-day">`).join("")}
+            </colgroup>
+            <thead>
+              <tr>
+                <th rowspan="2">NO</th>
+                <th rowspan="2">구분</th>
+                <th rowspan="2">관리기준</th>
+                <th rowspan="2">TIME</th>
+                <th colspan="31">일</th>
+              </tr>
+              <tr>${dayHeads}</tr>
+            </thead>
+            <tbody>
+              ${band("temp", temps, "℃")}
+              ${band("hum", hums, "%")}
+              <tr>
+                <th>3</th>
+                <th>조도</th>
+                <td class="spec">[조도 SPEC] 800Lx 이상<br>[숫자 표기]</td>
+                <th class="time">조도(Lx)</th>
+                ${luxRow}
+              </tr>
+            </tbody>
+          </table>
+          <div class="clim-bottom">
+            <table class="clim-cond">
+              <thead><tr><th colspan="2">생산 라인에 대한 저장조건</th></tr></thead>
+              <tbody>
+                <tr>
+                  <th>온,습도</th>
+                  <td>상온 10~25℃, 상습 0~70% 이하<br>1) 직사광선을 피할 것<br>2) 기타 유해한 저장 조건이 생기지 않도록 한다.</td>
+                </tr>
+                <tr>
+                  <th>조도</th>
+                  <td>자주검사대 상면 기준 800Lx 이상<br>1) Lux 범위 이내여야 한다<br>2) 3파장 스탠드에서 측정한다.</td>
+                </tr>
+              </tbody>
+            </table>
+            <table class="clim-sign">
+              <thead><tr><th>구분</th><th>CHECK TIME</th></tr></thead>
+              <tbody>
+                <tr><th>점검시간</th><td>08:30 ~ 09:30</td></tr>
+                <tr><th>점검자</th><td><input data-clim-k="inspector" value="${h(pack.inspector || "")}"></td></tr>
+                <tr><th>책임자</th><td><input data-clim-k="manager" value="${h(pack.manager || "")}"></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="clim-note">* 적정 온,습도 유지 관리철저</p>
+          <p class="clim-co">(주)디오엠</p>
+        </article>
+      </div>
+    </div>`;
+}
+
 function fiveText(iso, id) {
   const v = state.fiveS.dates[iso]?.shop?.[id];
   return typeof v === "string" ? v : "";
@@ -1517,11 +1647,20 @@ function bindModule(mod, date, extra) {
       persist();
       return bindShopFiveS(mod);
     }
+    if (mod.type === "climate") {
+      remember(mod.id, thisMonth());
+      persist();
+      return bindShopClimate(mod);
+    }
     if (mod.type === "equipment") return bindEq(thisMonth(), "");
     return;
   }
   remember(mod.id, date); persist();
-  if (mod.type === "climate" || mod.type === "lab-climate") {
+  if (mod.type === "climate") {
+    if (extra === "map") return bindClimate(mod, date);
+    return bindShopClimate(mod);
+  }
+  if (mod.type === "lab-climate") {
     if (extra === "map") return bindClimate(mod, date);
     return bindMonthGrid(mod);
   }
@@ -1721,6 +1860,60 @@ function bindMonthGrid(mod) {
     if (mark) mark.textContent = el.checked ? "✓" : "";
     el.closest("td")?.classList.toggle("on", el.checked);
     persist();
+  });
+}
+
+function bindShopClimate(mod) {
+  const monthOf = () => {
+    const y = document.getElementById("clim-y")?.value;
+    const m = document.getElementById("clim-m")?.value;
+    if (!y || !m) return thisMonth();
+    return `${y}-${String(Number(m)).padStart(2, "0")}`;
+  };
+  const go = (ym) => {
+    remember(mod.id, ym);
+    persist();
+    const next = `#/${mod.id}/${ym}`;
+    if (location.hash.replace(/^#\/?/, "") === `${mod.id}/${ym}`) render();
+    else location.hash = next;
+  };
+  document.getElementById("qa-print")?.addEventListener("click", () => window.print());
+  document.getElementById("clim-prev")?.addEventListener("click", () => go(shiftMonth(monthOf(), -1)));
+  document.getElementById("clim-next")?.addEventListener("click", () => go(shiftMonth(monthOf(), 1)));
+  document.getElementById("clim-y")?.addEventListener("change", () => go(monthOf()));
+  document.getElementById("clim-m")?.addEventListener("change", () => go(monthOf()));
+  const pack = climPack(monthOf());
+  root.querySelectorAll("[data-clim]").forEach((el) => {
+    el.onclick = () => {
+      const kind = el.dataset.clim;
+      const day = el.dataset.day;
+      const val = Number(el.dataset.val);
+      const cur = pack[kind][day] ?? pack[kind][String(day)];
+      if (cur !== "" && cur != null && Number(cur) === val) {
+        delete pack[kind][day];
+        delete pack[kind][String(day)];
+      } else {
+        pack[kind][day] = val;
+      }
+      root.querySelectorAll(`[data-clim="${kind}"][data-day="${day}"]`).forEach((cell) => {
+        const on = Number(cell.dataset.val) === Number(pack[kind][day]);
+        cell.textContent = on ? "X" : "";
+        cell.classList.toggle("on", on);
+      });
+      persist();
+    };
+  });
+  root.querySelectorAll("[data-clim-lux]").forEach((el) => {
+    el.oninput = () => {
+      pack.lux[el.dataset.day] = el.value;
+      persist();
+    };
+  });
+  root.querySelectorAll("[data-clim-k]").forEach((el) => {
+    el.oninput = () => {
+      pack[el.dataset.climK] = el.value;
+      persist();
+    };
   });
 }
 

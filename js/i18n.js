@@ -130,6 +130,7 @@ const en = {
   "가공 회사·납품처, 품번·품명·LOT, X·Y·Z 5회 측정과 사진을 기록합니다.": "Record mill, customer, part, LOT, XYZ measures and photos.",
   "현장 온습도 관리": "Shop climate",
   "한 달 표에서 위치별로 점검 여부를 체크합니다.": "Check locations on a monthly sheet.",
+  "생산라인 온·습도 점검 체크시트를 연·월을 바꿔 가며 작성합니다.": "Fill the production-line temperature/humidity check sheet by year and month.",
   "현장 3정5S 관리": "Shop 3S/5S",
   "한 달 표에서 항목별로 일자 점검을 체크합니다.": "Check items by day on a monthly sheet.",
   "생산라인 3정 5S 체크시트를 연·월을 바꿔 가며 작성합니다.": "Fill the production-line 3S/5S check sheet by year and month.",

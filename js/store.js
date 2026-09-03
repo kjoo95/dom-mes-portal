@@ -90,7 +90,7 @@ function hydrate(parsed) {
     ...parsed,
     modules: mergeModules(base.modules, parsed.modules),
     records: { ...base.records, ...(parsed.records || {}) },
-    climate: { ...base.climate, ...(parsed.climate || {}), rooms: parsed.climate?.rooms || base.climate.rooms, checks: parsed.climate?.checks || base.climate.checks || {} },
+    climate: { ...base.climate, ...(parsed.climate || {}), rooms: parsed.climate?.rooms || base.climate.rooms, checks: parsed.climate?.checks || base.climate.checks || {}, sheet: parsed.climate?.sheet || {} },
     labClimate: {
       ...base.labClimate,
       ...(parsed.labClimate || {}),
