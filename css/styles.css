@@ -102,6 +102,20 @@ main { padding: 28px 32px 48px; overflow: auto; background: #f6f6f6; }
 .page-head input[type="search"]:focus,
 .page-head input[type="text"]:focus { outline: none; border-color: var(--red); }
 .page-head .btn { width: auto; flex: 0 0 auto; height: 36px; }
+.head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.save-note {
+  color: #2f6f4e;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+}
+.save-note[hidden] { display: none !important; }
 .home-board {
   background: #fff;
   border: 1px solid var(--line);
@@ -687,6 +701,11 @@ table.checks .chk { width: 72px; text-align: center; }
 .a4-tools .btn.ghost {
   border: 1px solid var(--line);
   background: #fff;
+}
+.a4-tools .save-note {
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
 }
 .a4-tools input[type="file"] {
   position: absolute;
@@ -1840,6 +1859,7 @@ table.qa thead th { font-weight: 700; }
   .page-head { flex-direction: column; align-items: stretch; }
   .page-head input[type="search"],
   .page-head input[type="text"] { width: 100%; }
+  .head-actions { justify-content: flex-start; }
   .home-list { grid-template-columns: 1fr; }
   .home-row { min-height: 64px; padding: 12px 14px; }
   .folders { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }

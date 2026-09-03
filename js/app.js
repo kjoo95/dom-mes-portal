@@ -9,7 +9,7 @@ import { saveBlob, loadBlob, readAsDataUrl, saveDirHandle, loadDirHandle, remove
 import { parseProgram, decodeCamFile, mayBeCamFile } from "./gcode.js?v=51";
 import { boot, showRecover } from "./safety.js?v=39";
 import { chatView, bindChat } from "./comm.js?v=51";
-import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=57";
+import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=58";
 
 const WHOIS_MAIL = "https://email.whois.co.kr/v2/";
 
@@ -35,6 +35,33 @@ const ht = (v) => h(t(v));
 function persist() {
   state.camFolder = camFolder;
   try { saveState(state); } catch { /* 백업은 store에서 유지 */ }
+}
+
+function flashSaved() {
+  const n = document.getElementById("save-note");
+  const msg = t("저장했습니다.");
+  if (!n) {
+    alert(msg);
+    return;
+  }
+  n.hidden = false;
+  n.textContent = msg;
+  clearTimeout(flashSaved._t);
+  flashSaved._t = setTimeout(() => { n.hidden = true; }, 1800);
+}
+
+function bindSaveButton(before) {
+  const run = () => {
+    before?.();
+    persist();
+    flashSaved();
+  };
+  document.getElementById("sheet-save")?.addEventListener("click", run);
+  document.getElementById("folder-save")?.addEventListener("click", run);
+}
+
+function saveNote() {
+  return `<span class="save-note" id="save-note" hidden></span>`;
 }
 
 function printSheet() {
@@ -610,7 +637,7 @@ function recCell(mod, row, field) {
 
 function recAct(mod, row) {
   return `<td class="act">
-    <a class="btn sm" href="${h(recOpenHash(mod, row))}">${ht("열기")}</a>
+    <a class="btn sm" href="${h(recOpenHash(mod, row))}">${ht("수정")}</a>
     <button class="btn sm" data-del="${h(row.id)}" data-mod="${h(mod.id)}" type="button">${ht("삭제")}</button>
   </td>`;
 }
@@ -638,7 +665,11 @@ function recordsView(folderId = "") {
         <h1>${ht("기록 관리")}</h1>
         <p>${ht("모든 폴더의 기록을 한곳에서 찾아 고칩니다.")}</p>
       </div>
-      <input id="q" type="search" placeholder="${ht("검색")}" autocomplete="off" />
+      <div class="head-actions">
+        ${saveNote()}
+        <button class="btn" id="folder-save" type="button">${ht("저장")}</button>
+        <input id="q" type="search" placeholder="${ht("검색")}" autocomplete="off" />
+      </div>
     </div>
     ${groups.map((g) => `<section class="panel rec-pack" data-band>
       <div class="bar compact-bar"><b>${ht(g.title)}</b></div>
@@ -672,9 +703,13 @@ function recordsFolderView(mod) {
     <div class="page-head">
       <div>
         <h1>${h(t(mod.title))}</h1>
-        <p>${ht("이 폴더에 모인 기록입니다. 열기를 누르면 원래 표로 갑니다.")}</p>
+        <p>${ht("이 폴더에 모인 기록입니다. 수정을 누르면 원래 표로 갑니다.")}</p>
       </div>
-      <input id="q" type="search" placeholder="${ht("검색")}" autocomplete="off" />
+      <div class="head-actions">
+        ${saveNote()}
+        <button class="btn" id="folder-save" type="button">${ht("저장")}</button>
+        <input id="q" type="search" placeholder="${ht("검색")}" autocomplete="off" />
+      </div>
     </div>
     <section class="panel rec-pack">
       <div class="bar compact-bar">
@@ -718,6 +753,7 @@ function bindRecords(folderId) {
       render();
     };
   });
+  bindSaveButton();
 }
 
 function moduleView(mod, date, extra) {
@@ -784,7 +820,11 @@ function folderBrowse(mod) {
         <h1>${h(t(mod.title))}</h1>
         <p>${h(t(mod.desc))}</p>
       </div>
-      <button class="btn red sm" id="add-row" type="button">${ht("추가")}</button>
+      <div class="head-actions">
+        ${saveNote()}
+        <button class="btn" id="folder-save" type="button">${ht("저장")}</button>
+        <button class="btn red sm" id="add-row" type="button">${ht("추가")}</button>
+      </div>
     </div>
     ${blocks || `<section class="panel"><p class="mute pad">${ht("아직 기록이 없습니다. 추가로 넣으세요.")}</p></section>`}`;
 }
@@ -799,7 +839,7 @@ function inboundBrowse(mod) {
         <td>${h(r.item || "—")}</td>
         <td>${h(r.qty || "—")}</td>
         <td>${h(r.size || "—")}</td>
-        <td class="act"><a class="btn sm" href="#/${mod.id}/${ym}">${ht("열기")}</a></td>
+        <td class="act"><a class="btn sm" href="#/${mod.id}/${ym}">${ht("수정")}</a></td>
       </tr>`).join("");
     return `<section class="panel rec-pack">
       <div class="bar compact-bar">
@@ -819,7 +859,11 @@ function inboundBrowse(mod) {
         <h1>${h(t(mod.title))}</h1>
         <p>${h(t(mod.desc))}</p>
       </div>
-      <a class="btn red sm" href="#/${mod.id}/${thisMonth()}">${ht("이번 달 표")}</a>
+      <div class="head-actions">
+        ${saveNote()}
+        <button class="btn" id="folder-save" type="button">${ht("저장")}</button>
+        <a class="btn red sm" href="#/${mod.id}/${thisMonth()}">${ht("이번 달 표")}</a>
+      </div>
     </div>
     ${blocks || `<section class="panel"><p class="mute pad">${ht("아직 기록이 없습니다. 이번 달 표에서 적으세요.")}</p></section>`}`;
 }
@@ -863,7 +907,11 @@ function dayView(mod, date) {
   const rows = rowsOn(mod, date);
   return `
     <div class="head compact-head"><div><h1>${h(t(mod.title))}</h1><p>${h(camDay(date))}</p></div>
-      <a class="btn ghost sm" href="#/${mod.id}">${ht("뒤로가기")}</a></div>
+      <div class="head-actions">
+        ${saveNote()}
+        <button class="btn sm" id="folder-save" type="button">${ht("저장")}</button>
+        <a class="btn ghost sm" href="#/${mod.id}">${ht("뒤로가기")}</a>
+      </div></div>
     <section class="panel">
       <div class="bar compact-bar"><b>${h(date)}</b>
         <button class="btn sm red" id="add-row" type="button">${ht("추가")}</button></div>
@@ -1052,10 +1100,13 @@ function fc(f, row) {
 }
 
 function a4Tools(backHref, extras = "") {
+  const extra = String(extras).trim();
   return `<div class="a4-tools no-print">
     ${backHref ? `<a class="btn ghost" href="${h(backHref)}">${ht("뒤로가기")}</a>` : ""}
-    ${extras}
+    ${extra}
+    <button class="btn" id="sheet-save" type="button">${ht("저장")}</button>
     <button class="btn red" id="qa-print" type="button">${ht("인쇄")}</button>
+    ${saveNote()}
   </div>`;
 }
 
@@ -1712,7 +1763,11 @@ function climateView(mod, date) {
   const ym = monthKey(date) || date;
   return `
     <div class="head"><div><h1>${h(mod.title)}</h1><p>${h(monthLabel(ym))} 평면도 · 구역을 끌어서 옮기고, 모서리로 크기·위쪽 점으로 회전합니다.</p></div>
-      <div class="no-print"><a class="btn ghost" href="#/${mod.id}/${ym}">${ht("뒤로가기")}</a></div></div>
+      <div class="head-actions no-print">
+        ${saveNote()}
+        <button class="btn" id="folder-save" type="button">${ht("저장")}</button>
+        <a class="btn ghost" href="#/${mod.id}/${ym}">${ht("뒤로가기")}</a>
+      </div></div>
     <section class="panel">
       <div class="bar"><b>${lab ? "검사실 평면도" : "현장 평면도"}</b>
         <button class="btn sm" id="add-room" type="button">구역 추가</button>
@@ -1742,7 +1797,11 @@ function eqView(mod, date) {
   }).join("");
   return `
     <div class="head compact-head"><div><h1>${h(mod.title)}</h1><p>설비를 누르면 설비일상점검표가 열립니다. 사진과 연·월은 표에서 넣습니다.</p></div>
-      <a class="btn ghost sm" href="#/home">${ht("운영 폴더")}</a></div>
+      <div class="head-actions">
+        ${saveNote()}
+        <button class="btn sm" id="folder-save" type="button">${ht("저장")}</button>
+        <a class="btn ghost sm" href="#/home">${ht("운영 폴더")}</a>
+      </div></div>
     <section class="panel dates-panel">${blocks}</section>`;
 }
 
@@ -2031,7 +2090,11 @@ function camView(mod) {
   </tr>`).join("");
   const path = atRoot ? "업체를 고른 뒤 프로그램을 넣습니다." : `${h(folder.name)} · 프로그램은 넣은 날이 자동으로 적힙니다.`;
   return `<div class="head"><div><h1>${h(mod.title)}</h1><p>${path}</p></div>
-    <a class="btn red sm" href="./cam-lab.html?v=36">가공 프로그램</a></div>
+    <div class="head-actions">
+      ${saveNote()}
+      <button class="btn sm" id="folder-save" type="button">${ht("저장")}</button>
+      <a class="btn red sm" href="./cam-lab.html?v=36">가공 프로그램</a>
+    </div></div>
     <section class="panel">
       <div class="bar">${folder.parent ? `<button class="btn sm" id="up" type="button">업체 목록</button>` : ""}
         ${atRoot ? `<button class="btn sm" id="nf" type="button">업체 추가</button>` : `<button class="btn sm" id="del-vendor" type="button">이 업체 삭제</button>`}
@@ -2100,7 +2163,10 @@ function bindModule(mod, date, extra) {
       return bindShopClimate(mod);
     }
     if (mod.type === "equipment") return bindEq(thisMonth(), "");
-    if (mod.type === "inbound") return;
+    if (mod.type === "inbound") {
+      bindSaveButton();
+      return;
+    }
     bindFolderBrowse(mod);
     return;
   }
@@ -2130,6 +2196,7 @@ function bindFolderBrowse(mod) {
       location.hash = `#/${mod.id}/${d}/${row.id}`;
     };
   });
+  bindSaveButton();
 }
 
 function bindRows(mod, date, extra) {
@@ -2158,6 +2225,7 @@ function bindRows(mod, date, extra) {
     state.records[mod.id] = (state.records[mod.id] || []).filter((x) => x.id !== b.dataset.del);
     persist(); render();
   });
+  bindSaveButton();
 }
 
 function bindInboundMonth(mod, date) {
@@ -2189,6 +2257,7 @@ function bindInboundMonth(mod, date) {
       render();
     };
   });
+  bindSaveButton();
 }
 
 function addBlank(mod, date) {
@@ -2311,6 +2380,7 @@ function bindSheet(mod, id) {
     persist();
     render();
   });
+  bindSaveButton(save);
 }
 
 function edit(mod, row, fields, date) {
@@ -2374,6 +2444,7 @@ function bindMonthGrid(mod) {
     el.closest("td")?.classList.toggle("on", el.checked);
     persist();
   });
+  bindSaveButton();
 }
 
 function bindShopClimate(mod) {
@@ -2428,6 +2499,7 @@ function bindShopClimate(mod) {
       persist();
     };
   });
+  bindSaveButton();
 }
 
 function bindShopFiveS(mod) {
@@ -2478,13 +2550,17 @@ function bindShopFiveS(mod) {
     }
     persist();
   });
+  bindSaveButton();
 }
 
 function bindEq(date, machineId) {
   const eq = eqRoute(date, machineId);
   const ym = eq.ym;
   const id = eq.machineId;
-  if (!id) return;
+  if (!id) {
+    bindSaveButton();
+    return;
+  }
   const pack = eqPack(ym, id);
   const go = (nextYm) => {
     remember("equipment", nextYm);
@@ -2559,6 +2635,7 @@ function bindEq(date, machineId) {
       render();
     };
   });
+  bindSaveButton();
 }
 
 function bindCam() {
@@ -2645,6 +2722,7 @@ function bindCam() {
     e.stopPropagation();
     dropFolder(b.dataset.delFolder);
   });
+  bindSaveButton();
 }
 
 function isCamNc(name, type) {
@@ -2891,6 +2969,7 @@ function bindClimate(mod, date) {
   });
   root.querySelectorAll("[data-rec]").forEach((b) => b.onclick = () => recPoint(mod, date, b.dataset.rec));
   drag(mod, date);
+  bindSaveButton();
 }
 
 function drag(mod, date) {
