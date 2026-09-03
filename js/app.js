@@ -1621,14 +1621,16 @@ function eqSheetView(mod, ym, machineId) {
       <div class="a4-wrap page">
         <article class="a4-sheet month-sheet eq-sheet">
           <header class="eq-head">
-            <div class="eq-ym no-print">
-              <select id="eq-y">${years.map((y) => `<option value="${y}" ${y === year ? "selected" : ""}>${y}</option>`).join("")}</select>
-              <span>년</span>
-              <select id="eq-m">${Array.from({ length: 12 }, (_, i) => i + 1).map((m) => `<option value="${m}" ${m === mon ? "selected" : ""}>${m}</option>`).join("")}</select>
-              <span>월</span>
+            <div class="eq-head-left">
+              <div class="eq-ym no-print">
+                <select id="eq-y">${years.map((y) => `<option value="${y}" ${y === year ? "selected" : ""}>${y}</option>`).join("")}</select>
+                <span>년</span>
+                <select id="eq-m">${Array.from({ length: 12 }, (_, i) => i + 1).map((m) => `<option value="${m}" ${m === mon ? "selected" : ""}>${m}</option>`).join("")}</select>
+                <span>월</span>
+              </div>
+              <p class="eq-ym-print">${year}년 ${mon}월</p>
             </div>
-            <p class="eq-ym-print">${year}년 ${mon}월</p>
-            <h1>설비 일 상 점 검 표</h1>
+            <h1>설비 일상점검표</h1>
             <table class="eq-stamp">
               <tr><th>작성</th><th>승인</th></tr>
               <tr><td><input data-eq-k="writer" value="${h(pack.writer || "")}"></td><td><input data-eq-k="approver" value="${h(pack.approver || "")}"></td></tr>

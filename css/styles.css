@@ -871,27 +871,30 @@ table.checks .chk { width: 72px; text-align: center; }
 }
 .eq-head {
   position: relative;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  min-height: 16mm;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  min-height: 12mm;
   flex: 0 0 auto;
+  column-gap: 8px;
+}
+.eq-head-left {
+  justify-self: start;
+  z-index: 1;
 }
 .eq-head h1 {
-  position: absolute;
-  left: 0;
-  right: 0;
-  margin: 4px 0 0;
+  grid-column: 2;
+  margin: 0;
   text-align: center;
   font-size: 20px;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
   pointer-events: none;
 }
 .eq-ym {
   display: flex;
   align-items: center;
   gap: 4px;
-  z-index: 1;
   font-size: 13px;
 }
 .eq-ym select {
@@ -901,14 +904,30 @@ table.checks .chk { width: 72px; text-align: center; }
   padding: 2px 4px;
 }
 .eq-ym-print { display: none; margin: 0; font-size: 13px; }
-.eq-stamp { width: 44mm; z-index: 1; }
+.eq-stamp {
+  width: 28mm;
+  justify-self: end;
+  z-index: 1;
+  table-layout: fixed;
+  font-size: 11px;
+}
 .eq-stamp th {
   background: #f4d56a;
-  width: 22mm;
+  width: 14mm;
+  height: 5mm;
+  padding: 0;
+  font-size: 11px;
+  font-weight: 700;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
-.eq-stamp td { height: 11mm; padding: 0; }
+.eq-stamp td { height: 7mm; padding: 0; }
+.eq-stamp input {
+  height: 7mm;
+  min-height: 0;
+  text-align: center;
+  font-size: 11px;
+}
 .eq-info th {
   background: #f4d56a;
   width: 18mm;
@@ -1493,7 +1512,8 @@ table.checks .chk { width: 72px; text-align: center; }
   .sheet-5s, .sheet-5s-body { overflow: hidden !important; }
   .eq-ym-print {
     display: block !important;
-    z-index: 1;
+    margin: 0;
+    font-size: 13px;
   }
   .month-scroll { overflow: hidden !important; }
   .eq-sheet { overflow: hidden !important; }
