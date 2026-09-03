@@ -137,18 +137,11 @@ def png_bytes(im):
 
 
 def main():
-    if not LOGO_SRC.exists():
-        raise SystemExit(f"missing Excel logo: {LOGO_SRC}")
     ASSETS.mkdir(exist_ok=True)
-    clean = content_box(knockout_black(Image.open(LOGO_SRC)))
-    logo = wipe_letterhead_rule(flatten_dom_letters(on_white(clean)))
-    ink = logo.convert("L").point(lambda p: 255 if p < 250 else 0)
-    box = ink.getbbox()
-    if box:
-        l, t, r, b = box
-        logo = logo.crop((max(0, l - 4), max(0, t - 4), min(logo.width, r + 4), min(logo.height, b + 4)))
-    logo.save(ASSETS / "dom-logo.png")
-    logo.save(ASSETS / "dom-letterhead.png")
+    logo_path = ASSETS / "dom-logo.png"
+    if not logo_path.exists():
+        raise SystemExit("missing clean wordmark: assets/dom-logo.png")
+    logo = Image.open(logo_path).convert("RGB")
     if SEAL_SRC.exists():
         Image.open(SEAL_SRC).save(ASSETS / "dom-seal.png")
     mark = red_mark(logo.convert("RGBA"))
@@ -164,7 +157,6 @@ def main():
         'width="32" height="32"/></svg>\n',
         encoding="utf-8",
     )
-    print("source", LOGO_SRC)
     print("logo", Image.open(ASSETS / "dom-logo.png").size)
 
 

@@ -4,7 +4,7 @@ export function showRecover(err) {
   root.innerHTML = `
     <div class="login">
       <div class="card">
-        <div class="logo"><span class="brand" aria-label="주식회사 디오엠"><span class="brand-mark">dom</span><span class="brand-type"><span class="brand-co">주식회사</span><span class="brand-name">디오엠</span></span></span></div>
+        <div class="logo"><img class="brand-logo" src="./assets/dom-logo.svg?v=6" alt="주식회사 디오엠"></div>
         <h1>화면을 다시 준비합니다</h1>
         <p>오류가 났지만 사이트와 저장 데이터는 지워지지 않았습니다.</p>
         <p class="err">${msg.replaceAll("<", "&lt;").slice(0, 180)}</p>

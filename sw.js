@@ -1,4 +1,4 @@
-const CACHE = "dom-v106";
+const CACHE = "dom-v107";
 const FILES = [
   "./",
   "./index.html",
@@ -26,6 +26,7 @@ const FILES = [
   "./assets/icon-512.png",
   "./assets/icon-maskable-512.png",
   "./assets/apple-touch-icon.png",
+  "./assets/dom-logo.svg",
   "./assets/dom-logo.png",
   "./assets/dom-letterhead.png",
   "./assets/dom-seal.png",
