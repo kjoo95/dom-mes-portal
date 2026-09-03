@@ -1670,6 +1670,15 @@ table.checks .chk { width: 72px; text-align: center; }
 }
 .inbound-month input[type="date"] { font-size: 12px; min-height: 22px; }
 .inbound-month input[type="number"] { text-align: center; }
+.delivery-day th, .delivery-day td { font-size: 11px; }
+.delivery-day .col-cust { width: 28mm; }
+.delivery-day .col-no { width: 28mm; }
+.delivery-day .col-name { width: 28mm; }
+.delivery-day .col-lot { width: 24mm; }
+.delivery-day .col-qty { width: 16mm; text-align: center; }
+.delivery-day .col-st { width: 22mm; }
+.delivery-day .col-note { width: auto; }
+.delivery-day select { text-align: left; }
 .date-print-wrap {
   display: block;
   width: 100%;
@@ -1856,7 +1865,8 @@ table.checks .chk { width: 72px; text-align: center; }
   }
   .inbound-sheet,
   .qa-a4,
-  .process-a4 {
+  .process-a4,
+  .delivery-sheet {
     width: 210mm !important;
     height: 297mm !important;
     max-height: 297mm !important;
@@ -1896,6 +1906,25 @@ table.checks .chk { width: 72px; text-align: center; }
     font-size: 13px;
   }
   .month-scroll { overflow: hidden !important; }
+  html:has(.delivery-sheet),
+  body:has(.delivery-sheet),
+  .app.print-mode:has(.delivery-sheet),
+  .app.print-mode:has(.delivery-sheet) main {
+    overflow: visible !important;
+    height: auto !important;
+  }
+  .delivery-sheet {
+    height: auto !important;
+    min-height: 297mm !important;
+    max-height: none !important;
+    overflow: visible !important;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+    page-break-after: auto !important;
+  }
+  .delivery-sheet .month-scroll { overflow: visible !important; height: auto !important; }
+  .delivery-day thead { display: table-header-group; }
+  .delivery-day tr { break-inside: avoid; page-break-inside: avoid; }
   .eq-sheet { overflow: hidden !important; }
   .qa-photos, .qa-shot { height: 22mm; min-height: 22mm; flex-basis: 22mm; }
   .qa-meas th, .qa-meas td { height: 6.8mm; }

@@ -217,7 +217,7 @@ export function defaultState() {
       { id: "mail", title: "후이즈 메일", desc: "새 창에서 후이즈 웹메일을 엽니다.", type: "mail" },
       { id: "inbound", title: "원자재 입고 관리", desc: "월 폴더에 A4 한 장으로 적습니다. 날짜, 업체, 자재 품명, 개수, 자재 사이즈 순입니다.", type: "inbound" },
       { id: "process", title: "가공 현황", desc: "품번·품명·날짜별 완료 수량을 관리합니다.", type: "process" },
-      { id: "delivery", title: "납품 일정", desc: "날짜 폴더에서 납품 목록과 표를 봅니다.", type: "delivery" },
+      { id: "delivery", title: "납품 일정", desc: "납품일 한 장에 그날 나가는 품목을 모두 적습니다. 가로줄을 늘려 한 번에 인쇄합니다.", type: "delivery" },
       { id: "quality", title: "품질 관리 현황", desc: "사진과 치수·비고를 성적서 한 장에 기록하고 인쇄합니다.", type: "quality" },
       { id: "climate", title: "현장 온습도 관리", desc: "생산라인 온·습도 점검 체크시트를 연·월을 바꿔 가며 작성합니다.", type: "climate" },
       { id: "five-s", title: "현장 3정5S 관리", desc: "생산라인 3정 5S 체크시트를 연·월을 바꿔 가며 작성합니다.", type: "five-s" },
@@ -242,6 +242,7 @@ export function defaultState() {
       ],
       delivery: [
         { id: "dl-1", date: today, customer: "참테크", partNo: "DOM-HSG-032", partName: "하우징", lot: "LOT-P-8841", qty: 80, status: "출하준비", note: "" },
+        { id: "dl-1b", date: today, customer: "인텔릭스", partNo: "DOM-SFT-018", partName: "샤프트", lot: "LOT-P-8847", qty: 40, status: "출하준비", note: "" },
         { id: "dl-2", date: "2026-09-04", customer: "인텔릭스", partNo: "DOM-SFT-018", partName: "샤프트", lot: "LOT-P-8847", qty: 200, status: "예정", note: "" },
         { id: "dl-3", date: "2026-09-05", customer: "준테크놀러지", partNo: "DOM-FLN-A01", partName: "플랜지", lot: "LOT-P-8850", qty: 120, status: "예정", note: "" },
       ],

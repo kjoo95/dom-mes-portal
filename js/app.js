@@ -3,13 +3,13 @@ import {
   CUSTOMERS, MILL_SHOPS, MACHINES, FIVE_S_SHOP, FIVE_S_LAB, QA_MEASURE_ITEMS,
   EQ_ITEMS, EQ_MARKS,
   fieldsFor, flattenChecks, badgeClass, todayISO,
-} from "./data.js?v=50";
+} from "./data.js?v=51";
 import { loadState, saveState, uid } from "./store.js?v=57";
 import { saveBlob, loadBlob, readAsDataUrl, saveDirHandle, loadDirHandle, removeBlob } from "./files.js?v=39";
 import { parseProgram, decodeCamFile, mayBeCamFile } from "./gcode.js?v=52";
 import { boot, showRecover } from "./safety.js?v=39";
 import { chatView, bindChat } from "./comm.js?v=51";
-import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=59";
+import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=60";
 
 const WHOIS_MAIL = "https://email.whois.co.kr/v2/";
 
@@ -193,6 +193,7 @@ function isPrintPage(mod, extra, date) {
   if (["climate", "lab-climate", "five-s", "lab-5s"].includes(mod?.type) && extra !== "map") return true;
   if (isMonthMod(mod) && date && extra !== "map") return true;
   if (mod?.type === "inbound" && date && !extra) return true;
+  if (mod?.type === "delivery" && date) return true;
   if (!extra) return false;
   if (isSheetMod(mod)) return true;
   return false;
@@ -593,9 +594,7 @@ function sheetUsed(mod, r) {
   if (mod.type === "quality") {
     return Boolean(String(r.partNo || r.partName || r.lot || r.inspector || "").trim() || r.qtyIn || r.qtyOut || r.status);
   }
-  if (mod.type === "delivery") {
-    return Boolean(String(r.partNo || r.partName || r.customer || r.note || "").trim() || r.qty || r.status);
-  }
+  if (mod.type === "delivery") return deliveryUsed(r);
   if (mod.type === "defect") {
     return Boolean(String(r.partNo || r.partName || r.type || r.action || "").trim() || r.qty);
   }
@@ -743,6 +742,7 @@ function recordsPeekView(mod, rowId) {
   const row = recRowsOf(mod).find((r) => r.id === rowId) || (state.records[mod.id] || []).find((r) => r.id === rowId);
   if (!row) return recordsFolderView(mod);
   const date = recDate(row, mod.type) || todayISO();
+  if (mod.type === "delivery") return deliveryDayView(mod, date, true);
   return printDocView(mod, date, row.id, true);
 }
 
@@ -783,6 +783,7 @@ function moduleView(mod, date, extra) {
     if (mod.type === "climate") return shopClimateView(mod, thisMonth());
     if (mod.type === "lab-climate") return shopClimateView(mod, thisMonth());
     if (mod.type === "inbound") return inboundBrowse(mod);
+    if (mod.type === "delivery") return deliveryBrowse(mod);
     return folderBrowse(mod);
   }
   if (mod.type === "climate") {
@@ -799,6 +800,10 @@ function moduleView(mod, date, extra) {
     const ym = monthKey(date) || date;
     padInboundRows(mod, ym);
     return inboundMonthView(mod, ym);
+  }
+  if (mod.type === "delivery") {
+    padDeliveryRows(mod, date);
+    return deliveryDayView(mod, date);
   }
   if (mod.type === "equipment") {
     const eq = eqRoute(date, extra);
@@ -881,6 +886,47 @@ function inboundBrowse(mod) {
     ${blocks || `<section class="panel"><p class="mute pad">${ht("아직 기록이 없습니다. 이번 달 표에서 적으세요.")}</p></section>`}`;
 }
 
+function deliveryBrowse(mod) {
+  const dates = datesOf(mod);
+  const blocks = dates.map((d) => {
+    const rows = rowsOn(mod, d).filter(deliveryUsed);
+    const body = rows.map((r) => `<tr>
+        <td>${h(r.customer || "—")}</td>
+        <td>${h(r.partNo || "—")}</td>
+        <td>${h(r.partName || "—")}</td>
+        <td>${h(r.lot || "—")}</td>
+        <td>${h(r.qty || "—")}</td>
+        <td>${h(t(r.status || "—"))}</td>
+        <td class="act"><a class="btn sm" href="#/${mod.id}/${d}">${ht("수정")}</a></td>
+      </tr>`).join("");
+    return `<section class="panel rec-pack">
+      <div class="bar compact-bar">
+        <b>${h(camDay(d))}</b>
+        <span class="mute">${ht("{n}건", { n: rows.length })}</span>
+        <a class="btn sm red" href="#/${mod.id}/${d}">${ht("표 열기")}</a>
+      </div>
+      <div class="scroll"><table class="rows rec-table"><thead><tr>
+        <th>${ht("납품 회사")}</th><th>${ht("품번")}</th><th>${ht("품명")}</th><th>${ht("LOT")}</th><th>${ht("수량")}</th><th>${ht("상태")}</th><th></th>
+      </tr></thead>
+      <tbody>${body || `<tr><td colspan="7">${ht("이 날짜에 적힌 납품이 없습니다.")}</td></tr>`}</tbody></table></div>
+    </section>`;
+  }).join("");
+  return `
+    <div class="page-head">
+      <div>
+        <h1>${h(t(mod.title))}</h1>
+        <p>${h(t(mod.desc))}</p>
+      </div>
+      <div class="head-actions">
+        ${saveNote()}
+        <button class="btn" id="folder-save" type="button">${ht("저장")}</button>
+        <button class="btn sm" id="open-delivery-date" type="button">${ht("날짜 열기")}</button>
+        <a class="btn red sm" href="#/${mod.id}/${todayISO()}">${ht("오늘 표")}</a>
+      </div>
+    </div>
+    ${blocks || `<section class="panel"><p class="mute pad">${ht("아직 기록이 없습니다. 오늘 표에서 적으세요.")}</p></section>`}`;
+}
+
 function dateIndex(mod) {
   const month = isMonthFolder(mod);
   const folders = datesOf(mod).map((d) => `
@@ -911,6 +957,7 @@ function count(mod, date) {
     return t("{n}일 점검", { n: days });
   }
   if (mod.type === "inbound") return t("{n}건", { n: rowsOn(mod, date).filter(inboundUsed).length });
+  if (mod.type === "delivery") return t("{n}건", { n: rowsOn(mod, date).filter(deliveryUsed).length });
   if (mod.type === "mastercam") return t("{n}개 파일", { n: (state.cam.files || []).filter((f) => f.date === date).length });
   if (mod.type === "equipment") return t("{n}대", { n: MACHINES.length });
   return t("{n}건", { n: rowsOn(mod, date).length });
@@ -941,11 +988,29 @@ function inboundUsed(r) {
   );
 }
 
+function deliveryUsed(r) {
+  return Boolean(
+    String(r.partNo || r.partName || r.lot || r.note || "").trim()
+    || r.qty
+  );
+}
+
 function padInboundRows(mod, ym) {
   let n = rowsOn(mod, ym).length;
   let added = 0;
   while (n < 22) {
     addBlank(mod, ym);
+    n += 1;
+    added += 1;
+  }
+  if (added) persist();
+}
+
+function padDeliveryRows(mod, date) {
+  let n = rowsOn(mod, date).length;
+  let added = 0;
+  while (n < 20) {
+    addBlank(mod, date);
     n += 1;
     added += 1;
   }
@@ -972,6 +1037,18 @@ function syncPrintDate(el) {
 function inboundCell(row, key, type, placeholder) {
   const val = row[key] ?? "";
   if (type === "date") return datePrintField(`data-in="${h(row.id)}" data-k="${key}"`, val);
+  return `<input data-in="${h(row.id)}" data-k="${key}" type="${type}" value="${h(val)}"${placeholder ? ` placeholder="${h(placeholder)}"` : ""}>`;
+}
+
+function deliveryCell(row, key, type, placeholder) {
+  const val = row[key] ?? "";
+  if (type === "select") {
+    const opts = key === "customer" ? CUSTOMERS : ["예정", "출하준비", "출하완료"];
+    const extra = val && !opts.includes(val) ? `<option value="${h(val)}" selected>${h(val)}</option>` : "";
+    return `<select data-in="${h(row.id)}" data-k="${key}">
+      <option value=""></option>${extra}${opts.map((o) => `<option value="${h(o)}" ${o === val ? "selected" : ""}>${h(t(o))}</option>`).join("")}
+    </select>`;
+  }
   return `<input data-in="${h(row.id)}" data-k="${key}" type="${type}" value="${h(val)}"${placeholder ? ` placeholder="${h(placeholder)}"` : ""}>`;
 }
 
@@ -1013,6 +1090,51 @@ function inboundMonthView(mod, ym) {
           </div>
           <div class="a4-sign">
             <span>${ht("입고")}</span><span>${ht("확인")}</span><span>${ht("승인")}</span>
+          </div>
+        </article>
+      </div>
+    </div>`;
+}
+
+function deliveryDayView(mod, date, viewOnly = false) {
+  const rows = rowsOn(mod, date);
+  const delHead = viewOnly ? "" : `<th class="no-print"></th>`;
+  const body = rows.map((r) => `<tr>
+      <td class="col-cust">${deliveryCell(r, "customer", "select")}</td>
+      <td class="col-no">${deliveryCell(r, "partNo", "text", t("품번"))}</td>
+      <td class="col-name">${deliveryCell(r, "partName", "text", t("품명"))}</td>
+      <td class="col-lot">${deliveryCell(r, "lot", "text", t("LOT"))}</td>
+      <td class="col-qty">${deliveryCell(r, "qty", "number")}</td>
+      <td class="col-st">${deliveryCell(r, "status", "select")}</td>
+      <td class="col-note">${deliveryCell(r, "note", "text", t("비고"))}</td>
+      ${viewOnly ? "" : `<td class="act no-print"><button class="btn sm" data-del="${r.id}" type="button">${ht("삭제")}</button></td>`}
+    </tr>`).join("");
+  const back = viewOnly ? `#/records/${mod.id}` : `#/${mod.id}`;
+  const extra = viewOnly ? "" : `<button class="btn" id="add-row" type="button">${ht("가로줄 추가")}</button>`;
+  return `
+    <div class="print-page${viewOnly ? " view-only" : ""}">
+      ${a4Tools(back, extra, viewOnly)}
+      <div class="a4-wrap page">
+        <article class="a4-sheet inbound-sheet delivery-sheet">
+          ${a4Head(t("납품 명세서"), date, true)}
+          <p class="a4-sub">${ht("납품일")} ${h(printDateText(date))}</p>
+          <div class="a4-grow month-scroll">
+            <table class="month-grid inbound-month delivery-day">
+              <thead><tr>
+                <th class="col-cust">${ht("납품 회사")}</th>
+                <th class="col-no">${ht("품번")}</th>
+                <th class="col-name">${ht("품명")}</th>
+                <th class="col-lot">${ht("LOT")}</th>
+                <th class="col-qty">${ht("수량")}</th>
+                <th class="col-st">${ht("상태")}</th>
+                <th class="col-note">${ht("비고")}</th>
+                ${delHead}
+              </tr></thead>
+              <tbody>${body}</tbody>
+            </table>
+          </div>
+          <div class="a4-sign">
+            <span>${ht("담당")}</span><span>${ht("출하")}</span><span>${ht("인수")}</span>
           </div>
         </article>
       </div>
@@ -1070,19 +1192,19 @@ function qualitySheet(rows, date, modId, quiet = false) {
 
 function deliverySheet(rows, date, modId, quiet = false) {
   const body = rows.map((r) => `<tr class="qa-row">
-      <td class="act"><a class="btn sm" href="#/${modId}/${date}/${r.id}">수정</a>
-        <a class="btn sm red" href="#/${modId}/${date}/${r.id}">보기·인쇄</a></td>
+      <td class="act"><a class="btn sm" href="#/${modId}/${date}">${ht("수정")}</a>
+        <a class="btn sm red" href="#/${modId}/${date}">${ht("표 열기")}</a></td>
       <td>${h(r.customer)}</td>
       <td>${h(r.partNo)}</td>
       <td>${h(r.partName)}</td>
       <td>${h(r.lot)}</td>
       <td>${h(r.qty ?? "")}</td>
-      <td>${h(r.status)}</td>
+      <td>${h(t(r.status || ""))}</td>
     </tr>`).join("");
-  return `${quiet ? "" : `<p class="mute pad">표 페이지에서 납품 내용을 고치고 인쇄할 수 있습니다.</p>`}
+  return `${quiet ? "" : `<p class="mute pad">${ht("그날 나가는 품목을 한 장에 모아 적고 인쇄합니다.")}</p>`}
     <div class="scroll"><table class="rows">
-    <thead><tr><th></th><th>납품 회사</th><th>품번</th><th>품명</th><th>LOT</th><th>수량</th><th>상태</th></tr></thead>
-    <tbody>${body || `<tr><td colspan="7">이 날짜 기록이 없습니다. 추가로 납품 내용을 넣으세요.</td></tr>`}</tbody>
+    <thead><tr><th></th><th>${ht("납품 회사")}</th><th>${ht("품번")}</th><th>${ht("품명")}</th><th>${ht("LOT")}</th><th>${ht("수량")}</th><th>${ht("상태")}</th></tr></thead>
+    <tbody>${body || `<tr><td colspan="7">${ht("이 날짜에 적힌 납품이 없습니다.")}</td></tr>`}</tbody>
   </table></div>`;
 }
 
@@ -1124,6 +1246,7 @@ function a4Tools(backHref, extras = "", viewOnly = false) {
 }
 
 function printDocView(mod, date, id, viewOnly = false) {
+  if (mod.type === "delivery") return deliveryDayView(mod, date, viewOnly);
   const row = (state.records[mod.id] || []).find((x) => x.id === id);
   if (!row) return mod.type === "inbound" ? inboundMonthView(mod, monthKey(date) || date) : dayView(mod, date);
   const photos = mod.type === "quality" || mod.type === "defect" || mod.type === "process";
@@ -2181,6 +2304,21 @@ function bindModule(mod, date, extra) {
       bindSaveButton();
       return;
     }
+    if (mod.type === "delivery") {
+      document.getElementById("open-delivery-date")?.addEventListener("click", () => form(
+        "납품일",
+        [{ key: "date", label: "납품일", type: "date" }],
+        { date: todayISO() },
+        (v) => {
+          remember(mod.id, v.date);
+          persist();
+          location.hash = `#/${mod.id}/${v.date}`;
+          render();
+        }
+      ));
+      bindSaveButton();
+      return;
+    }
     bindFolderBrowse(mod);
     return;
   }
@@ -2191,6 +2329,7 @@ function bindModule(mod, date, extra) {
   }
   if (mod.type === "five-s" || mod.type === "lab-5s") return bindShopFiveS(mod);
   if (mod.type === "inbound") return bindInboundMonth(mod, date);
+  if (mod.type === "delivery") return bindDeliveryDay(mod, date);
   if (mod.type === "equipment") return bindEq(date, extra);
   bindRows(mod, date, extra);
 }
@@ -2274,6 +2413,38 @@ function bindInboundMonth(mod, date) {
   bindSaveButton();
 }
 
+function bindDeliveryDay(mod, date) {
+  document.getElementById("qa-print")?.addEventListener("click", printSheet);
+  document.getElementById("add-row")?.addEventListener("click", () => {
+    addBlank(mod, date);
+    persist();
+    render();
+  });
+  root.querySelectorAll("[data-in]").forEach((el) => {
+    const save = () => {
+      const row = (state.records[mod.id] || []).find((x) => x.id === el.dataset.in);
+      if (!row) return;
+      const key = el.dataset.k;
+      if (!key) return;
+      row[key] = key === "qty" && el.value !== "" ? Number(el.value) : el.value;
+      row.date = date;
+      remember(mod.id, date);
+      persist();
+    };
+    el.onchange = save;
+    el.oninput = save;
+  });
+  root.querySelectorAll("[data-del]").forEach((b) => {
+    b.onclick = () => {
+      if (!confirm(t("삭제할까요?"))) return;
+      state.records[mod.id] = (state.records[mod.id] || []).filter((x) => x.id !== b.dataset.del);
+      persist();
+      render();
+    };
+  });
+  bindSaveButton();
+}
+
 function addBlank(mod, date) {
   const fields = fieldsFor(mod.type).filter((f) => f.key !== "progress");
   const row = { id: uid("r"), photos: [] };
@@ -2286,7 +2457,11 @@ function addBlank(mod, date) {
     row.progress = 0;
     row.status = "예정";
   }
-  if (mod.type === "delivery") { row.customer = CUSTOMERS[0]; row.status = "예정"; }
+  if (mod.type === "delivery") {
+    row.customer = "";
+    row.status = "";
+    row.date = date || todayISO();
+  }
   if (mod.type === "quality") {
     row.millCompany = "디오엠";
     row.customer = CUSTOMERS[0];
@@ -2303,7 +2478,7 @@ function addBlank(mod, date) {
     row.qty = "";
   }
   if (!state.records[mod.id]) state.records[mod.id] = [];
-  if (mod.type === "inbound") state.records[mod.id].push(row);
+  if (mod.type === "inbound" || mod.type === "delivery") state.records[mod.id].push(row);
   else state.records[mod.id].unshift(row);
   remember(mod.id, recDate(row, mod.type) || date);
   return row;
