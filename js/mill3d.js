@@ -1,4 +1,4 @@
-import { toolR, toolColor, accTime } from "./gcode.js?v=45";
+import { toolSpec, accTime } from "./gcode.js?v=47";
 
 function bboxOf(job) {
   const b = job?.bbox;
@@ -157,9 +157,10 @@ void main() {
 }
 `;
 
-function makeToolMesh(t, topZ, minZ) {
-  const cutR = Math.max(toolR(t), 0.9);
-  const body = hexRgb(toolColor(t));
+function makeToolMesh(t, topZ, minZ, lib) {
+  const spec = toolSpec(t, lib);
+  const cutR = Math.max(spec.r, 0.2);
+  const body = hexRgb(spec.color);
   const bodyDk = [body[0] * 0.72, body[1] * 0.72, body[2] * 0.72];
   const steel = [0.78, 0.82, 0.86];
   const steelDk = [0.62, 0.66, 0.7];
@@ -247,6 +248,8 @@ export function createMill(job) {
   rows = Math.max(90, Math.round(rows / over));
   const dx = (spanX) / Math.max(1, cols - 1);
   const dy = (spanY) / Math.max(1, rows - 1);
+  const lib = job.toolLib || {};
+  const rOf = (t, p) => Math.max(p?.d ? p.d / 2 : toolSpec(t, lib).r, 0.15);
   const height = new Float32Array(cols * rows);
   const base = new Float32Array(cols * rows);
   let pts = pts0;
@@ -298,7 +301,7 @@ export function createMill(job) {
       if (q.rapid) continue;
       const len = Math.max(s1 - s0, 0.001);
       const steps = Math.max(1, Math.ceil(len / step));
-      const r = toolR(q.t || p.t);
+      const r = rOf(q.t || p.t, q);
       for (let k = 0; k <= steps; k += 1) {
         const s = s0 + (len * k) / steps;
         if (s < a0 || s > a1) continue;
@@ -636,7 +639,7 @@ export function createMill(job) {
   function ensureTool(t) {
     const n = Number(t) || 1;
     if (gpu.tool && Number(gpu.toolT) === n) return;
-    const mesh = makeToolMesh(n, topZ, minZ);
+    const mesh = makeToolMesh(n, topZ, minZ, lib);
     gpu.tool = {
       pos: buffer(mesh.pos),
       nrm: buffer(mesh.nrm),
@@ -803,9 +806,9 @@ export function createMill(job) {
     }
     if (tool) {
       const p = pr(tool.x, tool.y, tool.z ?? topZ);
-      ctx.fillStyle = toolColor(tool.t);
+      ctx.fillStyle = toolSpec(tool.t, lib).color;
       ctx.beginPath();
-      ctx.arc(p.x, p.y, Math.max(5, toolR(tool.t) * scale * 0.9), 0, Math.PI * 2);
+      ctx.arc(p.x, p.y, Math.max(5, rOf(tool.t, tool) * scale * 0.9), 0, Math.PI * 2);
       ctx.fill();
     }
   }

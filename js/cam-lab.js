@@ -1,8 +1,8 @@
 import { getSession, logout, isInternalNetwork } from "./auth.js?v=45";
 import { loadState, saveState, uid } from "./store.js";
-import { collectStats, optimizeJob, toNc, toJson, accTime, toolOps, toolSpec } from "./gcode.js?v=45";
+import { collectStats, optimizeJob, toNc, toJson, accTime, toolOps, toolSpec } from "./gcode.js?v=47";
 import { boot } from "./safety.js";
-import { createMill } from "./mill3d.js?v=25";
+import { createMill } from "./mill3d.js?v=27";
 import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=42";
 
 const root = document.getElementById("app");
@@ -63,7 +63,7 @@ function render() {
     opJob = job;
   }
   const stats = collectStats(job ? [job] : []);
-  const seq = job?.seq || toolOps(job?.points || []);
+  const seq = job?.seq || toolOps(job?.points || [], job?.toolLib);
   if (opIndex >= seq.length) opIndex = Math.max(0, seq.length - 1);
   const curOp = seq[opIndex];
   const cycle = job?.timeMin || 0;
@@ -72,7 +72,7 @@ function render() {
   const stock = job?.stock || mill?.stock;
   const nextOp = seq[opIndex + 1];
   const nextLabel = nextOp ? `다음 공구 T${nextOp.tool}` : "마지막 공구";
-  const spec = curOp ? toolSpec(curOp.tool) : null;
+  const spec = curOp ? toolSpec(curOp.tool, job?.toolLib) : null;
   const statLine = job
     ? `${h(job.partName || job.name)} · ${seq.map((o, i) => `${i === opIndex ? "▶ " : ""}T${o.tool}`).join(" → ")} · 소재 ${stock ? `${stock.w}×${stock.d}×${stock.h} mm` : "—"}`
     : "마스터캠 폴더에 프로그램을 올리면 여기 쌓입니다.";
@@ -208,7 +208,7 @@ function render() {
   document.getElementById("reset").onclick = () => {
     sim.playing = false;
     const jobNow = current();
-    const seqNow = jobNow?.seq || toolOps(jobNow?.points || []);
+    const seqNow = jobNow?.seq || toolOps(jobNow?.points || [], jobNow?.toolLib);
     sim.t = seqNow[opIndex]?.t0 || 0;
     const btn = document.getElementById("play");
     if (btn) btn.textContent = "시뮬레이션";
@@ -229,7 +229,7 @@ function render() {
   document.getElementById("next-op")?.addEventListener("click", () => {
     const src = current();
     if (!src) return;
-    const seqNow = src.seq || toolOps(src.points || []);
+    const seqNow = src.seq || toolOps(src.points || [], src.toolLib);
     if (!seqNow.length) return;
     if (!mill) mill = createMill(src);
     const cur = seqNow[Math.min(opIndex, seqNow.length - 1)];
@@ -363,7 +363,7 @@ function syncTime(pos) {
   set("t-remain", formatMin(Math.max(0, cycle - elapsed)));
   const pathJob = opJob || job;
   const p = pos || (pathJob?.points?.length ? at(pathJob.points, sim.t) : null);
-  const spec = p ? toolSpec(p.t) : null;
+  const spec = p ? toolSpec(p.t, pathJob?.toolLib) : null;
   set("t-tool", spec ? `T${spec.t} ${spec.name}` : "—");
   if (!p) {
     set("t-feed", "—");
@@ -399,11 +399,11 @@ function draw() {
   }
   const pathJob = opJob || job;
   const pos = at(pathJob.points, sim.t);
-  const seqNow = pathJob.seq || toolOps(pathJob.points || []);
+  const seqNow = pathJob.seq || toolOps(pathJob.points || [], pathJob.toolLib);
   let hit = 0;
   seqNow.forEach((o, i) => { if (sim.t >= o.t0 - 1e-6) hit = i; });
   opIndex = hit;
-  const specNow = toolSpec(pos.t);
+  const specNow = toolSpec(pos.t, pathJob.toolLib);
   const cycle = job.timeMin || 0;
   const mode = pos.rapid ? "급속이송" : pos.change ? "공구교환" : "절삭";
   const fs = pos.change ? "" : pos.rapid ? `  S${Math.round(pos.s || 0)}` : `  F${Math.round(pos.f || 0)}  S${Math.round(pos.s || 0)}`;
