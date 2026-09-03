@@ -27,6 +27,21 @@ function persist() {
   try { saveState(state); } catch { /* 백업은 store에서 유지 */ }
 }
 
+function printSheet() {
+  const sheet = document.querySelector(".a4-sheet");
+  const land = sheet?.classList.contains("month-sheet");
+  let tag = document.getElementById("print-size");
+  if (!tag) {
+    tag = document.createElement("style");
+    tag.id = "print-size";
+    document.head.appendChild(tag);
+  }
+  tag.textContent = land
+    ? "@media print { @page { size: A4 landscape; margin: 0; } }"
+    : "@media print { @page { size: A4 portrait; margin: 0; } }";
+  window.print();
+}
+
 function route() {
   const p = location.hash.replace(/^#\/?/, "").split("/").filter(Boolean);
   if (!p.length || p[0] === "home") return { page: "home" };
@@ -1749,7 +1764,7 @@ function bindRows(mod, date, extra) {
 
 function bindInboundMonth(mod, date) {
   const ym = monthKey(date) || date;
-  document.getElementById("qa-print")?.addEventListener("click", () => window.print());
+  document.getElementById("qa-print")?.addEventListener("click", printSheet);
   document.getElementById("add-row")?.addEventListener("click", () => {
     addBlank(mod, ym);
     persist();
@@ -1815,7 +1830,7 @@ function addBlank(mod, date) {
 function bindSheet(mod, id) {
   const row = (state.records[mod.id] || []).find((x) => x.id === id);
   const formEl = document.getElementById("sheet-form");
-  document.getElementById("qa-print")?.addEventListener("click", () => window.print());
+  document.getElementById("qa-print")?.addEventListener("click", printSheet);
   formEl?.addEventListener("submit", (e) => e.preventDefault());
   const save = () => {
     if (!row || !formEl) return;
@@ -1928,7 +1943,7 @@ function edit(mod, row, fields, date) {
 }
 
 function bindMonthGrid(mod) {
-  document.getElementById("qa-print")?.addEventListener("click", () => window.print());
+  document.getElementById("qa-print")?.addEventListener("click", printSheet);
   root.querySelectorAll("[data-iso][data-id]").forEach((el) => el.onchange = () => {
     setMonthCheck(mod, el.dataset.k, el.dataset.iso, el.dataset.id, el.checked);
     const mark = el.parentElement?.querySelector(".print-mark");
@@ -1952,7 +1967,7 @@ function bindShopClimate(mod) {
     if (location.hash.replace(/^#\/?/, "") === `${mod.id}/${ym}`) render();
     else location.hash = next;
   };
-  document.getElementById("qa-print")?.addEventListener("click", () => window.print());
+  document.getElementById("qa-print")?.addEventListener("click", printSheet);
   document.getElementById("clim-prev")?.addEventListener("click", () => go(shiftMonth(monthOf(), -1)));
   document.getElementById("clim-next")?.addEventListener("click", () => go(shiftMonth(monthOf(), 1)));
   document.getElementById("clim-y")?.addEventListener("change", () => go(monthOf()));
@@ -2007,7 +2022,7 @@ function bindShopFiveS(mod) {
     if (location.hash.replace(/^#\/?/, "") === `${mod.id}/${ym}`) render();
     else location.hash = next;
   };
-  document.getElementById("qa-print")?.addEventListener("click", () => window.print());
+  document.getElementById("qa-print")?.addEventListener("click", printSheet);
   document.getElementById("five-prev")?.addEventListener("click", () => go(shiftMonth(monthOf(), -1)));
   document.getElementById("five-next")?.addEventListener("click", () => go(shiftMonth(monthOf(), 1)));
   document.getElementById("five-y")?.addEventListener("change", () => go(monthOf()));
@@ -2059,7 +2074,7 @@ function bindEq(date, machineId) {
     if (!y || !m) return ym;
     return `${y}-${String(Number(m)).padStart(2, "0")}`;
   };
-  document.getElementById("qa-print")?.addEventListener("click", () => window.print());
+  document.getElementById("qa-print")?.addEventListener("click", printSheet);
   document.getElementById("eq-prev")?.addEventListener("click", () => go(shiftMonth(monthOf(), -1)));
   document.getElementById("eq-next")?.addEventListener("click", () => go(shiftMonth(monthOf(), 1)));
   document.getElementById("eq-y")?.addEventListener("change", () => go(monthOf()));

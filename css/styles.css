@@ -414,7 +414,7 @@ table.checks .chk { width: 72px; text-align: center; }
   color: inherit;
 }
 .a4-sheet textarea { min-height: 0; resize: vertical; }
-.a4-sheet textarea.a4-note { height: 100%; min-height: 28mm; }
+.a4-sheet textarea.a4-note { height: 100%; min-height: 16mm; }
 .a4-sheet input[type="checkbox"] {
   width: 18px;
   height: 18px;
@@ -447,12 +447,14 @@ table.checks .chk { width: 72px; text-align: center; }
   width: 210mm;
   height: 297mm;
   min-height: 297mm;
+  max-height: 297mm;
   background: #fff;
   color: #111;
-  padding: 9mm 11mm 8mm;
+  padding: 8mm 9mm 7mm;
   box-shadow: 0 8px 28px rgba(0,0,0,.25);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 .a4-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; border-bottom: 2px solid #c41e3a; padding-bottom: 5px; margin-bottom: 8px; flex: 0 0 auto; }
 .a4-head b { color: #c41e3a; font-size: 22px; letter-spacing: -0.06em; }
@@ -547,12 +549,12 @@ table.checks .chk { width: 72px; text-align: center; }
 .a4-process-main .a4-meta { border: 0; }
 .process-a4 .detail-row th,
 .process-a4 .detail-row td {
-  height: 28mm;
+  height: 18mm;
   vertical-align: top;
 }
 .process-a4 .detail-row textarea {
-  min-height: 24mm;
-  height: 24mm;
+  min-height: 14mm;
+  height: 14mm;
 }
 .a4-process-detail h2,
 .a4-process-photo h2 {
@@ -606,8 +608,8 @@ table.checks .chk { width: 72px; text-align: center; }
 .a4-meas td:nth-child(2) { text-align: left; }
 .a4-grow { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
 .a4-grow > table { flex: 1; height: 100%; }
-.a4-photos { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; min-height: 42mm; align-content: start; }
-.a4-photos img { width: 52mm; height: 40mm; object-fit: cover; border: 1px solid #ccc; }
+.a4-photos { display: flex; flex-wrap: wrap; gap: 4px; flex: 1; min-height: 0; align-content: start; overflow: hidden; }
+.a4-photos img { width: 42mm; height: 32mm; object-fit: cover; border: 1px solid #ccc; }
 .a4-process-photo .a4-photos {
   display: grid;
   gap: 0;
@@ -628,9 +630,9 @@ table.checks .chk { width: 72px; text-align: center; }
   border-right: 1px solid #111;
   border-bottom: 1px solid #111;
 }
-.a4-empty { color: #888; font-size: 12px; flex: 1; display: grid; place-items: center; border: 1px dashed #bbb; background: #fafafa; min-height: 36mm; }
-.a4-sign { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 8px; flex: 0 0 auto; }
-.a4-sign span { border: 1px solid #222; padding: 4px 0 0; text-align: center; font-size: 11px; height: 14mm; }
+.a4-empty { color: #888; font-size: 12px; flex: 1; display: grid; place-items: center; border: 1px dashed #bbb; background: #fafafa; min-height: 20mm; }
+.a4-sign { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 6px; flex: 0 0 auto; }
+.a4-sign span { border: 1px solid #222; padding: 3px 0 0; text-align: center; font-size: 11px; height: 12mm; }
 .qa-a4 { overflow: hidden; }
 .qa-a4 .a4-head { margin-bottom: 5px; padding-bottom: 3px; }
 .qa-a4 .a4-meta { font-size: 11px; }
@@ -669,7 +671,7 @@ table.checks .chk { width: 72px; text-align: center; }
 .qa-a4 .a4-sign { margin-top: 5px; }
 .qa-a4 .a4-sign span { height: 11mm; }
 .qa-a4 { break-inside: avoid; page-break-inside: avoid; }
-.month-sheet { width: 297mm; height: 210mm; min-height: 210mm; padding: 7mm 8mm 6mm; }
+.month-sheet { width: 297mm; height: 210mm; min-height: 210mm; max-height: 210mm; padding: 5mm 6mm 4mm; overflow: hidden; }
 .month-sheet .a4-tools { width: min(297mm, 100%); }
 .eq-sheet {
   display: flex;
@@ -743,8 +745,8 @@ table.checks .chk { width: 72px; text-align: center; }
 .eq-shot {
   display: grid;
   place-items: center;
-  height: 20mm;
-  margin: 3px 0;
+  height: 14mm;
+  margin: 2px 0;
   border: 1px solid #888;
   background: #f4f4f2;
   cursor: pointer;
@@ -807,8 +809,8 @@ table.checks .chk { width: 72px; text-align: center; }
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
-.eq-machine img { flex: 1; width: 100%; min-height: 32mm; object-fit: cover; }
-.eq-machine span { flex: 1; display: grid; place-items: center; color: #888; min-height: 32mm; }
+.eq-machine img { flex: 1; width: 100%; min-height: 22mm; object-fit: cover; }
+.eq-machine span { flex: 1; display: grid; place-items: center; color: #888; min-height: 22mm; }
 .month-scroll { overflow: auto; flex: 1; min-height: 0; }
 .month-grid { width: 100%; height: 100%; border-collapse: collapse; font-size: 10px; }
 .month-grid th, .month-grid td { border: 1px solid #222; padding: 2px 1px; text-align: center; }
@@ -908,7 +910,8 @@ table.checks .chk { width: 72px; text-align: center; }
 }
 .sheet-5s-note textarea {
   width: 100%;
-  min-height: 18mm;
+  min-height: 12mm;
+  height: 12mm;
   border: 0;
   padding: 4px 8px;
   resize: none;
@@ -970,7 +973,7 @@ table.checks .chk { width: 72px; text-align: center; }
   border: 1px solid #111;
   text-align: center;
   padding: 0;
-  height: 6.2mm;
+  height: 5.4mm;
 }
 .clim-grid thead th { background: #fafafa; font-weight: 700; }
 .clim-grid col.c-no { width: 8mm; }
@@ -1001,7 +1004,7 @@ table.checks .chk { width: 72px; text-align: center; }
 .clim-grid td.lux input {
   width: 100%;
   min-width: 0;
-  height: 6.2mm;
+  height: 5.4mm;
   border: 0;
   background: transparent;
   text-align: center;
@@ -1053,13 +1056,13 @@ table.checks .chk { width: 72px; text-align: center; }
   font-weight: 700;
 }
 .inbound-month { table-layout: fixed; }
-.inbound-month th, .inbound-month td { text-align: left; padding: 2px 6px; height: 8.2mm; }
+.inbound-month th, .inbound-month td { text-align: left; padding: 1px 6px; height: 7.2mm; }
 .inbound-month .col-date { width: 32mm; }
 .inbound-month .col-vendor { width: 30mm; }
 .inbound-month .col-item { width: 34mm; }
 .inbound-month .col-qty { width: 16mm; text-align: center; }
 .inbound-month .col-size { width: 42%; }
-.inbound-month tbody tr { height: 8.2mm; }
+.inbound-month tbody tr { height: 7.2mm; }
 .inbound-month input, .inbound-month select {
   width: 100%;
   min-width: 0;
@@ -1153,19 +1156,44 @@ table.checks .chk { width: 72px; text-align: center; }
 .mail-panel code { font-size: 12px; }
 
 @media print {
-  @page { size: A4 portrait; margin: 12mm; }
-  @page month { size: A4 landscape; margin: 8mm; }
+  @page { size: A4 portrait; margin: 0; }
+  @page month { size: A4 landscape; margin: 0; }
   .month-sheet { page: month; }
-  html, body, #app { background: #fff !important; }
+  html, body, #app {
+    background: #fff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: auto !important;
+    height: auto !important;
+    overflow: hidden !important;
+  }
   .app > header, .app > aside, .no-print, #modal { display: none !important; }
-  .app.print-mode { display: block; background: #fff; }
-  .app.print-mode main { display: block !important; background: #fff; padding: 0; overflow: visible; }
+  .app.print-mode {
+    display: block !important;
+    background: #fff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: auto !important;
+    height: auto !important;
+    overflow: hidden !important;
+  }
+  .app.print-mode main {
+    display: block !important;
+    background: #fff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
   .app:not(.print-mode) > main { display: none !important; }
-  .mask.a4-mask {
-    position: static;
-    background: none;
-    padding: 0;
-    overflow: visible;
+  .print-page, .a4-wrap, .a4-wrap.page, .mask.a4-mask {
+    display: block !important;
+    position: static !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: auto !important;
+    height: auto !important;
+    overflow: hidden !important;
+    background: #fff !important;
   }
   .a4-sheet input,
   .a4-sheet select,
@@ -1182,24 +1210,42 @@ table.checks .chk { width: 72px; text-align: center; }
   .a4-sheet input[type="date"]::-webkit-calendar-picker-indicator { display: none; }
   .a4-sheet input[type="checkbox"] { display: none !important; }
   .a4-sheet input[type="file"] { display: none !important; }
-  .inbound-sheet {
-    min-height: 273mm;
-    height: 273mm;
-  }
-  .print-mark { display: inline !important; font-size: 14px; font-weight: 700; }
-  .a4-machine { height: 32mm; }
+  .print-mark { display: inline !important; font-size: 13px; font-weight: 700; }
+  .a4-machine { height: 24mm; }
   .a4-sheet {
-    box-shadow: none;
-    width: auto;
-    min-height: 273mm;
-    height: 273mm;
-    padding: 0;
+    box-shadow: none !important;
+    width: 210mm !important;
+    height: 297mm !important;
+    min-height: 297mm !important;
+    max-height: 297mm !important;
+    padding: 8mm 9mm 7mm !important;
+    overflow: hidden !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    page-break-after: avoid !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
-  .process-a4 .a4-process-body { height: 100%; }
   .month-sheet {
-    min-height: 194mm;
-    height: 194mm;
+    width: 297mm !important;
+    height: 210mm !important;
+    min-height: 210mm !important;
+    max-height: 210mm !important;
+    padding: 5mm 6mm 4mm !important;
   }
+  .inbound-sheet,
+  .qa-a4,
+  .process-a4 {
+    width: 210mm !important;
+    height: 297mm !important;
+    max-height: 297mm !important;
+    overflow: hidden !important;
+  }
+  .process-a4 .a4-process-body { height: 100%; min-height: 0; overflow: hidden; }
+  .a4-photos { min-height: 0; max-height: 48mm; }
+  .a4-photos img { width: 38mm; height: 28mm; }
+  .a4-empty { min-height: 16mm; }
+  .a4-sign span { height: 11mm; }
   .sheet-5s-ym-print {
     display: block !important;
     position: absolute;
@@ -1212,15 +1258,10 @@ table.checks .chk { width: 72px; text-align: center; }
     display: block !important;
     z-index: 1;
   }
-  .eq-sheet { min-height: 194mm; height: 194mm; }
-  .qa-a4 {
-    min-height: 273mm;
-    height: 273mm;
-    overflow: hidden;
-    padding: 7mm 8mm 6mm;
-  }
-  .qa-photos, .qa-shot { height: 24mm; min-height: 24mm; }
-  .qa-meas th, .qa-meas td { height: 6.2mm; }
+  .month-scroll { overflow: hidden !important; }
+  .eq-sheet { overflow: hidden !important; }
+  .qa-photos, .qa-shot { height: 22mm; min-height: 22mm; flex-basis: 22mm; }
+  .qa-meas th, .qa-meas td { height: 6mm; }
   .clim-ym-print {
     display: block !important;
     position: absolute;
