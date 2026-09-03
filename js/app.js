@@ -328,7 +328,7 @@ function shell(session, active, inner, printMode = false) {
           ${link("home", "운영 폴더")}
           ${link("manage", "수정·삭제")}
           ${isAdmin(session) ? `<a class="${"members" === active ? "on" : ""}" href="#/members">${ht("가입 승인")}${wait ? ` (${wait})` : ""}</a>` : ""}
-          <a href="./cam-lab.html?v=28">${ht("가공 프로그램")}</a>
+          <a href="./cam-lab.html?v=29">${ht("가공 프로그램")}</a>
         </div>
         <div class="side-block comm">
           <p class="side-label">${ht("소통")}</p>
@@ -1215,7 +1215,7 @@ function camView(mod, date) {
     <td>${j.fromNc ? "NC 해석" : "추정 경로"}</td>
   </tr>`).join("");
   return `<div class="head"><div><h1>${h(mod.title)}</h1><p>${h(date)}</p></div>
-    <a class="btn red sm" href="./cam-lab.html">가공 프로그램</a></div>
+    <a class="btn red sm" href="./cam-lab.html?v=29">가공 프로그램</a></div>
     <section class="panel">
       <div class="bar">${folder.parent ? `<button class="btn sm" id="up" type="button">상위</button>` : ""}
         <button class="btn sm" id="nf" type="button">폴더</button>

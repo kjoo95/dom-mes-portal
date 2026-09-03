@@ -1,31 +1,120 @@
 import { getSession, logout, isInternalNetwork } from "./auth.js?v=45";
 import { loadState, saveState, uid } from "./store.js";
-import { collectStats, optimizeJob, toNc, toJson, accTime, toolOps, toolSpec } from "./gcode.js?v=47";
+import { collectStats, parseProgram, toNc, toJson, accTime, toolOps, toolSpec } from "./gcode.js?v=47";
 import { boot } from "./safety.js";
 import { createMill } from "./mill3d.js?v=27";
 import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=42";
+import { todayISO } from "./data.js?v=43";
 
 const root = document.getElementById("app");
 const h = (v) => String(v ?? "")
   .replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
 
 let state = loadState();
-let selected = 0;
+let selectedId = "";
 let mill = null;
 let opJob = null;
 let opIndex = 0;
+let focusOp = -1;
+let jobQuery = "";
 let sim = { playing: false, t: 0, last: 0, raf: 0, speed: 64 };
 const SPEEDS = [1, 4, 16, 32, 64, 120, 300];
 const CAM0 = { yaw: 0.92, pitch: 0.98, scale: 1.22, panX: 0, panY: 8 };
 let cam = { ...CAM0 };
 let drag = null;
 
+function allJobs() {
+  return (state.cam.jobs || []).filter((j) => !j.optimized);
+}
+
 function jobs() {
-  return state.cam.jobs || [];
+  const q = jobQuery.trim().toLowerCase();
+  const list = allJobs();
+  if (!q) return list;
+  return list.filter((j) => `${j.partName || ""} ${j.name || ""}`.toLowerCase().includes(q));
 }
 
 function current() {
-  return jobs()[selected] || jobs()[0];
+  const list = allJobs();
+  return list.find((j) => j.id === selectedId) || jobs()[0] || list[0];
+}
+
+function isCamNc(name) {
+  return /\.(nc|nci|cnc|tap|txt|iso|eia|min|ncc)$/i.test(name || "");
+}
+
+async function readNcText(file) {
+  const buf = await file.slice(0, 2_000_000).arrayBuffer().catch(() => null);
+  if (!buf) return "";
+  const u8 = new Uint8Array(buf);
+  if (u8.length >= 2 && u8[0] === 0xFF && u8[1] === 0xFE) return new TextDecoder("utf-16le").decode(buf);
+  if (u8.length >= 2 && u8[0] === 0xFE && u8[1] === 0xFF) return new TextDecoder("utf-16be").decode(buf);
+  if (u8.length >= 3 && u8[0] === 0xEF && u8[1] === 0xBB && u8[2] === 0xBF) return new TextDecoder("utf-8").decode(buf);
+  let zeros = 0;
+  const n = Math.min(u8.length, 400);
+  for (let i = 1; i < n; i += 2) if (u8[i] === 0) zeros += 1;
+  if (zeros > n / 4) return new TextDecoder("utf-16le").decode(buf);
+  return new TextDecoder("utf-8").decode(buf);
+}
+
+async function ingestLabFile(file) {
+  if (!isCamNc(file.name)) return null;
+  const text = await readNcText(file);
+  const parsed = parseProgram(file.name, text);
+  if (!parsed?.points?.length) return null;
+  if (!state.cam.jobs) state.cam.jobs = [];
+  const job = { ...parsed, id: uid("job"), date: todayISO(), folderId: "cam-root" };
+  state.cam.jobs.unshift(job);
+  return job;
+}
+
+function viewJob() {
+  const job = current();
+  if (!job) return null;
+  if (focusOp < 0) return job;
+  const seq = job.seq || toolOps(job.points || [], job.toolLib);
+  const op = seq[focusOp];
+  if (!op) return job;
+  const pts = (job.points || []).slice(op.i0, (op.i1 ?? op.i0) + 1);
+  if (pts.length < 2) return job;
+  const span = Math.max((op.t1 ?? 1) - (op.t0 ?? 0), 0.001);
+  return {
+    ...job,
+    points: pts,
+    seq: toolOps(pts, job.toolLib),
+    timeMin: Number(((job.timeMin || 0) * span).toFixed(2)),
+    partName: `${job.partName || job.name} · T${op.tool}`,
+  };
+}
+
+function loadView(job) {
+  const view = job || viewJob();
+  mill = view?.points?.length ? createMill(view) : null;
+  opJob = view;
+}
+
+function selectTool(index) {
+  const src = current();
+  if (!src) return;
+  const seqNow = src.seq || toolOps(src.points || [], src.toolLib);
+  if (!seqNow.length) return;
+  focusOp = Math.max(0, Math.min(index, seqNow.length - 1));
+  opIndex = focusOp;
+  sim.playing = false;
+  sim.t = 0;
+  sim.last = 0;
+  loadView();
+  render();
+}
+
+function selectAllTools() {
+  focusOp = -1;
+  opIndex = 0;
+  sim.playing = false;
+  sim.t = 0;
+  sim.last = 0;
+  loadView();
+  render();
 }
 
 function persist() {
@@ -58,24 +147,22 @@ function render() {
   const session = getSession();
   const list = jobs();
   const job = current();
-  if (!mill && job?.points?.length) {
-    mill = createMill(job);
-    opJob = job;
-  }
+  if (job) selectedId = allJobs().some((j) => j.id === selectedId) ? selectedId : job.id;
+  const view = viewJob();
+  if (!mill && view?.points?.length) loadView(view);
   const stats = collectStats(job ? [job] : []);
   const seq = job?.seq || toolOps(job?.points || [], job?.toolLib);
   if (opIndex >= seq.length) opIndex = Math.max(0, seq.length - 1);
-  const curOp = seq[opIndex];
-  const cycle = job?.timeMin || 0;
+  if (focusOp >= seq.length) focusOp = seq.length ? Math.min(focusOp, seq.length - 1) : -1;
+  const curOp = seq[focusOp >= 0 ? focusOp : opIndex];
+  const cycle = view?.timeMin || 0;
   const elapsed = cycle * sim.t;
   const remain = Math.max(0, cycle - elapsed);
-  const stock = job?.stock || mill?.stock;
-  const nextOp = seq[opIndex + 1];
-  const nextLabel = nextOp ? `다음 공구 T${nextOp.tool}` : "마지막 공구";
+  const stock = view?.stock || mill?.stock;
   const spec = curOp ? toolSpec(curOp.tool, job?.toolLib) : null;
   const statLine = job
-    ? `${h(job.partName || job.name)} · ${seq.map((o, i) => `${i === opIndex ? "▶ " : ""}T${o.tool}`).join(" → ")} · 소재 ${stock ? `${stock.w}×${stock.d}×${stock.h} mm` : "—"}`
-    : "마스터캠 폴더에 프로그램을 올리면 여기 쌓입니다.";
+    ? `${h(job.partName || job.name)}${focusOp >= 0 ? ` · T${curOp?.tool}만 보기` : ` · ${seq.map((o) => `T${o.tool}`).join(" → ")}`} · 소재 ${stock ? `${stock.w}×${stock.d}×${stock.h} mm` : "—"}`
+    : "프로그램 찾기로 NC 또는 NCI를 넣으면 여기 보입니다.";
   root.innerHTML = `
     <div class="app lab">
       <header>
@@ -83,24 +170,31 @@ function render() {
         <div class="who">${langBar()}<span>${h(session.name)}</span> <button class="btn ghost" id="out" type="button">${h(t("로그아웃"))}</button></div>
       </header>
       <aside class="side">
-        <p class="side-label">축적 데이터</p>
-        ${list.map((j, i) => `<div class="job-item">
-          <button class="job-row ${i === selected ? "on" : ""}" data-i="${i}" type="button">${h(j.partName || j.name)}<small>가공 ${formatMin(j.timeMin)}${j.optimized ? " · 최적" : ""}</small></button>
-          <button class="btn sm" data-del="${i}" type="button">삭제</button>
-        </div>`).join("") || `<p class="mute pad">없음</p>`}
+        <p class="side-label">프로그램</p>
         <div class="side-actions">
-          <button class="btn sm" id="del-opt" type="button">최적 경로만 지우기</button>
-          <button class="btn sm" id="del-all" type="button">축적 데이터 모두 지우기</button>
+          <button class="btn red sm" id="open-prog" type="button">프로그램 찾기</button>
+          <button class="btn sm" id="open-folder" type="button">폴더에서 넣기</button>
+          <input id="open-nc" type="file" multiple hidden accept=".nc,.nci,.cnc,.tap,.txt,.iso,.eia,.min,.ncc">
+          <input id="open-dir" type="file" hidden webkitdirectory>
+        </div>
+        <input class="job-q" id="job-q" type="search" placeholder="이름 찾기" value="${h(jobQuery)}" autocomplete="off">
+        ${list.map((j) => `<div class="job-item">
+          <button class="job-row ${j.id === job?.id ? "on" : ""}" data-id="${h(j.id)}" type="button">${h(j.partName || j.name)}<small>가공 ${formatMin(j.timeMin)}</small></button>
+          <button class="btn sm" data-del="${h(j.id)}" type="button">삭제</button>
+        </div>`).join("") || `<p class="mute pad">${jobQuery ? "찾는 프로그램이 없습니다." : "없음"}</p>`}
+        <div class="side-actions">
+          <button class="btn sm" id="del-all" type="button">목록 모두 지우기</button>
         </div>
         <p class="side-label">프로그램 가공 순서</p>
         <div class="seq-list">
-        ${seq.map((o, i) => `<p class="seq-row ${i === opIndex ? "op-on" : ""}" data-seq="${i}">T${o.tool} · ${h(o.spec?.name || "")}${i === opIndex ? " · 진행" : ""}</p>`).join("") || `<p class="seq-row mute">없음</p>`}
+        <button class="seq-row ${focusOp < 0 ? "op-on" : ""}" data-seq-all type="button">전체 프로그램</button>
+        ${seq.map((o, i) => `<button class="seq-row ${focusOp === i ? "op-on" : ""}" data-seq="${i}" type="button">T${o.tool} · ${h(o.spec?.name || "")}${focusOp === i ? " · 이 공구만" : ""}</button>`).join("") || `<p class="seq-row mute">없음</p>`}
         </div>
         <p class="side-label">공구 통계</p>
         <div class="seq-list">
-        ${stats.map((s) => `<p class="seq-row mag-row ${s.tool === curOp?.tool ? "op-on" : ""}" data-mag="${s.tool}">
+        ${stats.map((s) => `<button class="seq-row mag-row ${s.tool === curOp?.tool ? "op-on" : ""}" data-mag="${s.tool}" type="button">
           <b>T${s.tool}</b> ${h(s.name)} · ${h(s.feedLabel)} · ${h(s.spindleLabel)}
-        </p>`).join("") || `<p class="seq-row mute">없음</p>`}
+        </button>`).join("") || `<p class="seq-row mute">없음</p>`}
         </div>
       </aside>
       <div class="lab-main">
@@ -116,16 +210,13 @@ function render() {
             <div class="time-box"><span>주축 S</span><b id="t-spindle">—</b></div>
           </div>
           <div class="lab-tools">
-            <button class="btn red" id="opt" type="button">최적 경로 생성</button>
-            <button class="btn red" id="next-op" type="button">${nextLabel}</button>
-            <button class="btn" id="raw" type="button">프로그램 처음부터</button>
-            <button class="btn" id="play" type="button">${sim.playing ? "일시정지" : "시뮬레이션"}</button>
+            <button class="btn red" id="play" type="button">${sim.playing ? "일시정지" : "시뮬레이션"}</button>
+            <button class="btn" id="raw" type="button">전체 처음부터</button>
             <button class="btn" id="reset" type="button">이 공구 처음으로</button>
             <button class="btn" id="view" type="button">시점 초기화</button>
             <span class="speeds" id="speeds">${SPEEDS.map((n) => `<button class="btn sm ${n === sim.speed ? "on" : ""}" data-speed="${n}" type="button">${n}x</button>`).join("")}</span>
             <button class="btn" id="nc" type="button">NC 출력</button>
             <button class="btn" id="json" type="button">데이터 출력</button>
-            <a class="btn ghost" href="./portal.html?v=5#/mastercam">마스터캠 폴더</a>
           </div>
         </div>
         <div class="stage">
@@ -133,73 +224,115 @@ function render() {
           <div class="sim-hud" id="sim-hud"></div>
           <p class="view-hint">왼쪽 드래그 회전 · 휠 확대/축소 · 오른쪽 드래그 이동 · 더블클릭 시점 초기화</p>
         </div>
-        <textarea class="nc" id="outnc" readonly>${job ? h(toNc(job)) : ""}</textarea>
+        <textarea class="nc" id="outnc" readonly>${view ? h(toNc(job)) : ""}</textarea>
       </div>
     </div>`;
   applyHtmlLang();
   bindLang(render);
   document.getElementById("out").onclick = () => { logout(); location.href = "./portal.html?v=42"; };
-  root.querySelectorAll("[data-i]").forEach((b) => b.onclick = () => {
-    selected = Number(b.dataset.i);
-    const next = current();
-    mill = next?.points?.length ? createMill(next) : null;
-    opJob = next;
+  document.getElementById("job-q")?.addEventListener("change", (e) => {
+    jobQuery = e.target.value || "";
+    render();
+  });
+  document.getElementById("job-q")?.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    jobQuery = e.target.value || "";
+    render();
+  });
+  const takeFiles = async (files) => {
+    const list = [...files].filter((f) => isCamNc(f.name));
+    if (!list.length) return alert("NC 또는 NCI 파일이 없습니다.");
+    let last = null;
+    let miss = 0;
+    for (const file of list) {
+      const job = await ingestLabFile(file);
+      if (job) last = job;
+      else miss += 1;
+    }
+    if (!last) return alert("프로그램을 읽지 못했습니다. 마스터캠에서 포스트한 NC 또는 NCI를 선택하세요.");
+    selectedId = last.id;
+    focusOp = -1;
+    opIndex = 0;
+    persist();
+    sim.playing = false;
+    sim.t = 0;
+    loadView();
+    render();
+    if (miss) alert(`${list.length - miss}개를 넣었습니다. ${miss}개는 경로가 없어 건너뛰었습니다.`);
+  };
+  document.getElementById("open-prog")?.addEventListener("click", () => {
+    document.getElementById("open-nc")?.click();
+  });
+  document.getElementById("open-folder")?.addEventListener("click", async () => {
+    if (window.showDirectoryPicker) {
+      try {
+        const dir = await window.showDirectoryPicker({ id: "dom-sim-nc" });
+        const files = [];
+        for await (const [, entry] of dir.entries()) {
+          if (entry.kind === "file" && isCamNc(entry.name)) files.push(await entry.getFile());
+        }
+        await takeFiles(files);
+        return;
+      } catch (err) {
+        if (err?.name === "AbortError") return;
+      }
+    }
+    document.getElementById("open-dir")?.click();
+  });
+  document.getElementById("open-nc")?.addEventListener("change", async (e) => {
+    await takeFiles(e.target.files || []);
+    e.target.value = "";
+  });
+  document.getElementById("open-dir")?.addEventListener("change", async (e) => {
+    await takeFiles(e.target.files || []);
+    e.target.value = "";
+  });
+  root.querySelectorAll("[data-id]").forEach((b) => b.onclick = () => {
+    selectedId = b.dataset.id;
+    focusOp = -1;
     opIndex = 0;
     sim.playing = false;
     sim.t = 0;
+    loadView();
     render();
   });
   root.querySelectorAll("[data-del]").forEach((b) => b.onclick = (event) => {
     event.stopPropagation();
-    const i = Number(b.dataset.del);
-    const row = state.cam.jobs[i];
+    const id = b.dataset.del;
+    const i = (state.cam.jobs || []).findIndex((j) => j.id === id);
+    const row = i >= 0 ? state.cam.jobs[i] : null;
     if (!row || !confirm(`‘${row.partName || row.name}’을 지울까요?`)) return;
     state.cam.jobs.splice(i, 1);
-    if (selected >= state.cam.jobs.length) selected = Math.max(0, state.cam.jobs.length - 1);
+    if (selectedId === id) selectedId = allJobs()[0]?.id || "";
     persist();
     sim.playing = false;
     sim.t = 0;
-    render();
-  });
-  document.getElementById("del-opt")?.addEventListener("click", () => {
-    if (!state.cam.jobs.some((j) => j.optimized)) return alert("지울 최적 경로가 없습니다.");
-    if (!confirm("최적 경로로 만든 항목만 지울까요? 원본 프로그램은 남습니다.")) return;
-    state.cam.jobs = state.cam.jobs.filter((j) => !j.optimized);
-    selected = 0;
-    persist();
-    sim.playing = false;
-    sim.t = 0;
+    focusOp = -1;
+    loadView();
     render();
   });
   document.getElementById("del-all")?.addEventListener("click", () => {
     if (!state.cam.jobs.length) return;
-    if (!confirm("축적된 가공 데이터를 모두 지울까요?")) return;
+    if (!confirm("목록의 프로그램을 모두 지울까요?")) return;
     state.cam.jobs = [];
-    selected = 0;
+    selectedId = "";
     mill = null;
     opJob = null;
     opIndex = 0;
+    focusOp = -1;
     persist();
     sim.playing = false;
     sim.t = 0;
     render();
   });
-  document.getElementById("opt").onclick = () => {
-    const src = current();
-    if (!src) return;
-    const next = { ...optimizeJob(src, stats), id: uid("job"), date: src.date, folderId: src.folderId };
-    state.cam.jobs.unshift(next);
-    selected = 0;
-    persist();
-    sim.t = 0;
-    render();
-  };
   document.getElementById("play").onclick = () => {
     sim.playing = !sim.playing;
     const btn = document.getElementById("play");
     if (sim.playing) {
       btn.textContent = "일시정지";
       sim.last = 0;
+      if (sim.t >= 1) sim.t = 0;
       loop();
     } else {
       btn.textContent = "시뮬레이션";
@@ -207,39 +340,25 @@ function render() {
   };
   document.getElementById("reset").onclick = () => {
     sim.playing = false;
-    const jobNow = current();
-    const seqNow = jobNow?.seq || toolOps(jobNow?.points || [], jobNow?.toolLib);
-    sim.t = seqNow[opIndex]?.t0 || 0;
+    sim.t = 0;
     const btn = document.getElementById("play");
     if (btn) btn.textContent = "시뮬레이션";
-    mill?.setProgress?.(sim.t);
+    mill?.reset?.();
+    mill?.setProgress?.(0);
     syncTime();
     draw();
   };
   document.getElementById("raw")?.addEventListener("click", () => {
-    const src = current();
-    if (!src) return;
-    mill = createMill(src);
-    opJob = src;
-    opIndex = 0;
-    sim.playing = false;
-    sim.t = 0;
-    render();
+    selectAllTools();
   });
-  document.getElementById("next-op")?.addEventListener("click", () => {
+  root.querySelectorAll("[data-seq-all]").forEach((b) => b.onclick = () => selectAllTools());
+  root.querySelectorAll("[data-seq]").forEach((b) => b.onclick = () => selectTool(Number(b.dataset.seq)));
+  root.querySelectorAll("[data-mag]").forEach((b) => b.onclick = () => {
+    const tool = Number(b.dataset.mag);
     const src = current();
-    if (!src) return;
-    const seqNow = src.seq || toolOps(src.points || [], src.toolLib);
-    if (!seqNow.length) return;
-    if (!mill) mill = createMill(src);
-    const cur = seqNow[Math.min(opIndex, seqNow.length - 1)];
-    sim.t = cur?.t1 ?? 1;
-    mill.setProgress(sim.t);
-    if (opIndex < seqNow.length - 1) opIndex += 1;
-    opJob = src;
-    sim.playing = false;
-    sim.last = 0;
-    render();
+    const seqNow = src?.seq || toolOps(src?.points || [], src?.toolLib);
+    const i = seqNow.findIndex((o) => o.tool === tool);
+    if (i >= 0) selectTool(i);
   });
   root.querySelectorAll("[data-speed]").forEach((b) => b.onclick = () => {
     sim.speed = Number(b.dataset.speed);
@@ -355,13 +474,13 @@ function at(points, t) {
 
 function syncTime(pos) {
   const job = current();
-  const cycle = job?.timeMin || 0;
+  const pathJob = opJob || viewJob() || job;
+  const cycle = pathJob?.timeMin || 0;
   const elapsed = cycle * sim.t;
   const set = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
   set("t-cycle", formatMin(cycle));
   set("t-elapsed", formatMin(elapsed));
   set("t-remain", formatMin(Math.max(0, cycle - elapsed)));
-  const pathJob = opJob || job;
   const p = pos || (pathJob?.points?.length ? at(pathJob.points, sim.t) : null);
   const spec = p ? toolSpec(p.t, pathJob?.toolLib) : null;
   set("t-tool", spec ? `T${spec.t} ${spec.name}` : "—");
@@ -381,8 +500,12 @@ function syncTime(pos) {
   document.querySelectorAll("[data-mag]").forEach((el) => {
     el.classList.toggle("op-on", Number(el.dataset.mag) === Number(p?.t));
   });
+  document.querySelectorAll("[data-seq-all]").forEach((el) => {
+    el.classList.toggle("op-on", focusOp < 0);
+  });
   document.querySelectorAll("[data-seq]").forEach((el) => {
-    el.classList.toggle("op-on", Number(el.dataset.seq) === opIndex);
+    const i = Number(el.dataset.seq);
+    el.classList.toggle("op-on", focusOp >= 0 ? i === focusOp : i === opIndex);
   });
 }
 
@@ -392,20 +515,23 @@ function draw() {
   fitCanvas(canvas);
   const hud = document.getElementById("sim-hud");
   const job = current();
-  if (!job?.points?.length) {
-    if (hud) hud.textContent = "가공할 프로그램이 없습니다.";
+  const pathJob = opJob || viewJob();
+  if (!pathJob?.points?.length) {
+    if (hud) hud.textContent = "프로그램 찾기로 NC 또는 NCI를 넣으세요.";
     syncTime();
     return;
   }
-  const pathJob = opJob || job;
   const pos = at(pathJob.points, sim.t);
-  const seqNow = pathJob.seq || toolOps(pathJob.points || [], pathJob.toolLib);
-  let hit = 0;
-  seqNow.forEach((o, i) => { if (sim.t >= o.t0 - 1e-6) hit = i; });
-  opIndex = hit;
+  if (focusOp < 0) {
+    const seqNow = job?.seq || toolOps(job?.points || [], job?.toolLib);
+    let hit = 0;
+    seqNow.forEach((o, i) => { if (sim.t >= o.t0 - 1e-6) hit = i; });
+    opIndex = hit;
+  }
   const specNow = toolSpec(pos.t, pathJob.toolLib);
-  const cycle = job.timeMin || 0;
+  const cycle = pathJob.timeMin || 0;
   const mode = pos.rapid ? "급속이송" : pos.change ? "공구교환" : "절삭";
+  const only = focusOp >= 0 ? "  이 공구만" : "";
   const fs = pos.change ? "" : pos.rapid ? `  S${Math.round(pos.s || 0)}` : `  F${Math.round(pos.f || 0)}  S${Math.round(pos.s || 0)}`;
   try {
     if (!mill) {
@@ -415,7 +541,7 @@ function draw() {
     mill.setProgress(sim.t);
     mill.draw(canvas, canvas.width, canvas.height, pos, cam);
     if (hud) {
-      hud.textContent = `${job.partName}  T${pos.t} ${specNow.name}${fs}  ${mode}  ${sim.speed}x  X${pos.x.toFixed(1)}  Y${pos.y.toFixed(1)}  Z${pos.z.toFixed(1)}  ${formatMin(cycle * sim.t)} / ${formatMin(cycle)}`;
+      hud.textContent = `${pathJob.partName}  T${pos.t} ${specNow.name}${fs}  ${mode}${only}  ${sim.speed}x  X${pos.x.toFixed(1)}  Y${pos.y.toFixed(1)}  Z${pos.z.toFixed(1)}  ${formatMin(cycle * sim.t)} / ${formatMin(cycle)}`;
     }
   } catch {
     if (hud) hud.textContent = "3D 화면을 준비하지 못했습니다. 다시 열기를 눌러 주세요.";
@@ -428,8 +554,8 @@ function loop(now = 0) {
   if (!sim.last) sim.last = now;
   const dt = Math.min(0.05, (now - sim.last) / 1000);
   sim.last = now;
-  const cycleSec = Math.max((current()?.timeMin || 0.2) * 60, 1);
-  sim.t = Math.min(1, sim.t + (dt * sim.speed) / cycleSec);
+  const cycleSec = Math.max((opJob || current())?.timeMin || 0.2, 0.05) * 60;
+  sim.t = Math.min(1, sim.t + (dt * sim.speed) / Math.max(cycleSec, 1));
   draw();
   if (sim.t >= 1) {
     mill?.commit?.();
