@@ -333,6 +333,26 @@ article h3 { margin: 4px 0; }
 .code { color: var(--red); font-size: 12px; font-weight: 800; }
 .pics { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
 .pics img { width: 96px; height: 72px; object-fit: cover; border-radius: 8px; }
+.pic-item { position: relative; display: block; min-width: 0; min-height: 0; }
+.pics .pic-item { display: inline-block; }
+.pic-del {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  z-index: 3;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(20, 20, 20, 0.72);
+  color: #fff;
+  font-size: 16px;
+  line-height: 22px;
+  text-align: center;
+  cursor: pointer;
+}
+.pic-del:hover { background: #c41e3a; }
 .scroll { overflow: auto; }
 table.rows th:first-child, table.rows td:first-child {
   position: sticky;
@@ -665,6 +685,7 @@ table.checks .chk { width: 72px; text-align: center; }
 .a4-grow { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
 .a4-grow > table { flex: 1; height: 100%; }
 .a4-photos { display: flex; flex-wrap: wrap; gap: 4px; flex: 1; min-height: 0; align-content: start; overflow: hidden; }
+.a4-photos .pic-item img,
 .a4-photos img { width: 42mm; height: 32mm; object-fit: cover; border: 1px solid #ccc; }
 .a4-process-photo .a4-photos {
   display: grid;
@@ -677,14 +698,19 @@ table.checks .chk { width: 72px; text-align: center; }
 .a4-process-photo .a4-photos.one { grid-template-columns: 1fr; }
 .a4-process-photo .a4-photos.two { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
 .a4-process-photo .a4-photos.many { grid-template-columns: 1fr 1fr; }
+.a4-process-photo .a4-photos .pic-item {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-right: 1px solid #111;
+  border-bottom: 1px solid #111;
+}
 .a4-process-photo .a4-photos img {
   width: 100%;
   height: 100%;
   min-height: 0;
   object-fit: cover;
   border: 0;
-  border-right: 1px solid #111;
-  border-bottom: 1px solid #111;
 }
 .a4-empty { color: #888; font-size: 12px; flex: 1; display: grid; place-items: center; border: 1px dashed #bbb; background: #fafafa; min-height: 20mm; }
 .a4-sign { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 6px; flex: 0 0 auto; }
@@ -703,15 +729,24 @@ table.checks .chk { width: 72px; text-align: center; }
   min-height: 28mm;
 }
 .qa-shot {
+  position: relative;
   display: grid;
   place-items: center;
   height: 28mm;
   border: 1px dashed #888;
   background: #f7f7f5;
-  cursor: pointer;
   overflow: hidden;
   margin: 0;
 }
+.qa-shot label {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  cursor: pointer;
+}
+.qa-shot.has-pic { border-style: solid; }
 .qa-shot img { width: 100%; height: 100%; object-fit: cover; }
 .qa-shot span { color: #888; font-size: 12px; }
 .qa-meas { table-layout: fixed; font-size: 12px; flex: 1 1 auto; }
@@ -798,6 +833,7 @@ table.checks .chk { width: 72px; text-align: center; }
 .eq-guide td { width: 16.66%; vertical-align: top; text-align: center; padding: 3px; }
 .eq-guide b { display: block; }
 .eq-guide p { margin: 2px 0 0; font-size: 10px; line-height: 1.3; }
+.eq-shot-box { position: relative; }
 .eq-shot {
   display: grid;
   place-items: center;
@@ -850,10 +886,10 @@ table.checks .chk { width: 72px; text-align: center; }
 .eq-foot-fields label { display: flex; gap: 6px; align-items: center; margin: 0; }
 .eq-foot-fields input { border-bottom: 1px solid #111; }
 .eq-machine {
+  position: relative;
   display: flex;
   flex-direction: column;
   border: 1px solid #111;
-  cursor: pointer;
   min-height: 0;
   margin: 0;
 }
@@ -865,8 +901,16 @@ table.checks .chk { width: 72px; text-align: center; }
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
+.eq-machine-body {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  margin: 0;
+  cursor: pointer;
+}
 .eq-machine img { flex: 1; width: 100%; min-height: 22mm; object-fit: cover; }
 .eq-machine span { flex: 1; display: grid; place-items: center; color: #888; min-height: 22mm; }
+.eq-machine .pic-del { top: auto; bottom: 4px; right: 4px; }
 .month-scroll { overflow: auto; flex: 1; min-height: 0; }
 .month-grid { width: 100%; height: 100%; border-collapse: collapse; font-size: 11px; }
 .month-grid th, .month-grid td { border: 1px solid #222; padding: 2px 1px; text-align: center; }
@@ -1307,6 +1351,7 @@ table.checks .chk { width: 72px; text-align: center; }
   .process-a4 .a4-process-body { height: 100%; min-height: 0; overflow: hidden; }
   .a4-photos { min-height: 0; max-height: 48mm; }
   .a4-photos img { width: 38mm; height: 28mm; }
+  .pic-del { display: none !important; }
   .a4-empty { min-height: 16mm; }
   .a4-sign span { height: 11mm; }
   .sheet-5s-ym-print {

@@ -874,12 +874,19 @@ function qaMeasures(r) {
   return r.measures;
 }
 
+function picDel(attr) {
+  return `<button type="button" class="pic-del no-print" ${attr} aria-label="사진 빼기" title="사진 빼기">×</button>`;
+}
+
 function qaPhotos(r) {
   const pics = Array.from({ length: 3 }, (_, i) => (r.photos || [])[i] || "");
-  return `<div class="qa-photos">${pics.map((src, i) => `<label class="qa-shot">
-      ${src ? `<img src="${src}" alt="">` : `<span>사진 ${i + 1}</span>`}
-      <input data-qa-pic="${i}" type="file" accept="image/*" hidden>
-    </label>`).join("")}</div>`;
+  return `<div class="qa-photos">${pics.map((src, i) => `<div class="qa-shot${src ? " has-pic" : ""}">
+      <label>
+        ${src ? `<img src="${src}" alt="">` : `<span>사진 ${i + 1}</span>`}
+        <input data-qa-pic="${i}" type="file" accept="image/*" hidden>
+      </label>
+      ${src ? picDel(`data-qa-del="${i}"`) : ""}
+    </div>`).join("")}</div>`;
 }
 
 function qualityA4(r) {
@@ -984,13 +991,16 @@ function processStamp(r) {
 }
 
 function processPhotos(r) {
-  const pics = r.photos || [];
+  const pics = (r.photos || []).filter(Boolean);
   if (!pics.length) {
     return `<p class="a4-empty">작업·제품 사진<br>위 ‘사진’으로 첨부</p>`;
   }
   const shown = pics.slice(0, 4);
   const cls = shown.length === 1 ? "one" : shown.length === 2 ? "two" : "many";
-  return `<div class="a4-photos ${cls}">${shown.map((s) => `<img src="${s}" alt="">`).join("")}</div>`;
+  return `<div class="a4-photos ${cls}">${shown.map((s, i) => `<div class="pic-item">
+      <img src="${s}" alt="">
+      ${picDel(`data-pic-del="${i}"`)}
+    </div>`).join("")}</div>`;
 }
 
 function processA4(r) {
@@ -1026,8 +1036,12 @@ function processA4(r) {
 }
 
 function defectA4(r) {
-  const pics = (r.photos || []).length
-    ? `<div class="a4-photos">${(r.photos || []).map((s) => `<img src="${s}" alt="">`).join("")}</div>`
+  const list = (r.photos || []).filter(Boolean);
+  const pics = list.length
+    ? `<div class="a4-photos">${list.map((s, i) => `<div class="pic-item">
+        <img src="${s}" alt="">
+        ${picDel(`data-pic-del="${i}"`)}
+      </div>`).join("")}</div>`
     : `<p class="a4-empty">사진 없음 · 위 ‘사진’으로 첨부</p>`;
   return `
       <article class="a4-sheet">
@@ -1512,10 +1526,13 @@ function eqSheetView(mod, ym, machineId) {
     const src = pics.items[item.id];
     return `<td>
       <b>${item.no} ${h(item.name)}</b>
-      <label class="eq-shot">
-        ${src ? `<img src="${src}" alt="">` : `<span>사진 넣기</span>`}
-        <input data-eq-item-pic="${item.id}" type="file" accept="image/*" hidden>
-      </label>
+      <div class="eq-shot-box">
+        <label class="eq-shot">
+          ${src ? `<img src="${src}" alt="">` : `<span>사진 넣기</span>`}
+          <input data-eq-item-pic="${item.id}" type="file" accept="image/*" hidden>
+        </label>
+        ${src ? picDel(`data-eq-del="${item.id}"`) : ""}
+      </div>
       <p>${h(item.criteria)}</p>
     </td>`;
   }).join("");
@@ -1576,7 +1593,7 @@ function eqSheetView(mod, ym, machineId) {
             </tr>
           </table>
           <table class="eq-guide">
-            <thead><tr><th colspan="6">점검항목 · 점검위치 (사진 칸을 누르면 넣습니다)</th></tr></thead>
+            <thead><tr><th colspan="6">점검항목 · 점검위치 (사진 칸을 누르면 넣고, ×로 뺍니다)</th></tr></thead>
             <tbody><tr>${guide}</tr></tbody>
           </table>
           <table class="eq-grid">
@@ -1604,11 +1621,14 @@ function eqSheetView(mod, ym, machineId) {
                 <label>비고 <input data-eq-k="remark" value="${h(pack.remark || "")}"></label>
               </div>
             </div>
-            <label class="eq-machine">
+            <div class="eq-machine">
               <b>설비사진</b>
-              ${machinePic ? `<img src="${machinePic}" alt="">` : `<span>사진을 넣으세요</span>`}
-              <input id="eq-photo" type="file" accept="image/*" hidden>
-            </label>
+              <label class="eq-machine-body">
+                ${machinePic ? `<img src="${machinePic}" alt="">` : `<span>사진을 넣으세요</span>`}
+                <input id="eq-photo" type="file" accept="image/*" hidden>
+              </label>
+              ${machinePic ? picDel(`data-eq-del="machine"`) : ""}
+            </div>
           </div>
         </article>
       </div>
@@ -1879,6 +1899,29 @@ function bindSheet(mod, id) {
       render();
     };
   });
+  root.querySelectorAll("[data-qa-del]").forEach((b) => {
+    b.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!row) return;
+      const i = Number(b.dataset.qaDel);
+      row.photos = Array.from({ length: 3 }, (_, n) => (row.photos || [])[n] || "");
+      row.photos[i] = "";
+      persist();
+      render();
+    };
+  });
+  root.querySelectorAll("[data-pic-del]").forEach((b) => {
+    b.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!row) return;
+      const i = Number(b.dataset.picDel);
+      row.photos = (row.photos || []).filter(Boolean).filter((_, n) => n !== i);
+      persist();
+      render();
+    };
+  });
   document.getElementById("sheet-photos")?.addEventListener("change", async (e) => {
     if (!row) return;
     if (mod.type === "quality") {
@@ -1910,13 +1953,14 @@ function edit(mod, row, fields, date) {
     val.status = "합격";
   }
   let extra = "";
+  const photoDraft = [...(val.photos || [])].filter(Boolean);
   if (mod.type === "quality" || mod.type === "defect") {
-    extra = `<label>사진<input id="photos" type="file" accept="image/*" multiple></label><div class="pics" id="prev">${(val.photos || []).map((s) => `<img src="${s}" alt="">`).join("")}</div>`;
+    extra = `<label>사진<input id="photos" type="file" accept="image/*" multiple></label><div class="pics" id="prev"></div>`;
   }
   if (mod.type === "process") {
     extra = `<p class="mute" id="prog-hint">진행률은 계획 수량과 완료 수량으로 자동 계산됩니다.</p>
       <label>작업 사진<input id="photos" type="file" accept="image/*" multiple></label>
-      <div class="pics" id="prev">${(val.photos || []).map((s) => `<img src="${s}" alt="">`).join("")}</div>`;
+      <div class="pics" id="prev"></div>`;
   }
   form(row ? "수정" : "추가", formFields, val, async (data) => {
     const next = { ...(row || { id: uid("r"), photos: [] }), ...cast(formFields, data) };
@@ -1925,16 +1969,15 @@ function edit(mod, row, fields, date) {
       if (next.progress >= 100) next.status = next.status && next.status !== "가동" ? next.status : "완료";
       else if (!next.status || next.status === "완료") next.status = next.progress > 0 ? "가동" : "예정";
     }
-    const input = document.getElementById("photos");
-    if (input?.files?.length) {
-      next.photos = [...(next.photos || [])];
-      for (const f of input.files) next.photos.push(await readAsDataUrl(f));
+    if (mod.type === "quality" || mod.type === "defect" || mod.type === "process") {
+      next.photos = [...photoDraft];
     }
     if (!state.records[mod.id]) state.records[mod.id] = [];
     remember(mod.id, recDate(next, mod.type) || date);
     if (row) Object.assign(row, next); else state.records[mod.id].unshift(next);
     persist(); render();
   }, extra);
+  bindPhotoDraft(photoDraft);
   if (mod.type === "process") {
     const plan = document.querySelector('[name="planQty"]');
     const done = document.querySelector('[name="doneQty"]');
@@ -2130,6 +2173,18 @@ function bindEq(date, machineId) {
   document.getElementById("eq-photo")?.addEventListener("change", (e) => setPic("machine", e.target.files?.[0]));
   root.querySelectorAll("[data-eq-item-pic]").forEach((el) => {
     el.onchange = (e) => setPic(el.dataset.eqItemPic, e.target.files?.[0]);
+  });
+  root.querySelectorAll("[data-eq-del]").forEach((b) => {
+    b.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const bag = eqPhotoBag(id);
+      const key = b.dataset.eqDel;
+      if (key === "machine") bag.machine = "";
+      else delete bag.items[key];
+      persist();
+      render();
+    };
   });
 }
 
@@ -2447,15 +2502,36 @@ function form(title, fields, values, onSave, extra = "") {
     return `<label>${h(t(f.label))}<input name="${f.key}" type="${f.type}" value="${v}"></label>`;
   }).join("")}${extra}<div class="bar"><button class="btn ghost" id="c" type="button">${ht("취소")}</button><button class="btn red" type="submit">${ht("저장")}</button></div></form></div>`;
   document.getElementById("c").onclick = () => { box.innerHTML = ""; };
-  document.getElementById("photos")?.addEventListener("change", async (e) => {
-    const prev = document.getElementById("prev");
-    for (const f of e.target.files) prev.insertAdjacentHTML("beforeend", `<img src="${await readAsDataUrl(f)}" alt="">`);
-  });
   document.getElementById("f").onsubmit = async (e) => {
     e.preventDefault();
     await onSave(Object.fromEntries(new FormData(e.currentTarget).entries()));
     box.innerHTML = "";
   };
+}
+
+function bindPhotoDraft(photos) {
+  const box = document.getElementById("prev");
+  const input = document.getElementById("photos");
+  if (!box || !input) return;
+  const paint = () => {
+    box.innerHTML = photos.map((s, i) => `<span class="pic-item">
+        <img src="${s}" alt="">
+        ${picDel(`data-draft-del="${i}"`)}
+      </span>`).join("");
+    box.querySelectorAll("[data-draft-del]").forEach((b) => {
+      b.onclick = (ev) => {
+        ev.preventDefault();
+        photos.splice(Number(b.dataset.draftDel), 1);
+        paint();
+      };
+    });
+  };
+  paint();
+  input.addEventListener("change", async (e) => {
+    for (const f of [...(e.target.files || [])]) photos.push(await readAsDataUrl(f));
+    e.target.value = "";
+    paint();
+  });
 }
 
 function cast(fields, values) {
