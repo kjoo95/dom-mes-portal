@@ -4,7 +4,7 @@ import {
   EQ_ITEMS, EQ_MARKS, DOM_SUPPLIER,
   fieldsFor, flattenChecks, badgeClass, todayISO,
 } from "./data.js?v=56";
-import { loadState, saveState, uid } from "./store.js?v=63";
+import { loadState, loadStateAsync, shareState, uid } from "./store.js?v=64";
 import { saveBlob, loadBlob, readAsDataUrl, removeBlob } from "./files.js?v=39";
 import { parseProgram, decodeCamFile, mayBeCamFile } from "./gcode.js?v=52";
 import { boot, showRecover } from "./safety.js?v=42";
@@ -37,7 +37,7 @@ let sheetDirty = false;
 
 function persist() {
   state.camFolder = camFolder;
-  try { saveState(state); } catch { /* 백업은 store에서 유지 */ }
+  try { shareState(state); } catch { /* 백업은 store에서 유지 */ }
 }
 
 function sheetEditKey() {
@@ -3929,4 +3929,11 @@ function clamp(n, a, b) { return Math.min(b, Math.max(a, n)); }
 window.addEventListener("hashchange", () => {
   try { render(); } catch (err) { showRecover(err); }
 });
-boot(render);
+boot(() => {
+  loadStateAsync().then((next) => {
+    state = next;
+    camFolder = state.camFolder || "cam-root";
+    shareState(state);
+    render();
+  }).catch(showRecover);
+});

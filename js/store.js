@@ -255,6 +255,28 @@ export function loadState() {
   return fresh();
 }
 
+function hadLocal() {
+  try {
+    return Boolean(localStorage.getItem(STORAGE_KEY) || localStorage.getItem(BAK));
+  } catch {
+    return false;
+  }
+}
+
+export async function loadStateAsync() {
+  const local = loadState();
+  let remote = null;
+  try {
+    const res = await fetch(`./data/mes-state.json?t=${Date.now()}`, { cache: "no-store" });
+    if (res.ok) remote = hydrate(await res.json());
+  } catch { /* offline */ }
+  if (remote && !hadLocal()) {
+    saveState(remote);
+    return remote;
+  }
+  return local;
+}
+
 export function saveState(state) {
   try {
     const raw = JSON.stringify(state);
@@ -266,6 +288,18 @@ export function saveState(state) {
       localStorage.setItem(STORAGE_KEY, raw);
     } catch { /* keep last backup */ }
   }
+}
+
+export function shareState(state) {
+  try {
+    state.savedAt = Date.now();
+    saveState(state);
+    fetch("/api/state", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(state),
+    }).catch(() => {});
+  } catch { /* ignore */ }
 }
 
 export function uid(prefix) {

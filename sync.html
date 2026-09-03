@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>기록 저장 | 디오엠</title>
+  </head>
+  <body style="font-family:sans-serif;padding:40px;max-width:480px">
+    <h1>맥북 기록 저장</h1>
+    <p id="msg">이 브라우저에 있는 입고·가공 기록을 홈페이지 파일로 옮기는 중입니다.</p>
+    <script>
+      (async () => {
+        const msg = document.getElementById("msg");
+        const raw = localStorage.getItem("dom-mes-fresh-v1") || localStorage.getItem("dom-mes-fresh-v1-bak");
+        if (!raw) {
+          msg.textContent = "이 브라우저에는 아직 저장 기록이 없습니다. 운영 포털에서 한 번 연 뒤 다시 이 주소를 열어 주세요.";
+          return;
+        }
+        let data;
+        try { data = JSON.parse(raw); } catch {
+          msg.textContent = "기록이 깨져 있어 옮기지 못했습니다.";
+          return;
+        }
+        const res = await fetch("/api/state", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+        msg.textContent = res.ok
+          ? "저장했습니다. 이 창을 닫아도 됩니다."
+          : "지금은 저장 서버가 꺼져 있습니다. 맥북에서 포털을 연 뒤 다시 시도해 주세요.";
+      })();
+    </script>
+  </body>
+</html>
