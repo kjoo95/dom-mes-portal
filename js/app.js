@@ -669,8 +669,26 @@ function padInboundRows(mod, ym) {
   if (added) persist();
 }
 
+function printDateText(val) {
+  const s = String(val || "").trim();
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return s;
+  return `${m[1]}. ${m[2]}. ${m[3]}`;
+}
+
+function datePrintField(attrs, value) {
+  return `<span class="date-print-wrap"><input ${attrs} type="date" value="${h(value ?? "")}"><span class="print-date">${h(printDateText(value))}</span></span>`;
+}
+
+function syncPrintDate(el) {
+  if (!el || el.type !== "date") return;
+  const label = el.parentElement?.querySelector(".print-date");
+  if (label) label.textContent = printDateText(el.value);
+}
+
 function inboundCell(row, key, type, placeholder) {
   const val = row[key] ?? "";
+  if (type === "date") return datePrintField(`data-in="${h(row.id)}" data-k="${key}"`, val);
   return `<input data-in="${h(row.id)}" data-k="${key}" type="${type}" value="${h(val)}"${placeholder ? ` placeholder="${h(placeholder)}"` : ""}>`;
 }
 
@@ -790,6 +808,7 @@ function deliverySheet(rows, date, modId) {
 }
 
 function fi(name, value, type = "text") {
+  if (type === "date") return datePrintField(`name="${name}"`, value);
   return `<input name="${name}" type="${type}" value="${h(value ?? "")}">`;
 }
 
@@ -1857,6 +1876,7 @@ function bindInboundMonth(mod, date) {
       if (!key) return;
       row[key] = key === "qty" && el.value !== "" ? Number(el.value) : el.value;
       row.month = ym;
+      syncPrintDate(el);
       remember(mod.id, ym);
       persist();
     };
@@ -1926,6 +1946,7 @@ function bindSheet(mod, id) {
         if (k in data) row[k] = data[k];
       });
     }
+    formEl.querySelectorAll('input[type="date"]').forEach(syncPrintDate);
     remember(mod.id, recDate(row, mod.type));
     persist();
   };

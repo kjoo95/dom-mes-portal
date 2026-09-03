@@ -1417,7 +1417,7 @@ table.checks .chk { width: 72px; text-align: center; }
 }
 .inbound-month { table-layout: fixed; }
 .inbound-month th, .inbound-month td { text-align: left; padding: 1px 6px; height: 7.2mm; }
-.inbound-month .col-date { width: 32mm; }
+.inbound-month .col-date { width: 36mm; }
 .inbound-month .col-vendor { width: 30mm; }
 .inbound-month .col-item { width: 34mm; }
 .inbound-month .col-qty { width: 16mm; text-align: center; }
@@ -1435,6 +1435,14 @@ table.checks .chk { width: 72px; text-align: center; }
 }
 .inbound-month input[type="date"] { font-size: 12px; min-height: 22px; }
 .inbound-month input[type="number"] { text-align: center; }
+.date-print-wrap {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+}
+.date-print-wrap input[type="date"] { width: 100%; height: 100%; }
+.print-date { display: none; }
 .a4-sub { margin: 0 0 4px; font-size: 12px; color: #555; }
 
 .talk {
@@ -1573,7 +1581,18 @@ table.checks .chk { width: 72px; text-align: center; }
     box-shadow: none;
     color: #111 !important;
   }
-  .a4-sheet input[type="date"]::-webkit-calendar-picker-indicator { display: none; }
+  .a4-sheet input[type="date"] { display: none !important; }
+  .print-date {
+    display: flex !important;
+    align-items: center;
+    height: 100%;
+    min-height: 5mm;
+    color: #111 !important;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .a4-stamp .print-date { font-size: 11px; justify-content: center; }
   .a4-sheet input[type="checkbox"] { display: none !important; }
   .a4-sheet input[type="file"] { display: none !important; }
   .print-mark { display: inline !important; font-size: 13px; font-weight: 700; }
