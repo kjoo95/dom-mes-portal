@@ -3,15 +3,25 @@ import {
   CUSTOMERS, MILL_SHOPS, MACHINES, FIVE_S_SHOP, FIVE_S_LAB, QA_MEASURE_ITEMS,
   EQ_ITEMS, EQ_MARKS,
   fieldsFor, flattenChecks, badgeClass, todayISO,
-} from "./data.js?v=46";
-import { loadState, saveState, uid } from "./store.js?v=50";
+} from "./data.js?v=47";
+import { loadState, saveState, uid } from "./store.js?v=51";
 import { saveBlob, loadBlob, readAsDataUrl, saveDirHandle, loadDirHandle, removeBlob } from "./files.js?v=39";
 import { parseProgram, decodeCamFile, mayBeCamFile } from "./gcode.js?v=51";
 import { boot, showRecover } from "./safety.js?v=39";
-import { chatView, bindChat } from "./comm.js?v=50";
-import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=52";
+import { chatView, bindChat } from "./comm.js?v=51";
+import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=53";
 
 const WHOIS_MAIL = "https://email.whois.co.kr/v2/";
+
+function openWhoisMail() {
+  const win = window.open(WHOIS_MAIL, "_blank", "noopener,noreferrer");
+  if (win) win.opener = null;
+  return Boolean(win);
+}
+
+function whoisMailHref() {
+  return `href="${WHOIS_MAIL}" target="_blank" rel="noopener noreferrer"`;
+}
 const root = document.getElementById("app");
 let state = loadState();
 let camFolder = state.camFolder || "cam-root";
@@ -198,7 +208,8 @@ function render() {
     return;
   }
   if (mod.type === "mail") {
-    location.href = WHOIS_MAIL;
+    openWhoisMail();
+    location.replace(`${location.pathname}${location.search}#/home`);
     return;
   }
   const printMode = isPrintPage(mod, r.extra, r.date);
@@ -337,6 +348,16 @@ function bindShell() {
       else box.classList.remove("open");
     };
   });
+  root.querySelectorAll("a[href*='whois']").forEach((a) => {
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    a.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const win = window.open(a.href, "_blank", "noopener,noreferrer");
+      if (win) win.opener = null;
+    });
+  });
 }
 
 function shell(session, active, inner, printMode = false) {
@@ -357,12 +378,12 @@ function shell(session, active, inner, printMode = false) {
           ${link("home", "운영 폴더")}
           ${link("manage", "수정·삭제")}
           ${isAdmin(session) ? `<a class="${"members" === active ? "on" : ""}" href="#/members">${ht("가입 승인")}${wait ? ` (${wait})` : ""}</a>` : ""}
-          <a href="./cam-lab.html?v=32">${ht("가공 프로그램")}</a>
+          <a href="./cam-lab.html?v=33">${ht("가공 프로그램")}</a>
         </div>
         <div class="side-block comm">
           <p class="side-label">${ht("소통")}</p>
           ${link("chat", "사내 메신저")}
-          <a href="${WHOIS_MAIL}">${ht("후이즈 메일")}</a>
+          <a ${whoisMailHref()}>${ht("후이즈 메일")}</a>
         </div>
         <div class="side-block dirs">
           <div class="nav-group ${foldOpen}">
@@ -399,8 +420,10 @@ function homeGroups() {
 }
 
 function folderRow(m) {
-  const href = m.type === "mail" || m.id === "mail" ? WHOIS_MAIL : `#/${m.id}`;
-  return `<a class="home-row" href="${h(href)}" data-name="${h(`${t(m.title)} ${t(m.desc)} ${m.id}`)}">
+  const mail = m.type === "mail" || m.id === "mail";
+  const href = mail ? WHOIS_MAIL : `#/${m.id}`;
+  const extra = mail ? " target=\"_blank\" rel=\"noopener noreferrer\"" : "";
+  return `<a class="home-row" href="${h(href)}"${extra} data-name="${h(`${t(m.title)} ${t(m.desc)} ${m.id}`)}">
       <b>${h(t(m.title))}</b>
       <span>${h(t(m.desc))}</span>
     </a>`;

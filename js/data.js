@@ -214,7 +214,7 @@ export function defaultState() {
     modules: [
       { id: "records", title: "기록 관리", desc: "각 폴더의 기록을 수정하거나 삭제합니다.", type: "records" },
       { id: "chat", title: "사내 메신저", desc: "카카오톡처럼 현장·검사실·개인 대화를 나눕니다.", type: "chat" },
-      { id: "mail", title: "후이즈 메일", desc: "후이즈 웹메일로 이동합니다.", type: "mail" },
+      { id: "mail", title: "후이즈 메일", desc: "새 창에서 후이즈 웹메일을 엽니다.", type: "mail" },
       { id: "inbound", title: "원자재 입고 관리", desc: "월 폴더에 A4 한 장으로 적습니다. 날짜, 업체, 자재 품명, 개수, 자재 사이즈 순입니다.", type: "inbound" },
       { id: "process", title: "가공 현황", desc: "품번·품명·날짜별 완료 수량을 관리합니다.", type: "process" },
       { id: "delivery", title: "납품 일정", desc: "날짜 폴더에서 납품 목록과 표를 봅니다.", type: "delivery" },

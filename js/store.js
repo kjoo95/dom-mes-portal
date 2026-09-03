@@ -1,4 +1,4 @@
-import { STORAGE_KEY, defaultState, todayISO } from "./data.js?v=46";
+import { STORAGE_KEY, defaultState, todayISO } from "./data.js?v=47";
 import { seedJobs, parseProgram, toNc, looksBinaryText } from "./gcode.js?v=50";
 
 const BAK = `${STORAGE_KEY}-bak`;
@@ -57,7 +57,7 @@ function mergeModules(base, saved) {
   }
   const mail = list.find((item) => item.id === "mail");
   if (mail) {
-    mail.desc = "후이즈 웹메일로 이동합니다.";
+    mail.desc = "새 창에서 후이즈 웹메일을 엽니다.";
   }
   const inbound = list.find((item) => item.id === "inbound");
   if (inbound) {

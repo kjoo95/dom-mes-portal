@@ -106,7 +106,7 @@ export function chatView(state, h, roomRaw) {
   }).join("");
   return `
     <div class="head compact-head"><div><h1>${t("사내 메신저")}</h1><p>${t("카카오톡처럼 현장·검사실·개인 대화를 나눕니다.")}</p></div>
-      <a class="btn ghost sm" href="https://email.whois.co.kr/v2/">${t("후이즈 메일")}</a></div>
+      <a class="btn ghost sm" href="https://email.whois.co.kr/v2/" target="_blank" rel="noopener noreferrer">${t("후이즈 메일")}</a></div>
     <section class="talk">
       <aside class="talk-rooms">
         <p>${t("대화방")}</p>
@@ -165,8 +165,8 @@ export function mailView(state, h) {
     <section class="panel mail-panel">
       <div class="bar compact-bar">
         <b>${t("웹메일")}</b>
-        <a class="btn sm red" id="open-whois" href="${h(mail.web)}" target="_blank" rel="noopener">${t("후이즈 메일 열기")}</a>
-        <a class="btn sm" href="https://smart.whoismail.net" target="_blank" rel="noopener">${t("스마트웹메일")}</a>
+        <a class="btn sm red" id="open-whois" href="${h(mail.web)}" target="_blank" rel="noopener noreferrer">${t("후이즈 메일 열기")}</a>
+        <a class="btn sm" href="https://smart.whoismail.net" target="_blank" rel="noopener noreferrer">${t("스마트웹메일")}</a>
       </div>
       <form class="mail-set" id="mail-set">
         <label>${t("내 메일")}<input name="address" type="email" value="${h(mail.address)}" /></label>
