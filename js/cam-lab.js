@@ -1,6 +1,6 @@
 import { getSession, logout, isInternalNetwork } from "./auth.js?v=45";
 import { loadState, saveState, uid } from "./store.js?v=49";
-import { collectStats, parseProgram, toNc, toJson, accTime, toolOps, toolSpec, decodeCamFile, isCamFileName } from "./gcode.js?v=49";
+import { collectStats, parseProgram, toNc, toJson, accTime, toolOps, toolSpec, decodeCamFile, isCamFileName } from "./gcode.js?v=50";
 import { boot } from "./safety.js";
 import { createMill } from "./mill3d.js?v=29";
 import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=42";
@@ -49,6 +49,13 @@ function cutCount(job) {
   return (job?.points || []).filter((p) => !p.rapid && !p.change).length;
 }
 
+function camRank(name) {
+  if (/\.nci$/i.test(name)) return 3;
+  if (/\.(nc|cnc|tap|iso|eia|min|ncc)$/i.test(name)) return 2;
+  if (/\.mc[89]$/i.test(name)) return 1;
+  return 0;
+}
+
 async function takeFiles(fileList) {
   const incoming = [...(fileList || [])].filter((f) => isCamNc(f.name));
   if (!incoming.length) return 0;
@@ -56,10 +63,13 @@ async function takeFiles(fileList) {
   for (const file of incoming) {
     const text = await readNcText(file);
     const parsed = parseProgram(file.name, text);
-    if (cutCount(parsed) < 2) continue;
+    const cuts = cutCount(parsed);
     const stem = fileStem(file.name);
     const prev = byStem.get(stem);
-    if (!prev || cutCount(parsed) > cutCount(prev.parsed)) byStem.set(stem, { file, parsed });
+    const better = !prev
+      || cuts > cutCount(prev.parsed)
+      || (cuts === cutCount(prev.parsed) && camRank(file.name) > camRank(prev.file.name));
+    if (cuts >= 2 && better) byStem.set(stem, { file, parsed });
   }
   if (!byStem.size) return 0;
   if (!state.cam.jobs) state.cam.jobs = [];
@@ -104,13 +114,8 @@ async function walkEntry(entry, out) {
 async function loadCam(fileList) {
   const all = [...(fileList || [])];
   const incoming = all.filter((f) => isCamNc(f.name));
-  if (!incoming.length) {
-    if (all.length) alert("NC, NCI 또는 Mastercam 파일을 넣어 주세요. MC9만 있으면 같은 폴더의 NCI나 포스트한 NC를 함께 넣으면 됩니다.");
-    return 0;
-  }
-  const n = await takeFiles(incoming);
-  if (!n) alert("공구경로를 읽지 못했습니다. 마스터캠에서 NCI를 저장하거나 NC로 포스트한 파일을 넣어 주세요.");
-  return n;
+  if (!incoming.length) return 0;
+  return takeFiles(incoming);
 }
 
 function viewJob() {
@@ -222,7 +227,7 @@ function render() {
       <aside class="side">
         <p class="side-label">프로그램</p>
         <div class="drop-zone" id="drop-zone">
-          <p>파일을 여기 놓거나<br>아래 버튼으로 넣으면 됩니다.</p>
+          <p>마스터캠 프로그램을 넣으면<br>NCI·NC를 찾아 바로 돌립니다.</p>
           <button class="btn red sm" id="open-prog" type="button">프로그램 넣기</button>
           <input id="open-nc" type="file" multiple hidden accept=".nc,.nci,.cnc,.tap,.txt,.iso,.eia,.min,.ncc,.mc9,.mc8">
           <input id="open-dir" type="file" hidden webkitdirectory>
@@ -280,9 +285,13 @@ function render() {
   bindLang(render);
   document.getElementById("out").onclick = () => { logout(); location.href = "./portal.html?v=42"; };
   document.getElementById("open-prog")?.addEventListener("click", () => {
-    document.getElementById("open-nc")?.click();
+    document.getElementById("open-dir")?.click();
   });
   document.getElementById("open-nc")?.addEventListener("change", async (e) => {
+    await loadCam(e.target.files || []);
+    e.target.value = "";
+  });
+  document.getElementById("open-dir")?.addEventListener("change", async (e) => {
     await loadCam(e.target.files || []);
     e.target.value = "";
   });

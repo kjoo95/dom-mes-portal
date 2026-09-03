@@ -1,4 +1,4 @@
-import { toolSpec, accTime } from "./gcode.js?v=49";
+import { toolSpec, accTime } from "./gcode.js?v=50";
 
 function bboxOf(job) {
   const pts = (job?.points || []).filter((p) => !p.rapid && !p.change);

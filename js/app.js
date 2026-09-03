@@ -6,7 +6,7 @@ import {
 } from "./data.js?v=46";
 import { loadState, saveState, uid } from "./store.js?v=50";
 import { saveBlob, loadBlob, readAsDataUrl, saveDirHandle, loadDirHandle, removeBlob } from "./files.js?v=39";
-import { parseProgram, decodeCamFile, isCamFileName } from "./gcode.js?v=49";
+import { parseProgram, decodeCamFile, isCamFileName } from "./gcode.js?v=50";
 import { boot, showRecover } from "./safety.js?v=39";
 import { chatView, bindChat } from "./comm.js?v=50";
 import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=52";
@@ -357,7 +357,7 @@ function shell(session, active, inner, printMode = false) {
           ${link("home", "운영 폴더")}
           ${link("manage", "수정·삭제")}
           ${isAdmin(session) ? `<a class="${"members" === active ? "on" : ""}" href="#/members">${ht("가입 승인")}${wait ? ` (${wait})` : ""}</a>` : ""}
-          <a href="./cam-lab.html?v=31">${ht("가공 프로그램")}</a>
+          <a href="./cam-lab.html?v=32">${ht("가공 프로그램")}</a>
         </div>
         <div class="side-block comm">
           <p class="side-label">${ht("소통")}</p>
@@ -1619,6 +1619,13 @@ function camFileStem(name) {
   return String(name || "").replace(/\.[^.]+$/, "").toLowerCase();
 }
 
+function camRank(name) {
+  if (/\.nci$/i.test(name)) return 3;
+  if (/\.(nc|cnc|tap|iso|eia|min|ncc)$/i.test(name)) return 2;
+  if (/\.mc[89]$/i.test(name)) return 1;
+  return 0;
+}
+
 function camCount(folderId, date) {
   const files = (state.cam.files || []).filter((f) => f.folderId === folderId && f.date === date).length;
   const jobs = (state.cam.jobs || []).filter((j) => (j.folderId || "cam-root") === folderId && j.date === date).length;
@@ -1660,7 +1667,7 @@ function camView(mod, date) {
   </tr>`).join("");
   const path = atRoot ? "업체를 고른 뒤 프로그램을 넣습니다." : `${h(folder.name)} · ${date}`;
   return `<div class="head"><div><h1>${h(mod.title)}</h1><p>${path}</p></div>
-    <a class="btn red sm" href="./cam-lab.html?v=31">가공 프로그램</a></div>
+    <a class="btn red sm" href="./cam-lab.html?v=32">가공 프로그램</a></div>
     <section class="panel">
       <div class="bar">${folder.parent ? `<button class="btn sm" id="up" type="button">업체 목록</button>` : ""}
         ${atRoot ? `<button class="btn sm" id="nf" type="button">업체 추가</button>` : `<button class="btn sm" id="del-vendor" type="button">이 업체 삭제</button>`}
@@ -2161,7 +2168,7 @@ function bindCam(date) {
       e.target.value = "";
       return;
     }
-    for (const f of e.target.files) await ingestCamFile(f, date);
+    await ingestCamBatch(e.target.files, date);
     persist(); render();
     e.target.value = "";
   });
@@ -2210,7 +2217,31 @@ async function readNcText(file) {
   return decodeCamFile(buf, file.name);
 }
 
-async function ingestCamFile(file, date = todayISO()) {
+async function ingestCamBatch(fileList, date = todayISO()) {
+  const files = [...(fileList || [])].filter((f) => isCamNc(f.name));
+  const byStem = new Map();
+  for (const file of files) {
+    const stem = camFileStem(file.name);
+    const list = byStem.get(stem) || [];
+    list.push(file);
+    byStem.set(stem, list);
+  }
+  for (const group of byStem.values()) {
+    group.sort((a, b) => camRank(b.name) - camRank(a.name));
+    let best = null;
+    for (const file of group) {
+      const text = await readNcText(file);
+      const parsed = parseProgram(file.name, text);
+      const cuts = (parsed?.points || []).filter((p) => !p.rapid && !p.change).length;
+      if (!best || cuts > best.cuts || (cuts === best.cuts && camRank(file.name) > camRank(best.file.name))) {
+        best = { file, parsed, cuts };
+      }
+    }
+    if (best) await ingestCamFile(best.file, date, best.parsed);
+  }
+}
+
+async function ingestCamFile(file, date = todayISO(), parsedIn) {
   if (!state.cam.jobs) state.cam.jobs = [];
   if (!state.cam.files) state.cam.files = [];
   if (!state.records.process) state.records.process = [];
@@ -2226,8 +2257,8 @@ async function ingestCamFile(file, date = todayISO()) {
   const id = uid("file");
   await saveBlob(id, file);
   state.cam.files.push({ id, folderId, name: file.name, size: file.size, date, auto: true });
-  const text = await readNcText(file);
-  const parsed = parseProgram(file.name, text);
+  const text = parsedIn ? "" : await readNcText(file);
+  const parsed = parsedIn || parseProgram(file.name, text);
   const cuts = (parsed?.points || []).filter((p) => !p.rapid && !p.change).length;
   if (cuts < 2) {
     remember("mastercam", date);
@@ -2265,19 +2296,26 @@ async function ingestCamFile(file, date = todayISO()) {
   remember("process", date);
 }
 
+async function collectCamFiles(handle, out = []) {
+  for await (const [, entry] of handle.entries()) {
+    if (entry.kind === "file" && isCamNc(entry.name)) out.push(await entry.getFile());
+    else if (entry.kind === "directory") await collectCamFiles(entry, out);
+  }
+  return out;
+}
+
 async function pickCamWatchDir() {
   if (!window.showDirectoryPicker) {
-    alert("Chrome 또는 Edge에서만 폴더 연결이 됩니다. Mastercam이 NC를 저장하는 폴더를 선택하세요.");
+    alert("Chrome 또는 Edge에서만 폴더 연결이 됩니다. Mastercam이 프로그램을 저장하는 폴더를 선택하세요.");
     return;
   }
   const handle = await window.showDirectoryPicker({ id: "dom-mcam-nc", mode: "read" });
   await saveDirHandle(handle);
   state.cam.watchName = handle.name;
   if (!state.cam.seen) state.cam.seen = {};
-  for await (const [name, entry] of handle.entries()) {
-    if (entry.kind !== "file" || !isCamNc(name)) continue;
-    const file = await entry.getFile();
-    state.cam.seen[`${name}:${file.size}:${file.lastModified}`] = 1;
+  const files = await collectCamFiles(handle);
+  for (const file of files) {
+    state.cam.seen[`${file.name}:${file.size}:${file.lastModified}`] = 1;
   }
   persist();
   ensureCamWatch();
@@ -2290,28 +2328,27 @@ async function scanCamWatch() {
   const perm = await handle.queryPermission({ mode: "read" });
   if (perm !== "granted") return;
   if (!state.cam.seen) state.cam.seen = {};
-  let added = 0;
-  for await (const [name, entry] of handle.entries()) {
-    if (entry.kind !== "file" || !isCamNc(name)) continue;
-    const file = await entry.getFile();
+  const files = await collectCamFiles(handle);
+  const fresh = [];
+  for (const file of files) {
     if (Date.now() - file.lastModified < 2500) continue;
-    const key = `${name}:${file.size}:${file.lastModified}`;
+    const key = `${file.name}:${file.size}:${file.lastModified}`;
     if (state.cam.seen[key]) continue;
-    if ((state.cam.files || []).some((f) => f.name === name && f.size === file.size && f.date === todayISO())) {
+    if ((state.cam.files || []).some((f) => f.name === file.name && f.size === file.size && f.date === todayISO())) {
       state.cam.seen[key] = 1;
       continue;
     }
-    await ingestCamFile(file, todayISO());
+    fresh.push(file);
     state.cam.seen[key] = 1;
-    added += 1;
+  }
+  if (fresh.length) {
+    await ingestCamBatch(fresh, todayISO());
+    persist();
+    if (!document.getElementById("modal")?.innerHTML) render();
   }
   const keys = Object.keys(state.cam.seen);
   if (keys.length > 800) {
     keys.slice(0, keys.length - 500).forEach((k) => { delete state.cam.seen[k]; });
-  }
-  if (added) {
-    persist();
-    if (!document.getElementById("modal")?.innerHTML) render();
   }
 }
 
