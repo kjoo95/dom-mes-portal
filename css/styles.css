@@ -946,27 +946,44 @@ table.checks .chk { width: 72px; text-align: center; }
 }
 .process-a4 .a4-head-corp {
   display: grid;
-  grid-template-columns: minmax(52mm, 1fr) auto minmax(70mm, 1fr);
-  align-items: center;
-  min-height: 18mm;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "logo stamp"
+    "title title";
+  align-items: start;
+  column-gap: 8px;
+  row-gap: 2px;
+  min-height: 0;
+  padding-bottom: 8px;
+}
+.process-a4 .a4-head-corp > div:first-child {
+  grid-area: logo;
+  justify-self: start;
+  align-self: start;
+  min-width: 0;
+}
+.process-a4 .a4-logo {
+  height: 10mm;
+  max-width: 78mm;
 }
 .process-a4 .a4-head-corp h1 {
+  grid-area: title;
   position: static;
   left: auto;
   right: auto;
   top: auto;
-  grid-column: 2;
-  letter-spacing: 0.04em;
-  font-size: 20px;
-  line-height: 1.2;
-}
-.process-a4 .a4-head-corp > div:first-child {
-  justify-self: start;
-  align-self: start;
+  margin: 0;
+  padding: 2px 4px 0;
+  text-align: center;
+  font-size: 18px;
+  line-height: 1.25;
+  letter-spacing: 0.14em;
+  z-index: 2;
 }
 .process-a4 .a4-stamp {
+  grid-area: stamp;
   justify-self: end;
-  grid-column: 3;
+  width: 68mm;
 }
 .process-a4 .a4-meta {
   table-layout: fixed;
