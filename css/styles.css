@@ -2098,8 +2098,7 @@ table.checks .chk { width: 72px; text-align: center; }
   }
   .inbound-sheet,
   .qa-a4,
-  .process-a4,
-  .delivery-sheet {
+  .process-a4 {
     width: 210mm !important;
     height: 297mm !important;
     max-height: 297mm !important;
@@ -2147,15 +2146,38 @@ table.checks .chk { width: 72px; text-align: center; }
     height: auto !important;
   }
   .delivery-sheet {
+    width: 100% !important;
+    max-width: 100% !important;
     height: auto !important;
-    min-height: 297mm !important;
+    min-height: 0 !important;
     max-height: none !important;
     overflow: visible !important;
     page-break-inside: auto !important;
     break-inside: auto !important;
     page-break-after: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
-  .delivery-sheet .tx-form { width: 100% !important; }
+  .delivery-sheet .tx-form col.col-act,
+  .delivery-sheet .tx-form .col-act,
+  .delivery-sheet .tx-form .no-print {
+    display: none !important;
+    width: 0 !important;
+  }
+  .delivery-sheet .tx-form {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    table-layout: fixed !important;
+  }
+  .delivery-sheet .tx-form .col-n { width: 5% !important; }
+  .delivery-sheet .tx-form .col-no { width: 15% !important; }
+  .delivery-sheet .tx-form .col-name { width: 28% !important; }
+  .delivery-sheet .tx-form .col-unit { width: 7% !important; }
+  .delivery-sheet .tx-form .col-qty { width: 8% !important; }
+  .delivery-sheet .tx-form .col-price { width: 12% !important; }
+  .delivery-sheet .tx-form .col-amt { width: 13% !important; }
+  .delivery-sheet .tx-form .col-note { width: 12% !important; }
   .tx-seal, .brand-logo { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .delivery-day tr { break-inside: avoid; page-break-inside: avoid; }
   .eq-sheet { overflow: hidden !important; }

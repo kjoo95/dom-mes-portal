@@ -104,6 +104,7 @@ function saveNote() {
 function printSheet() {
   const sheet = document.querySelector(".a4-sheet");
   const land = sheet?.classList.contains("month-sheet");
+  const delivery = sheet?.classList.contains("delivery-sheet");
   let tag = document.getElementById("print-size");
   if (!tag) {
     tag = document.createElement("style");
@@ -111,8 +112,10 @@ function printSheet() {
     document.head.appendChild(tag);
   }
   tag.textContent = land
-    ? "@media print { @page { size: A4 landscape; margin: 0; } }"
-    : "@media print { @page { size: A4 portrait; margin: 0; } }";
+    ? "@media print { @page { size: A4 landscape; margin: 8mm; } }"
+    : delivery
+      ? "@media print { @page { size: A4 portrait; margin: 8mm; } }"
+      : "@media print { @page { size: A4 portrait; margin: 0; } }";
   window.print();
 }
 
