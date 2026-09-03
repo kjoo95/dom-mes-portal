@@ -1,4 +1,4 @@
-const CACHE = "dom-v85";
+const CACHE = "dom-v95";
 const FILES = [
   "./",
   "./index.html",
@@ -21,8 +21,14 @@ const FILES = [
   "./js/public.js",
   "./js/pwa.js",
   "./assets/favicon.svg",
+  "./assets/favicon-32.png",
   "./assets/icon-192.png",
   "./assets/icon-512.png",
+  "./assets/icon-maskable-512.png",
+  "./assets/apple-touch-icon.png",
+  "./assets/dom-logo.png",
+  "./assets/dom-letterhead.png",
+  "./assets/dom-seal.png",
 ];
 
 self.addEventListener("install", (event) => {

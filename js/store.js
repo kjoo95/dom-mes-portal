@@ -1,4 +1,4 @@
-import { STORAGE_KEY, defaultState, todayISO } from "./data.js?v=54";
+import { STORAGE_KEY, defaultState, todayISO } from "./data.js?v=56";
 import { seedJobs, parseProgram, toNc, looksBinaryText } from "./gcode.js?v=52";
 
 const BAK = `${STORAGE_KEY}-bak`;
@@ -72,8 +72,8 @@ function mergeModules(base, saved) {
   }
   const delivery = list.find((item) => item.id === "delivery");
   if (delivery) {
-    delivery.title = "거래명세표";
-    delivery.desc = "날짜별 거래명세표에 그날 나가는 품목을 적고 한 장으로 인쇄합니다.";
+    delivery.title = "납품 일정";
+    delivery.desc = "날짜를 연 뒤 표를 열면 거래명세표가 나옵니다.";
   }
   const lab5 = list.find((item) => item.id === "lab-5s");
   if (lab5) {
@@ -122,6 +122,10 @@ function hydrate(parsed) {
       sheet: parsed.labClimate?.sheet || {},
     },
     dateFolders: parsed.dateFolders || {},
+    vaults: {
+      sales: { pin: String(parsed.vaults?.sales?.pin || "") },
+      accounting: { pin: String(parsed.vaults?.accounting?.pin || "") },
+    },
     deliveryMeta: { ...(base.deliveryMeta || {}), ...(parsed.deliveryMeta || {}) },
     fiveS: { dates: {}, notes: {}, labNotes: {}, ...(parsed.fiveS || {}) },
     cam,
@@ -140,7 +144,33 @@ function hydrate(parsed) {
   migrateInbound(state);
   migrateMonthFolders(state);
   migrateCamFolders(state, base);
+  migrateCamProgramRows(state);
   return state;
+}
+
+function isCamProgramRow(row) {
+  return String(row?.status || "") === "프로그램 등록";
+}
+
+function migrateCamProgramRows(state) {
+  const list = state.records?.process;
+  if (!Array.isArray(list)) return;
+  const droppedDates = new Set();
+  const kept = [];
+  for (const row of list) {
+    if (isCamProgramRow(row)) {
+      const d = row.workDate || row.startDate;
+      if (d) droppedDates.add(d);
+    } else {
+      kept.push(row);
+    }
+  }
+  if (kept.length === list.length) return;
+  state.records.process = kept;
+  const keepDates = new Set(kept.map((row) => row.workDate || row.startDate).filter(Boolean));
+  if (Array.isArray(state.dateFolders?.process)) {
+    state.dateFolders.process = state.dateFolders.process.filter((d) => keepDates.has(d) || !droppedDates.has(d));
+  }
 }
 
 function migrateCamFolders(state, base) {

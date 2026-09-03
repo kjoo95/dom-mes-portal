@@ -1,15 +1,15 @@
-import { getSession, login, signup, logout, isInternalNetwork, pullUsers, isAdmin, listUsers, pendingCount, setUserStatus } from "./auth.js?v=45";
+import { getSession, login, signup, logout, isInternalNetwork, pullUsers, isAdmin, listUsers, pendingCount, setUserStatus } from "./auth.js?v=46";
 import {
   CUSTOMERS, MILL_SHOPS, MACHINES, FIVE_S_SHOP, FIVE_S_LAB, QA_MEASURE_ITEMS,
   EQ_ITEMS, EQ_MARKS, DOM_SUPPLIER,
   fieldsFor, flattenChecks, badgeClass, todayISO,
-} from "./data.js?v=54";
-import { loadState, saveState, uid } from "./store.js?v=60";
+} from "./data.js?v=56";
+import { loadState, saveState, uid } from "./store.js?v=63";
 import { saveBlob, loadBlob, readAsDataUrl, removeBlob } from "./files.js?v=39";
 import { parseProgram, decodeCamFile, mayBeCamFile } from "./gcode.js?v=52";
-import { boot, showRecover } from "./safety.js?v=39";
+import { boot, showRecover } from "./safety.js?v=41";
 import { chatView, bindChat } from "./comm.js?v=51";
-import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=65";
+import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=67";
 
 const WHOIS_MAIL = "https://email.whois.co.kr/v2/";
 
@@ -31,9 +31,44 @@ const h = (v) => String(v ?? "")
   .replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
 const ht = (v) => h(t(v));
 
+let savedSnap = null;
+let editKey = "";
+let sheetDirty = false;
+
 function persist() {
   state.camFolder = camFolder;
   try { saveState(state); } catch { /* 백업은 store에서 유지 */ }
+}
+
+function sheetEditKey() {
+  const r = route();
+  if (r.page !== "mod") return "";
+  return `${r.id}|${r.date || ""}|${r.extra || ""}`;
+}
+
+function beginSheetEdit() {
+  const key = sheetEditKey();
+  if (!key) return;
+  if (editKey === key && savedSnap) return;
+  savedSnap = structuredClone(state);
+  editKey = key;
+  sheetDirty = false;
+}
+
+function markDirty() {
+  sheetDirty = true;
+}
+
+function revertUnsavedIfLeft() {
+  const key = sheetEditKey();
+  if (!editKey || key === editKey) return;
+  if (sheetDirty && savedSnap) {
+    state = savedSnap;
+    camFolder = state.camFolder || camFolder;
+  }
+  savedSnap = null;
+  editKey = "";
+  sheetDirty = false;
 }
 
 function flashSaved() {
@@ -50,9 +85,12 @@ function flashSaved() {
 }
 
 function bindSaveButton(before) {
+  beginSheetEdit();
   const run = () => {
     before?.();
     persist();
+    savedSnap = structuredClone(state);
+    sheetDirty = false;
     flashSaved();
   };
   document.getElementById("sheet-save")?.addEventListener("click", run);
@@ -78,11 +116,52 @@ function printSheet() {
   window.print();
 }
 
+const VAULTS = [
+  { id: "sales", title: "영업 폴더", desc: "영업 관련 업무를 이 폴더에 모아 둡니다." },
+  { id: "accounting", title: "회계 폴더", desc: "회계 관련 업무를 이 폴더에 모아 둡니다." },
+];
+const VAULT_SESSION = "dom-vault:";
+let vaultResetId = "";
+
+function isVaultId(id) {
+  return VAULTS.some((v) => v.id === id);
+}
+
+function vaultUnlocked(id) {
+  return sessionStorage.getItem(`${VAULT_SESSION}${id}`) === "1";
+}
+
+function setVaultUnlocked(id, on) {
+  if (on) sessionStorage.setItem(`${VAULT_SESSION}${id}`, "1");
+  else sessionStorage.removeItem(`${VAULT_SESSION}${id}`);
+}
+
+function vaultBag(id) {
+  if (!state.vaults || typeof state.vaults !== "object") state.vaults = {};
+  if (!state.vaults[id] || typeof state.vaults[id] !== "object") state.vaults[id] = { pin: "" };
+  return state.vaults[id];
+}
+
+async function pinHash(id, pin) {
+  const raw = `dom-vault|${id}|${String(pin || "")}`;
+  if (crypto.subtle) {
+    const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(raw));
+    return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+  }
+  let h = 2166136261;
+  for (let i = 0; i < raw.length; i += 1) {
+    h ^= raw.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return `x${(h >>> 0).toString(16)}`;
+}
+
 function route() {
   const p = location.hash.replace(/^#\/?/, "").split("/").filter(Boolean);
   if (!p.length || p[0] === "home") return { page: "home" };
   if (p[0] === "manage") return { page: "manage" };
   if (p[0] === "members") return { page: "members" };
+  if (isVaultId(p[0])) return { page: "vault", id: p[0] };
   return { page: "mod", id: p[0], date: p[1] || "", extra: p[2] || "" };
 }
 
@@ -330,11 +409,13 @@ function isPrintPage(mod, extra, date) {
   return false;
 }
 
-function logo() {
-  return `<div class="logo"><b>DOM</b><span>${ht("디오엠 · 제조 운영")}</span></div>`;
+function logo(sub = "") {
+  const extra = sub ? `<span class="logo-sub">${ht(sub)}</span>` : "";
+  return `<div class="logo"><img class="logo-full" src="./assets/dom-logo.png" alt="주식회사 디오엠">${extra}</div>`;
 }
 
 function render() {
+  revertUnsavedIfLeft();
   applyHtmlLang();
   const session = getSession();
   const r = route();
@@ -357,6 +438,17 @@ function render() {
     }
     shell(session, "members", membersView());
     bindMembers();
+    return;
+  }
+  if (r.page === "vault") {
+    const vault = VAULTS.find((v) => v.id === r.id);
+    if (!vault) {
+      shell(session, "home", homeView());
+      bindHome();
+      return;
+    }
+    shell(session, vault.id, vaultView(vault, session));
+    bindVault(vault, session);
     return;
   }
   const mod = state.modules.find((m) => m.id === r.id);
@@ -483,9 +575,32 @@ function sideFolders(active) {
   }).join("");
 }
 
+const NAV_OPEN_KEY = "dom-nav-open";
+
+function navGroupOpen(id) {
+  try {
+    const map = JSON.parse(localStorage.getItem(NAV_OPEN_KEY) || "{}");
+    return Boolean(map[id]);
+  } catch {
+    return false;
+  }
+}
+
+function setNavGroupOpen(id, open) {
+  try {
+    const map = JSON.parse(localStorage.getItem(NAV_OPEN_KEY) || "{}");
+    map[id] = Boolean(open);
+    localStorage.setItem(NAV_OPEN_KEY, JSON.stringify(map));
+  } catch { /* ignore */ }
+}
+
 function bindShell() {
   root.querySelectorAll("[data-group]").forEach((b) => {
-    b.onclick = () => b.parentElement.classList.toggle("open");
+    b.onclick = () => {
+      const group = b.parentElement;
+      group.classList.toggle("open");
+      setNavGroupOpen(b.dataset.group, group.classList.contains("open"));
+    };
   });
   root.querySelectorAll("a[href*='whois']").forEach((a) => {
     a.target = "_blank";
@@ -499,12 +614,19 @@ function bindShell() {
   });
 }
 
+function sideVaults(active) {
+  return `<div class="side-vaults">${VAULTS.map((v) => {
+    const on = v.id === active ? "on" : "";
+    const mark = vaultUnlocked(v.id) ? "" : `<span class="vault-mark">${ht("잠금")}</span>`;
+    return `<a class="nav-vault ${on}" href="#/${v.id}">${ht(v.title)}${mark}</a>`;
+  }).join("")}</div>`;
+}
+
 function shell(session, active, inner, printMode = false) {
   const link = (id, title) => `<a class="${id === active ? "on" : ""}" href="#/${id}">${ht(title)}</a>`;
   const folders = sideFolders(active);
-  const comm = active === "chat" || active === "mail";
   const wait = isAdmin(session) ? pendingCount() : 0;
-  const foldOpen = active !== "home" && active !== "manage" && active !== "members" && !comm ? "open" : "";
+  const foldOpen = navGroupOpen("folders") ? "open" : "";
   root.innerHTML = `
     <div class="app ${printMode ? "print-mode" : ""}">
       <header>
@@ -526,9 +648,12 @@ function shell(session, active, inner, printMode = false) {
         </div>
         <div class="side-block dirs">
           <div class="nav-group ${foldOpen}">
-            <button class="nav-group-head" data-group="folders" type="button">${ht("폴더")}</button>
+            <button class="nav-group-head" data-group="folders" type="button">${ht("사내업무 폴더")}</button>
             <div class="nav-group-body">${folders}</div>
           </div>
+        </div>
+        <div class="side-block vaults">
+          ${sideVaults(active)}
         </div>
       </aside>
       <main>${inner}</main>
@@ -537,6 +662,75 @@ function shell(session, active, inner, printMode = false) {
   document.getElementById("out").onclick = () => { logout(); location.hash = ""; render(); };
   bindShell();
   bindLang(render);
+}
+
+function vaultView(vault, session) {
+  const bag = vaultBag(vault.id);
+  const hasPin = Boolean(bag.pin);
+  const admin = isAdmin(session);
+  const setup = !hasPin || vaultResetId === vault.id;
+  if (setup && !admin) {
+    return `<div class="head"><div><h1>${ht(vault.title)}</h1><p>${ht("관리자가 비밀번호를 정한 뒤에 열 수 있습니다.")}</p></div></div>
+      <section class="panel"><p class="mute pad">${ht("이 폴더는 비밀번호가 걸려 있습니다.")}</p></section>`;
+  }
+  if (setup) {
+    return `<section class="panel vault-panel">
+      <h1>${ht(vault.title)}</h1>
+      <p>${ht("이 폴더를 열 비밀번호를 정하세요. 영업과 회계는 각각 따로 정합니다.")}</p>
+      <form id="vault-form">
+        <label>${ht("비밀번호")}<input name="pin" type="password" autocomplete="new-password" required minlength="4"></label>
+        <label>${ht("비밀번호 확인")}<input name="pin2" type="password" autocomplete="new-password" required minlength="4"></label>
+        <p class="err" id="vault-err"></p>
+        <button class="btn red" type="submit">${ht("비밀번호 정하기")}</button>
+      </form>
+    </section>`;
+  }
+  if (!vaultUnlocked(vault.id)) {
+    return `<section class="panel vault-panel">
+      <h1>${ht(vault.title)}</h1>
+      <p>${ht("비밀번호를 입력하면 이 폴더가 열립니다.")}</p>
+      <form id="vault-form">
+        <label>${ht("비밀번호")}<input name="pin" type="password" autocomplete="off" required></label>
+        <p class="err" id="vault-err"></p>
+        <button class="btn red" type="submit">${ht("열기")}</button>
+        ${admin ? `<button class="btn ghost" id="vault-reset" type="button">${ht("비밀번호 다시 정하기")}</button>` : ""}
+      </form>
+    </section>`;
+  }
+  return `<div class="head"><div><h1>${ht(vault.title)}</h1><p>${h(t(vault.desc))}</p></div>
+      ${admin ? `<button class="btn sm" id="vault-reset" type="button">${ht("비밀번호 바꾸기")}</button>` : ""}
+    </div>
+    <section class="panel"><p class="mute pad">${ht("아직 이 폴더에 넣은 업무가 없습니다. 나중에 영업·회계 항목을 여기로 나누면 됩니다.")}</p></section>`;
+}
+
+function bindVault(vault, session) {
+  const err = document.getElementById("vault-err");
+  const showErr = (msg) => { if (err) err.textContent = t(msg); };
+  document.getElementById("vault-reset")?.addEventListener("click", () => {
+    vaultResetId = vault.id;
+    setVaultUnlocked(vault.id, false);
+    render();
+  });
+  document.getElementById("vault-form")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(e.currentTarget).entries());
+    const pin = String(data.pin || "");
+    const setup = !vaultBag(vault.id).pin || vaultResetId === vault.id;
+    if (setup) {
+      if (pin.length < 4) return showErr("비밀번호는 4자리 이상으로 정하세요.");
+      if (pin !== String(data.pin2 || "")) return showErr("비밀번호가 같지 않습니다.");
+      vaultBag(vault.id).pin = await pinHash(vault.id, pin);
+      vaultResetId = "";
+      setVaultUnlocked(vault.id, true);
+      persist();
+      render();
+      return;
+    }
+    const ok = await pinHash(vault.id, pin);
+    if (ok !== vaultBag(vault.id).pin) return showErr("비밀번호가 틀렸습니다.");
+    setVaultUnlocked(vault.id, true);
+    render();
+  });
 }
 
 function homeGroups() {
@@ -1442,61 +1636,84 @@ function deliveryDayView(mod, date, viewOnly = false) {
     ? `#/records/${mod.id}/${monthKey(date) || date}`
     : `#/${mod.id}/${monthKey(date) || date}`;
   const extra = viewOnly ? "" : `<button class="btn" id="add-row" type="button">${ht("가로줄 추가")}</button>`;
+  const delEmpty = viewOnly ? "" : `<td class="no-print"></td>`;
   return `
     <div class="print-page${viewOnly ? " view-only" : ""}">
       ${a4Tools(back, extra, viewOnly)}
       <div class="a4-wrap page">
         <article class="a4-sheet delivery-sheet tx-sheet">
-          <div class="tx-top">
-            <span></span>
-            <div class="tx-id">
-              <input data-head="docNo" value="${h(head.docNo)}" placeholder="PA0000000" spellcheck="false">
-              <span>${h(printDateText(date))}</span>
-            </div>
-          </div>
-          <h1 class="tx-title">${ht("거래명세표")}</h1>
-          <div class="tx-parties">
-            <div class="tx-user">
-              <b>User</b>
-              <select data-head="customer">
-                <option value=""></option>
-                ${custOpts.map((o) => `<option value="${h(o)}" ${o === head.customer ? "selected" : ""}>${h(o)}</option>`).join("")}
-              </select>
-              <textarea data-head="customerAddr" rows="2" placeholder="${ht("주소")}">${h(head.customerAddr)}</textarea>
-              <label><span>${ht("인수부서명")}:</span><input data-head="recvDept" value="${h(head.recvDept)}"></label>
-              <label><span>${ht("발주번호")};</span><input data-head="poNo" value="${h(head.poNo)}"></label>
-            </div>
-            <div class="tx-sup">
-              <b>Supplier</b>
-              <p>${h(DOM_SUPPLIER.name)}</p>
-              <p>${ht("사업자등록번호")};${h(DOM_SUPPLIER.bizNo)}</p>
-              <p>${h(DOM_SUPPLIER.addr)}</p>
-              <p>${h(DOM_SUPPLIER.tel)}</p>
-              <p>${ht("대표자")};${h(DOM_SUPPLIER.ceo)}</p>
-            </div>
-          </div>
-          <input class="tx-job" data-head="jobTitle" value="${h(head.jobTitle)}" placeholder="${ht("건명")}">
-          <div class="a4-grow month-scroll">
-            <table class="month-grid delivery-day">
-              <thead><tr>
+          <table class="tx-form delivery-day">
+            <colgroup>
+              <col class="col-n"><col class="col-no"><col class="col-name">
+              <col class="col-unit"><col class="col-qty"><col class="col-price">
+              <col class="col-amt"><col class="col-note">
+              ${viewOnly ? "" : "<col class=\"col-act\">"}
+            </colgroup>
+            <tbody>
+              <tr class="tx-meta">
+                <td colspan="5"></td>
+                <td colspan="3" class="tx-id">
+                  <input data-head="docNo" value="${h(head.docNo)}" placeholder="PA0000000" spellcheck="false">
+                  <span>${h(printDateText(date))}</span>
+                </td>
+                ${delEmpty}
+              </tr>
+              <tr class="tx-title-row">
+                <td colspan="8">거래명세표</td>
+                ${delEmpty}
+              </tr>
+              <tr class="tx-party-lab">
+                <td colspan="3">User</td>
+                <td colspan="5">Supplier</td>
+                ${delEmpty}
+              </tr>
+              <tr>
+                <td colspan="3" rowspan="5" class="tx-user">
+                  <select data-head="customer">
+                    <option value=""></option>
+                    ${custOpts.map((o) => `<option value="${h(o)}" ${o === head.customer ? "selected" : ""}>${h(o)}</option>`).join("")}
+                  </select>
+                  <textarea data-head="customerAddr" rows="3" placeholder="${ht("주소")}">${h(head.customerAddr)}</textarea>
+                  <label><span>인수부서명:</span><input data-head="recvDept" value="${h(head.recvDept)}"></label>
+                  <label><span>발주번호;</span><input data-head="poNo" value="${h(head.poNo)}"></label>
+                </td>
+                <td colspan="5" class="tx-sup tx-sup-logo">
+                  <img class="tx-logo" src="./assets/dom-logo.png" alt="주식회사 디오엠">
+                </td>
+                ${delEmpty}
+              </tr>
+              <tr><td colspan="5" class="tx-sup">사업자등록번호;${h(DOM_SUPPLIER.bizNo)}</td>${delEmpty}</tr>
+              <tr><td colspan="5" class="tx-sup">${h(DOM_SUPPLIER.addr)}</td>${delEmpty}</tr>
+              <tr><td colspan="5" class="tx-sup">${h(DOM_SUPPLIER.tel)}</td>${delEmpty}</tr>
+              <tr>
+                <td colspan="5" class="tx-sup tx-ceo">대표자;${h(DOM_SUPPLIER.ceo)}<img class="tx-seal" src="./assets/dom-seal.png" alt=""></td>
+                ${delEmpty}
+              </tr>
+              <tr class="tx-cols">
                 <th class="col-n">No</th>
-                <th class="col-no">${ht("품번")}</th>
-                <th class="col-name">${ht("품명")}</th>
-                <th class="col-unit">${ht("단위")}</th>
-                <th class="col-qty">${ht("수량")}</th>
-                <th class="col-price">${ht("단가")}</th>
-                <th class="col-amt">${ht("금액")}</th>
-                <th class="col-note">${ht("비고")}</th>
+                <th class="col-no">품번</th>
+                <th class="col-name">품명</th>
+                <th class="col-unit">단위</th>
+                <th class="col-qty">수량</th>
+                <th class="col-price">단가</th>
+                <th class="col-amt">금액</th>
+                <th class="col-note">비고</th>
                 ${delHead}
-              </tr></thead>
-              <tbody>${body}</tbody>
-            </table>
-          </div>
-          <p class="tx-end">${ht("이 하 여 백")}</p>
-          <div class="tx-total">
-            <span>Sub-Total(KRW)</span>
-            <b data-total>${h(total)}</b>
-          </div>
+              </tr>
+              <tr class="tx-job-row">
+                <td></td>
+                <td colspan="7"><input class="tx-job" data-head="jobTitle" value="${h(head.jobTitle)}" placeholder="건명"></td>
+                ${delEmpty}
+              </tr>
+              ${body}
+              <tr class="tx-blank-row"><td></td><td colspan="7">이 하 여 백</td>${delEmpty}</tr>
+              <tr class="tx-total">
+                <td colspan="6">Sub-Total(KRW)</td>
+                <td colspan="2" data-total>${h(total)}</td>
+                ${delEmpty}
+              </tr>
+            </tbody>
+          </table>
           <div class="tx-remark">
             <label>Remark:<input data-head="remark" value="${h(head.remark)}"></label>
             <span>1/1</span>
@@ -1637,7 +1854,7 @@ function a4For(mod, row) {
 
 function a4Head(title, date, ready = false) {
   return `<header class="a4-head">
-          <div><b>DOM</b><span>${ht("디오엠")}</span></div>
+          <div><img class="a4-logo" src="./assets/dom-logo.png" alt="주식회사 디오엠"></div>
           <h1>${h(ready ? title : t(title))}</h1>
         </header>`;
 }
@@ -1774,7 +1991,7 @@ function processA4(r) {
       <article class="a4-sheet process-a4">
         <header class="a4-head a4-head-corp">
           <div>
-            <b>DOM</b><span>${ht("디오엠")}</span>
+            <img class="a4-logo" src="./assets/dom-logo.png" alt="주식회사 디오엠">
           </div>
           <h1>가공 작업 현황</h1>
           ${processStamp(r)}
@@ -2662,7 +2879,8 @@ function bindModule(mod, date, extra) {
     if (mod.type === "equipment" && isMonthKey(date)) return bindEq(date, extra);
     return;
   }
-  remember(mod.id, date); persist();
+  remember(mod.id, date);
+  if (!sheetDirty) persist();
   if (mod.type === "climate" || mod.type === "lab-climate") {
     if (extra === "map") return bindClimate(mod, date);
     return bindShopClimate(mod);
@@ -2726,7 +2944,7 @@ function bindInboundMonth(mod, date) {
   document.getElementById("qa-print")?.addEventListener("click", printSheet);
   document.getElementById("add-row")?.addEventListener("click", () => {
     addBlank(mod, ym);
-    persist();
+    markDirty();
     render();
   });
   root.querySelectorAll("[data-in]").forEach((el) => {
@@ -2739,14 +2957,14 @@ function bindInboundMonth(mod, date) {
       row.month = ym;
       syncPrintDate(el);
       remember(mod.id, ym);
-      persist();
+      markDirty();
     };
   });
   root.querySelectorAll("[data-del]").forEach((b) => {
     b.onclick = () => {
       if (!confirm(t("삭제할까요?"))) return;
       state.records[mod.id] = (state.records[mod.id] || []).filter((x) => x.id !== b.dataset.del);
-      persist();
+      markDirty();
       render();
     };
   });
@@ -2757,7 +2975,7 @@ function bindDeliveryDay(mod, date) {
   document.getElementById("qa-print")?.addEventListener("click", printSheet);
   document.getElementById("add-row")?.addEventListener("click", () => {
     addBlank(mod, date);
-    persist();
+    markDirty();
     render();
   });
   const saveHead = (el) => {
@@ -2769,7 +2987,7 @@ function bindDeliveryDay(mod, date) {
       (state.records[mod.id] || []).filter((r) => r.date === date).forEach((r) => { r.customer = el.value; });
     }
     remember(mod.id, date);
-    persist();
+    markDirty();
   };
   root.querySelectorAll("[data-head]").forEach((el) => {
     el.onchange = () => saveHead(el);
@@ -2801,7 +3019,7 @@ function bindDeliveryDay(mod, date) {
       }
       if (key === "qty" || key === "price") row.amount = deliveryAmount(row);
       remember(mod.id, date);
-      persist();
+      markDirty();
       refreshMoney();
     };
     el.onchange = save;
@@ -2811,7 +3029,7 @@ function bindDeliveryDay(mod, date) {
     b.onclick = () => {
       if (!confirm(t("삭제할까요?"))) return;
       state.records[mod.id] = (state.records[mod.id] || []).filter((x) => x.id !== b.dataset.del);
-      persist();
+      markDirty();
       render();
     };
   });
@@ -2881,7 +3099,7 @@ function bindSheet(mod, id) {
     }
     formEl.querySelectorAll('input[type="date"]').forEach(syncPrintDate);
     remember(mod.id, recDate(row, mod.type));
-    persist();
+    markDirty();
   };
   formEl?.addEventListener("change", save);
   formEl?.addEventListener("input", (e) => {
@@ -2892,7 +3110,7 @@ function bindSheet(mod, id) {
       if (!row.measures) qaMeasures(row);
       if (!row.measures[i]) row.measures[i] = { item: "", spec: "", v1: "", v2: "", v3: "", note: "" };
       row.measures[i][k] = e.target.value;
-      persist();
+      markDirty();
     }
   });
   root.querySelectorAll("[data-qa-pic]").forEach((el) => {
@@ -2901,7 +3119,7 @@ function bindSheet(mod, id) {
       const i = Number(el.dataset.qaPic);
       row.photos = Array.from({ length: 3 }, (_, n) => (row.photos || [])[n] || "");
       row.photos[i] = await readAsDataUrl(el.files[0]);
-      persist();
+      markDirty();
       render();
     };
   });
@@ -2913,7 +3131,7 @@ function bindSheet(mod, id) {
       const i = Number(b.dataset.qaDel);
       row.photos = Array.from({ length: 3 }, (_, n) => (row.photos || [])[n] || "");
       row.photos[i] = "";
-      persist();
+      markDirty();
       render();
     };
   });
@@ -2924,7 +3142,7 @@ function bindSheet(mod, id) {
       if (!row) return;
       const i = Number(b.dataset.picDel);
       row.photos = (row.photos || []).filter(Boolean).filter((_, n) => n !== i);
-      persist();
+      markDirty();
       render();
     };
   });
@@ -2941,7 +3159,7 @@ function bindSheet(mod, id) {
       row.photos = row.photos || [];
       for (const f of e.target.files) row.photos.push(await readAsDataUrl(f));
     }
-    persist();
+    markDirty();
     render();
   });
   bindSaveButton(save);
@@ -3006,7 +3224,7 @@ function bindMonthGrid(mod) {
     const mark = el.parentElement?.querySelector(".print-mark");
     if (mark) mark.textContent = el.checked ? "✓" : "";
     el.closest("td")?.classList.toggle("on", el.checked);
-    persist();
+    markDirty();
   });
   bindSaveButton();
 }
@@ -3020,7 +3238,6 @@ function bindShopClimate(mod) {
   };
   const go = (ym) => {
     remember(mod.id, ym);
-    persist();
     const next = `#/${mod.id}/${ym}`;
     if (location.hash.replace(/^#\/?/, "") === `${mod.id}/${ym}`) render();
     else location.hash = next;
@@ -3048,19 +3265,19 @@ function bindShopClimate(mod) {
         cell.textContent = on ? "X" : "";
         cell.classList.toggle("on", on);
       });
-      persist();
+      markDirty();
     };
   });
   root.querySelectorAll("[data-clim-lux]").forEach((el) => {
     el.oninput = () => {
       pack.lux[el.dataset.day] = el.value;
-      persist();
+      markDirty();
     };
   });
   root.querySelectorAll("[data-clim-k]").forEach((el) => {
     el.oninput = () => {
       pack[el.dataset.climK] = el.value;
-      persist();
+      markDirty();
     };
   });
   bindSaveButton();
@@ -3076,7 +3293,6 @@ function bindShopFiveS(mod) {
   };
   const go = (ym) => {
     remember(mod.id, ym);
-    persist();
     const next = `#/${mod.id}/${ym}`;
     if (location.hash.replace(/^#\/?/, "") === `${mod.id}/${ym}`) render();
     else location.hash = next;
@@ -3092,7 +3308,7 @@ function bindShopFiveS(mod) {
       const mark = el.parentElement?.querySelector(".print-mark");
       if (mark) mark.textContent = el.checked ? "✓" : "";
       el.closest("td")?.classList.toggle("on", el.checked);
-      persist();
+      markDirty();
     };
   });
   root.querySelectorAll("[data-five-name]").forEach((el) => {
@@ -3101,7 +3317,7 @@ function bindShopFiveS(mod) {
       if (!state.fiveS.dates[iso]) state.fiveS.dates[iso] = { shop: {}, lab: {} };
       if (!state.fiveS.dates[iso][key]) state.fiveS.dates[iso][key] = {};
       state.fiveS.dates[iso][key][el.dataset.id] = el.value;
-      persist();
+      markDirty();
     };
   });
   root.querySelector("[data-five-note]")?.addEventListener("change", (e) => {
@@ -3112,7 +3328,7 @@ function bindShopFiveS(mod) {
       if (!state.fiveS.notes) state.fiveS.notes = {};
       state.fiveS.notes[monthOf()] = e.target.value;
     }
-    persist();
+    markDirty();
   });
   bindSaveButton();
 }
@@ -3128,7 +3344,6 @@ function bindEq(date, machineId) {
   const pack = eqPack(ym, id);
   const go = (nextYm) => {
     remember("equipment", nextYm);
-    persist();
     location.hash = `#/equipment/${nextYm}/${id}`;
   };
   const monthOf = () => {
@@ -3142,7 +3357,7 @@ function bindEq(date, machineId) {
   document.getElementById("eq-next")?.addEventListener("click", () => go(shiftMonth(monthOf(), 1)));
   document.getElementById("eq-y")?.addEventListener("change", () => go(monthOf()));
   document.getElementById("eq-m")?.addEventListener("change", () => go(monthOf()));
-  const save = () => persist();
+  const save = () => markDirty();
   root.querySelectorAll("[data-eq-k]").forEach((el) => {
     el.onchange = () => { pack[el.dataset.eqK] = el.value; save(); };
   });
@@ -3180,7 +3395,7 @@ function bindEq(date, machineId) {
     const url = await readAsDataUrl(file);
     if (key === "machine") bag.machine = url;
     else bag.items[key] = url;
-    persist();
+    markDirty();
     render();
   };
   document.getElementById("eq-photo")?.addEventListener("change", (e) => setPic("machine", e.target.files?.[0]));
@@ -3195,7 +3410,7 @@ function bindEq(date, machineId) {
       const key = b.dataset.eqDel;
       if (key === "machine") bag.machine = "";
       else delete bag.items[key];
-      persist();
+      markDirty();
       render();
     };
   });
@@ -3391,7 +3606,6 @@ async function hydrateCamJobs(folderId) {
 async function ingestCamFile(file, date = todayISO(), parsedIn) {
   if (!state.cam.jobs) state.cam.jobs = [];
   if (!state.cam.files) state.cam.files = [];
-  if (!state.records.process) state.records.process = [];
   const folderId = camFolder || "cam-root";
   const stem = camFileStem(file.name);
   const parsed = parsedIn || parseProgram(file.name, await readNcText(file));
@@ -3417,26 +3631,7 @@ async function ingestCamFile(file, date = todayISO(), parsedIn) {
     state.cam.jobs.splice(idx, 1);
     state.cam.jobs.push({ ...fields, id, fileId, folderId, date: keepDate });
   } else {
-    const job = { ...fields, id: uid("job"), fileId, folderId, date: keepDate };
-    state.cam.jobs.push(job);
-    state.records.process.unshift({
-      id: uid("pr"),
-      partNo: file.name.replace(/\.[^.]+$/, ""),
-      partName: job.partName,
-      lot: "",
-      line: "Mastercam 9.1",
-      wo: fileId,
-      startDate: keepDate,
-      workDate: keepDate,
-      endDate: "",
-      progress: 0,
-      planQty: 1,
-      doneQty: 0,
-      detail: `공구 ${(job.tools || []).join(",") || "-"} · 절삭 ${job.cutMm || "-"}mm · 예상 ${job.timeMin || "-"}분`,
-      owner: "",
-      status: "프로그램 등록",
-    });
-    remember("process", keepDate);
+    state.cam.jobs.push({ ...fields, id: uid("job"), fileId, folderId, date: keepDate });
   }
 }
 
@@ -3444,15 +3639,15 @@ function bindClimate(mod, date) {
   const bag = climateBag(mod);
   document.getElementById("add-room")?.addEventListener("click", () => {
     bag.rooms.push({ id: uid("rm"), name: "새 구역", x: 40, y: 40, w: 18, h: 16, rot: 0, kind: mod.type === "lab-climate" ? "qa" : "area" });
-    persist(); render();
+    markDirty(); render();
   });
   document.getElementById("add-m")?.addEventListener("click", () => {
     bag.rooms.push({ id: uid("rm"), name: "새 기계", x: 42, y: 44, w: 12, h: 14, rot: 0, kind: "machine" });
-    persist(); render();
+    markDirty(); render();
   });
   document.getElementById("add-p")?.addEventListener("click", () => {
     bag.points.push({ id: uid("p").slice(0, 6).toUpperCase(), name: "새 위치", x: 50, y: 50 });
-    persist(); render();
+    markDirty(); render();
   });
   root.querySelectorAll("[data-pin-del]").forEach((b) => {
     b.onpointerdown = (e) => e.stopPropagation();
@@ -3461,7 +3656,7 @@ function bindClimate(mod, date) {
       e.stopPropagation();
       if (!confirm("이 측정 위치를 뺄까요?")) return;
       removeClimatePoint(mod, b.dataset.pinDel);
-      persist();
+      markDirty();
       render();
     };
   });
@@ -3533,7 +3728,7 @@ function drag(mod, date) {
     };
     el.onpointerup = () => {
       if (!act || act.el !== el || act.type !== "move") return;
-      if (moved) persist();
+      if (moved) markDirty();
       else {
         clicks += 1;
         setTimeout(() => { clicks = 0; }, 280);
@@ -3564,7 +3759,7 @@ function drag(mod, date) {
         applyRoomBox(el, room);
       };
       h.onpointerup = () => {
-        if (act?.type === "rs") persist();
+        if (act?.type === "rs") markDirty();
         act = null;
       };
     });
@@ -3590,7 +3785,7 @@ function drag(mod, date) {
         applyRoomBox(el, room);
       };
       rot.onpointerup = () => {
-        if (act?.type === "rot") persist();
+        if (act?.type === "rot") markDirty();
         act = null;
       };
     }
@@ -3616,7 +3811,7 @@ function drag(mod, date) {
       if (moved) {
         const p = bag.points.find((x) => x.id === act.id);
         if (p) Object.assign(p, { x: parseFloat(el.style.left), y: parseFloat(el.style.top) });
-        persist();
+        markDirty();
       } else recPoint(mod, date, act.id);
       act = null;
     };
@@ -3641,14 +3836,14 @@ function editRoom(mod, id) {
       rot: Number(v.rot) || 0,
       kind: v.kind || room.kind,
     });
-    persist();
+    markDirty();
     render();
   }, `<button class="btn ghost" id="del-room" type="button">구역 빼기</button>`);
   document.getElementById("del-room")?.addEventListener("click", () => {
     if (!confirm("이 구역을 뺄까요?")) return;
     bag.rooms = bag.rooms.filter((r) => r.id !== id);
     document.getElementById("modal").innerHTML = "";
-    persist();
+    markDirty();
     render();
   });
 }
@@ -3666,13 +3861,13 @@ function recPoint(mod, date, id) {
     const i = list.findIndex((x) => x.pointId === id);
     const next = { pointId: id, temp: Number(v.temp), humidity: Number(v.humidity), lux: Number(v.lux), status: v.status || "정상" };
     if (i >= 0) list[i] = next; else list.push(next);
-    persist(); render();
+    markDirty(); render();
   }, `<button class="btn ghost" id="del-point" type="button">위치 빼기</button>`);
   document.getElementById("del-point")?.addEventListener("click", () => {
     if (!confirm("이 측정 위치를 뺄까요?")) return;
     removeClimatePoint(mod, id);
     document.getElementById("modal").innerHTML = "";
-    persist();
+    markDirty();
     render();
   });
 }

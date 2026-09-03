@@ -224,7 +224,7 @@ export function defaultState() {
       { id: "mail", title: "후이즈 메일", desc: "새 창에서 후이즈 웹메일을 엽니다.", type: "mail" },
       { id: "inbound", title: "원자재 입고 관리", desc: "월 폴더에 A4 한 장으로 적습니다. 날짜, 업체, 자재 품명, 개수, 자재 사이즈 순입니다.", type: "inbound" },
       { id: "process", title: "가공 현황", desc: "품번·품명·날짜별 완료 수량을 관리합니다.", type: "process" },
-      { id: "delivery", title: "거래명세표", desc: "날짜별 거래명세표에 그날 나가는 품목을 적고 한 장으로 인쇄합니다.", type: "delivery" },
+      { id: "delivery", title: "납품 일정", desc: "날짜를 연 뒤 표를 열면 거래명세표가 나옵니다.", type: "delivery" },
       { id: "quality", title: "품질 관리 현황", desc: "사진과 치수·비고를 성적서 한 장에 기록하고 인쇄합니다.", type: "quality" },
       { id: "climate", title: "현장 온습도 관리", desc: "월 목록에서 해당 달 온·습도 표를 열고 일자별로 적습니다.", type: "climate" },
       { id: "five-s", title: "현장 3정5S 관리", desc: "월 목록에서 해당 달 3정 5S 표를 열고 일자별로 체크합니다.", type: "five-s" },
@@ -357,6 +357,10 @@ export function defaultState() {
       drafts: [],
     },
     camFolder: "cam-root",
+    vaults: {
+      sales: { pin: "" },
+      accounting: { pin: "" },
+    },
     cam: {
       folders: [
         { id: "cam-root", name: "Mastercam 9.1", parent: null },

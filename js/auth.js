@@ -305,4 +305,7 @@ export async function setUserStatus(email, status) {
 
 export function logout() {
   sessionStorage.removeItem(SESSION_KEY);
+  Object.keys(sessionStorage).forEach((k) => {
+    if (k.startsWith("dom-vault:")) sessionStorage.removeItem(k);
+  });
 }

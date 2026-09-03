@@ -1,5 +1,5 @@
-import { getSession, logout, isInternalNetwork } from "./auth.js?v=45";
-import { loadState, saveState, uid } from "./store.js?v=56";
+import { getSession, logout, isInternalNetwork } from "./auth.js?v=46";
+import { loadState, saveState, uid } from "./store.js?v=63";
 import { collectStats, parseProgram, toNc, toJson, accTime, toolOps, toolSpec, decodeCamFile, mayBeCamFile } from "./gcode.js?v=52";
 import { boot } from "./safety.js";
 import { createMill } from "./mill3d.js?v=29";
@@ -260,7 +260,7 @@ function render() {
   root.innerHTML = `
     <div class="app lab">
       <header>
-        <a href="./portal.html?v=42#/home"><div class="logo"><b>DOM</b><span>${h(t("가공 프로그램"))}</span></div></a>
+        <a href="./portal.html?v=42#/home"><div class="logo"><img class="logo-full" src="./assets/dom-logo.png" alt="주식회사 디오엠"><span class="logo-sub">${h(t("가공 프로그램"))}</span></div></a>
         <div class="who">${langBar()}<span>${h(session.name)}</span> <button class="btn ghost" id="out" type="button">${h(t("로그아웃"))}</button></div>
       </header>
       <aside class="side">
