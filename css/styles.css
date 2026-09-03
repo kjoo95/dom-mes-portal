@@ -29,25 +29,40 @@ html[lang="ta"] body, html[lang="ta"] button, html[lang="ta"] input, html[lang="
 }
 
 .logo { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.logo-full,
-.a4-logo,
-.tx-logo {
-  display: block;
-  width: auto;
-  height: auto;
-  object-fit: contain;
-  object-position: left center;
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  line-height: 1;
+  color: #173a63;
   flex: 0 0 auto;
-  image-rendering: auto;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
 }
-.logo-full {
-  height: 38px;
-  max-width: 220px;
-  max-height: 38px;
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  padding: 0 14px 1px;
+  border-radius: 5px;
+  background: var(--red);
+  color: #fff;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 27px;
+  font-weight: 800;
+  letter-spacing: -0.05em;
 }
+.brand-type { display: flex; flex-direction: column; justify-content: center; gap: 4px; }
+.brand-co { font-size: 13px; font-weight: 700; letter-spacing: 0.02em; }
+.brand-name { font-size: 24px; font-weight: 800; letter-spacing: -0.04em; }
 .logo-sub { color: var(--mute); font-size: 12px; white-space: nowrap; }
-.login .logo-full { height: 52px; max-width: 300px; max-height: 52px; }
-.pub-top .logo-full { height: 40px; max-width: 230px; max-height: 40px; }
+.login .brand-mark { height: 58px; padding: 0 18px; font-size: 33px; }
+.login .brand-co { font-size: 15px; }
+.login .brand-name { font-size: 32px; }
+.pub-top .brand-mark { height: 50px; font-size: 28px; }
+.pub-top .brand-name { font-size: 26px; }
+.pub-top .brand-co { font-size: 14px; }
 
 .login { min-height: 100vh; display: grid; place-items: center; }
 .card { width: min(420px, 92vw); background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 32px; }
@@ -90,8 +105,8 @@ input[type="file"] { width: auto; margin: 0; padding: 0; border: 0; }
 .btn.sm { height: 32px; font-size: 12px; padding: 0 10px; }
 
 #app { position: relative; }
-.app { min-height: 100vh; display: grid; grid-template-columns: 232px 1fr; grid-template-rows: 60px 1fr; background: #f6f6f6; color: var(--ink); }
-.app > header { grid-column: 1 / -1; background: #fff; color: var(--ink); border-bottom: 1px solid var(--line); box-shadow: inset 0 -2px 0 var(--red); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; min-height: 60px; }
+.app { min-height: 100vh; display: grid; grid-template-columns: 232px 1fr; grid-template-rows: 68px 1fr; background: #f6f6f6; color: var(--ink); }
+.app > header { grid-column: 1 / -1; background: #fff; color: var(--ink); border-bottom: 1px solid var(--line); box-shadow: inset 0 -2px 0 var(--red); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; min-height: 68px; }
 .app > header .logo-sub { color: var(--mute); }
 .app > header .who { color: var(--mute); }
 .app > header .lang-pick { color: var(--mute); }
@@ -856,11 +871,18 @@ table.checks .chk { width: 72px; text-align: center; }
 }
 .a4-head p { margin: 0; color: #666; font-size: 12px; z-index: 1; }
 .a4-head > div { z-index: 1; }
-.a4-logo {
-  height: 10mm;
-  max-width: 48mm;
-  max-height: 10mm;
+.a4-head .brand-mark,
+.process-head .brand-mark {
+  height: 11mm;
+  padding: 0 3.2mm 0.4mm;
+  font-size: 6.2mm;
+  border-radius: 1mm;
 }
+.a4-head .brand-co,
+.process-head .brand-co { font-size: 3.2mm; }
+.a4-head .brand-name,
+.process-head .brand-name { font-size: 5.6mm; }
+.a4-head .brand { gap: 3mm; }
 .a4-head-corp {
   position: relative;
   display: flex;
@@ -960,11 +982,11 @@ table.checks .chk { width: 72px; text-align: center; }
   align-items: flex-start;
   gap: 12px;
 }
-.process-head .a4-logo {
-  height: 11mm;
-  max-width: 52mm;
-  max-height: 11mm;
+.process-head .brand-mark {
+  height: 12mm;
+  font-size: 6.8mm;
 }
+.process-head .brand-name { font-size: 6mm; }
 .process-head h1 {
   position: static;
   display: block;
@@ -1824,12 +1846,16 @@ table.checks .chk { width: 72px; text-align: center; }
   height: 12mm;
   padding: 2px 6px;
 }
-.tx-logo {
-  height: 9mm;
-  max-width: 44mm;
-  max-height: 9mm;
-  background: #fff;
+.tx-sup-logo .brand {
+  gap: 2.4mm;
 }
+.tx-sup-logo .brand-mark {
+  height: 8.5mm;
+  padding: 0 2.4mm;
+  font-size: 4.8mm;
+}
+.tx-sup-logo .brand-co { font-size: 2.6mm; }
+.tx-sup-logo .brand-name { font-size: 4.6mm; }
 .tx-ceo { position: relative; padding-right: 14mm !important; }
 .tx-seal {
   position: absolute;
@@ -2166,7 +2192,7 @@ table.checks .chk { width: 72px; text-align: center; }
     page-break-after: auto !important;
   }
   .delivery-sheet .tx-form { width: 100% !important; }
-  .tx-logo, .tx-seal, .a4-logo, .logo-full { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .tx-seal, .brand-mark { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   .delivery-day tr { break-inside: avoid; page-break-inside: avoid; }
   .eq-sheet { overflow: hidden !important; }
   .qa-photos, .qa-shot { height: 22mm; min-height: 22mm; flex-basis: 22mm; }
@@ -2213,7 +2239,7 @@ table.qa td.act { text-align: left; }
 table.qa thead th { font-weight: 700; }
 
 @media (max-width: 860px) {
-  .app { grid-template-columns: 1fr; grid-template-rows: 60px auto 1fr; }
+  .app { grid-template-columns: 1fr; grid-template-rows: 68px auto 1fr; }
   .side { flex-direction: row; flex-wrap: nowrap; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--line); padding: 8px 10px; gap: 8px; align-items: stretch; }
   .side-block { display: flex; flex-direction: row; flex: 0 0 auto; align-items: center; gap: 4px; padding: 4px 8px; }
   .side-label { display: none; }

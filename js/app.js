@@ -7,7 +7,7 @@ import {
 import { loadState, loadStateAsync, shareState, uid } from "./store.js?v=64";
 import { saveBlob, loadBlob, readAsDataUrl, removeBlob } from "./files.js?v=39";
 import { parseProgram, decodeCamFile, mayBeCamFile } from "./gcode.js?v=52";
-import { boot, showRecover } from "./safety.js?v=43";
+import { boot, showRecover } from "./safety.js?v=44";
 import { chatView, bindChat } from "./comm.js?v=51";
 import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=67";
 
@@ -409,9 +409,13 @@ function isPrintPage(mod, extra, date) {
   return false;
 }
 
+function brandMark() {
+  return `<span class="brand" aria-label="주식회사 디오엠"><span class="brand-mark">dom</span><span class="brand-type"><span class="brand-co">주식회사</span><span class="brand-name">디오엠</span></span></span>`;
+}
+
 function logo(sub = "") {
   const extra = sub ? `<span class="logo-sub">${ht(sub)}</span>` : "";
-  return `<div class="logo"><img class="logo-full" src="./assets/dom-logo.png?v=5" alt="주식회사 디오엠">${extra}</div>`;
+  return `<div class="logo">${brandMark()}${extra}</div>`;
 }
 
 function render() {
@@ -1678,7 +1682,7 @@ function deliveryDayView(mod, date, viewOnly = false) {
                   <label><span>발주번호;</span><input data-head="poNo" value="${h(head.poNo)}"></label>
                 </td>
                 <td colspan="5" class="tx-sup tx-sup-logo">
-                  <img class="tx-logo" src="./assets/dom-logo.png?v=5" alt="주식회사 디오엠">
+                  ${brandMark()}
                 </td>
                 ${delEmpty}
               </tr>
@@ -1854,7 +1858,7 @@ function a4For(mod, row) {
 
 function a4Head(title, date, ready = false) {
   return `<header class="a4-head">
-          <div><img class="a4-logo" src="./assets/dom-logo.png?v=5" alt="주식회사 디오엠"></div>
+          <div>${brandMark()}</div>
           <h1>${h(ready ? title : t(title))}</h1>
         </header>`;
 }
@@ -1991,7 +1995,7 @@ function processA4(r) {
       <article class="a4-sheet process-a4">
         <header class="process-head">
           <div class="process-head-top">
-            <img class="a4-logo" src="./assets/dom-logo.png?v=5" alt="주식회사 디오엠">
+            ${brandMark()}
             ${processStamp(r)}
           </div>
           <h1>가공 작업 현황</h1>
