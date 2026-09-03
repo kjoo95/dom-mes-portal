@@ -260,7 +260,7 @@ function render() {
   root.innerHTML = `
     <div class="app lab">
       <header>
-        <a href="./portal.html?v=42#/home"><div class="logo"><img class="logo-full" src="./assets/dom-logo.png" alt="주식회사 디오엠"><span class="logo-sub">${h(t("가공 프로그램"))}</span></div></a>
+        <a href="./portal.html?v=42#/home"><div class="logo"><img class="logo-full" src="./assets/dom-logo.png?v=4" alt="주식회사 디오엠"><span class="logo-sub">${h(t("가공 프로그램"))}</span></div></a>
         <div class="who">${langBar()}<span>${h(session.name)}</span> <button class="btn ghost" id="out" type="button">${h(t("로그아웃"))}</button></div>
       </header>
       <aside class="side">

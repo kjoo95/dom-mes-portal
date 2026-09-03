@@ -7,7 +7,7 @@ import {
 import { loadState, saveState, uid } from "./store.js?v=63";
 import { saveBlob, loadBlob, readAsDataUrl, removeBlob } from "./files.js?v=39";
 import { parseProgram, decodeCamFile, mayBeCamFile } from "./gcode.js?v=52";
-import { boot, showRecover } from "./safety.js?v=41";
+import { boot, showRecover } from "./safety.js?v=42";
 import { chatView, bindChat } from "./comm.js?v=51";
 import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=67";
 
@@ -411,7 +411,7 @@ function isPrintPage(mod, extra, date) {
 
 function logo(sub = "") {
   const extra = sub ? `<span class="logo-sub">${ht(sub)}</span>` : "";
-  return `<div class="logo"><img class="logo-full" src="./assets/dom-logo.png" alt="주식회사 디오엠">${extra}</div>`;
+  return `<div class="logo"><img class="logo-full" src="./assets/dom-logo.png?v=4" alt="주식회사 디오엠">${extra}</div>`;
 }
 
 function render() {
@@ -1678,7 +1678,7 @@ function deliveryDayView(mod, date, viewOnly = false) {
                   <label><span>발주번호;</span><input data-head="poNo" value="${h(head.poNo)}"></label>
                 </td>
                 <td colspan="5" class="tx-sup tx-sup-logo">
-                  <img class="tx-logo" src="./assets/dom-logo.png" alt="주식회사 디오엠">
+                  <img class="tx-logo" src="./assets/dom-logo.png?v=4" alt="주식회사 디오엠">
                 </td>
                 ${delEmpty}
               </tr>
@@ -1854,7 +1854,7 @@ function a4For(mod, row) {
 
 function a4Head(title, date, ready = false) {
   return `<header class="a4-head">
-          <div><img class="a4-logo" src="./assets/dom-logo.png" alt="주식회사 디오엠"></div>
+          <div><img class="a4-logo" src="./assets/dom-logo.png?v=4" alt="주식회사 디오엠"></div>
           <h1>${h(ready ? title : t(title))}</h1>
         </header>`;
 }
@@ -1991,7 +1991,7 @@ function processA4(r) {
       <article class="a4-sheet process-a4">
         <header class="a4-head a4-head-corp">
           <div>
-            <img class="a4-logo" src="./assets/dom-logo.png" alt="주식회사 디오엠">
+            <img class="a4-logo" src="./assets/dom-logo.png?v=4" alt="주식회사 디오엠">
           </div>
           <h1>가공 작업 현황</h1>
           ${processStamp(r)}

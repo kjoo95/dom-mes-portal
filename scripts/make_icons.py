@@ -10,7 +10,7 @@ ASSETS = ROOT / "assets"
 EXCEL = ROOT / "data" / "pa2600001.files"
 if not (EXCEL / "image002.png").exists():
     EXCEL = ROOT / "data" / "pa2600002.files"
-LOGO_SRC = EXCEL / "image002.png"
+LOGO_SRC = EXCEL / "image003.png"
 SEAL_SRC = EXCEL / "image005.png"
 
 
@@ -21,7 +21,13 @@ def knockout_black(im, thresh=36):
     for y in range(h):
         for x in range(w):
             r, g, b, a = px[x, y]
-            if a and r <= thresh and g <= thresh and b <= thresh:
+            if not a:
+                continue
+            if r <= thresh and g <= thresh and b <= thresh:
+                px[x, y] = (0, 0, 0, 0)
+                continue
+            # Excel letterhead leftover: pale gray-blue rules/edges
+            if min(r, g, b) >= 180 and max(r, g, b) - min(r, g, b) <= 45:
                 px[x, y] = (0, 0, 0, 0)
     return rgba
 
@@ -45,13 +51,58 @@ def on_white(im):
     return canvas
 
 
+def wipe_letterhead_rule(im):
+    rgb = im.convert("RGB")
+    px = rgb.load()
+    w, h = rgb.size
+    red_right, red_top = 0, h
+    for y in range(h):
+        for x in range(w):
+            r, g, b = px[x, y]
+            if r > 150 and r > g + 40 and r > b + 40:
+                red_right = max(red_right, x)
+                red_top = min(red_top, y)
+    for y in range(h):
+        for x in range(red_right + 2, w):
+            r, g, b = px[x, y]
+            if min(r, g, b) >= 140:
+                px[x, y] = (255, 255, 255)
+    return rgb
+
+
+def flatten_dom_letters(im):
+    rgb = im.convert("RGB")
+    px = rgb.load()
+    w, h = rgb.size
+    xs, ys = [], []
+    for y in range(h):
+        for x in range(w):
+            r, g, b = px[x, y]
+            if r > 150 and r > g + 40 and r > b + 40:
+                xs.append(x)
+                ys.append(y)
+    if not xs:
+        return rgb
+    left, top, right, bottom = min(xs), min(ys), max(xs), max(ys)
+    for y in range(top, bottom + 1):
+        for x in range(left, right + 1):
+            r, g, b = px[x, y]
+            in_red = r > 150 and r > g + 20 and r > b + 20
+            letter = g > 85 or b > 95 or (r > 220 and g > 130)
+            if in_red and letter:
+                px[x, y] = (255, 255, 255)
+    return rgb
+    return rgb
+
+
 def red_mark(im):
     px = im.load()
     w, h = im.size
     xs, ys = [], []
     for y in range(h):
         for x in range(w):
-            r, g, b, a = px[x, y]
+            r, g, b = px[x, y][:3]
+            a = px[x, y][3] if len(px[x, y]) > 3 else 255
             if a > 20 and r > 150 and r > g + 40 and r > b + 40:
                 xs.append(x)
                 ys.append(y)
@@ -90,11 +141,17 @@ def main():
         raise SystemExit(f"missing Excel logo: {LOGO_SRC}")
     ASSETS.mkdir(exist_ok=True)
     clean = content_box(knockout_black(Image.open(LOGO_SRC)))
-    on_white(clean).save(ASSETS / "dom-logo.png")
-    on_white(clean).save(ASSETS / "dom-letterhead.png")
+    logo = wipe_letterhead_rule(flatten_dom_letters(on_white(clean)))
+    ink = logo.convert("L").point(lambda p: 255 if p < 250 else 0)
+    box = ink.getbbox()
+    if box:
+        l, t, r, b = box
+        logo = logo.crop((max(0, l - 4), max(0, t - 4), min(logo.width, r + 4), min(logo.height, b + 4)))
+    logo.save(ASSETS / "dom-logo.png")
+    logo.save(ASSETS / "dom-letterhead.png")
     if SEAL_SRC.exists():
         Image.open(SEAL_SRC).save(ASSETS / "dom-seal.png")
-    mark = red_mark(clean)
+    mark = red_mark(logo.convert("RGBA"))
     square_icon(mark, 512).save(ASSETS / "icon-512.png")
     square_icon(mark, 192).save(ASSETS / "icon-192.png")
     square_icon(mark, 180).save(ASSETS / "apple-touch-icon.png")
