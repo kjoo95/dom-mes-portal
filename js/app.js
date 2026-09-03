@@ -321,11 +321,10 @@ function isCommMod(m) {
 
 function sideFolders(active) {
   return state.modules.filter((m) => !isCommMod(m)).map((m) => {
-    const dates = datesOf(m).slice(0, 10);
     const open = active === m.id ? "open" : "";
     const lines = m.type === "records"
       ? `<a href="#/records">${ht("기록 관리 열기")}</a>`
-      : `${dates.map((d) => `<a href="#/${m.id}/${d}">${h(isMonthFolder(m) ? monthLabel(d) : d)}</a>`).join("")}<a href="#/${m.id}">${ht(isMonthFolder(m) ? "월 목록" : "날짜 목록")}</a>`;
+      : `<a href="#/${m.id}">${ht(isMonthFolder(m) ? "월 목록" : "날짜 목록")}</a>`;
     return `<div class="nav-fold ${open}">
       <button class="nav-head ${m.id === active ? "on" : ""}" data-fold="${m.id}" type="button">${h(t(m.title))}</button>
       <div class="nav-drop">${lines}</div>
