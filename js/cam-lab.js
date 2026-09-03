@@ -1,8 +1,8 @@
 import { getSession, logout, isInternalNetwork } from "./auth.js?v=43";
 import { loadState, saveState, uid } from "./store.js";
-import { collectStats, optimizeJob, toNc, toJson, accTime, toolOps, toolSpec } from "./gcode.js?v=43";
+import { collectStats, optimizeJob, toNc, toJson, accTime, toolOps, toolSpec } from "./gcode.js?v=44";
 import { boot } from "./safety.js";
-import { createMill } from "./mill3d.js?v=22";
+import { createMill } from "./mill3d.js?v=23";
 import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=42";
 
 const root = document.getElementById("app");
@@ -62,7 +62,7 @@ function render() {
     mill = createMill(job);
     opJob = job;
   }
-  const stats = collectStats(list);
+  const stats = collectStats(job ? [job] : []);
   const seq = job?.seq || toolOps(job?.points || []);
   if (opIndex >= seq.length) opIndex = Math.max(0, seq.length - 1);
   const curOp = seq[opIndex];
@@ -93,9 +93,11 @@ function render() {
           <button class="btn sm" id="del-all" type="button">축적 데이터 모두 지우기</button>
         </div>
         <p class="side-label">프로그램 가공 순서</p>
-        ${seq.map((o, i) => `<p class="mute pad ${i === opIndex ? "op-on" : ""}">T${o.tool} ${h(o.spec?.name || "")}${i === opIndex ? " · 진행 중" : ""}</p>`).join("") || `<p class="mute pad">없음</p>`}
+        ${seq.map((o, i) => `<p class="mute pad ${i === opIndex ? "op-on" : ""}" data-seq="${i}">T${o.tool} 자리 · ${h(o.spec?.name || "")}${i === opIndex ? " · 진행 중" : ""}</p>`).join("") || `<p class="mute pad">없음</p>`}
         <p class="side-label">공구 통계</p>
-        ${stats.map((s) => `<p class="mute pad">T${s.tool} · ${Math.round(s.length)}mm · F${s.feed} · S${s.spindle}</p>`).join("")}
+        ${stats.map((s) => `<p class="mute pad mag-row ${s.tool === curOp?.tool ? "op-on" : ""}" data-mag="${s.tool}">
+          <b>T${s.tool} 자리</b> ${h(s.name)}<br>F${h(s.feedLabel)} · S${h(s.spindleLabel)} · ${Math.round(s.length)}mm
+        </p>`).join("") || `<p class="mute pad">없음</p>`}
       </aside>
       <div class="lab-main">
         <div>
@@ -105,7 +107,9 @@ function render() {
             <div class="time-box"><span>예상 가공 시간</span><b id="t-cycle">${formatMin(cycle)}</b></div>
             <div class="time-box"><span>경과</span><b id="t-elapsed">${formatMin(elapsed)}</b></div>
             <div class="time-box"><span>남은 시간</span><b id="t-remain">${formatMin(remain)}</b></div>
-            <div class="time-box"><span>현재 공구</span><b>${spec ? `T${spec.t} ${spec.name}` : "—"}</b></div>
+            <div class="time-box"><span>현재 공구</span><b id="t-tool">${spec ? `T${spec.t} ${spec.name}` : "—"}</b></div>
+            <div class="time-box"><span>이송 F</span><b id="t-feed">—</b></div>
+            <div class="time-box"><span>주축 S</span><b id="t-spindle">—</b></div>
           </div>
           <div class="lab-tools">
             <button class="btn red" id="opt" type="button">최적 경로 생성</button>
@@ -319,7 +323,7 @@ function lengths(points) {
 }
 
 function at(points, t) {
-  if (!points.length) return { x: 0, y: 0, z: 0, t: 1 };
+  if (!points.length) return { x: 0, y: 0, z: 0, t: 1, f: 0, s: 0 };
   const acc = accTime(points);
   const total = acc[acc.length - 1] || 1;
   const target = t * total;
@@ -333,16 +337,18 @@ function at(points, t) {
         y: a.y + (b.y - a.y) * u,
         z: (a.z || 0) + ((b.z || 0) - (a.z || 0)) * u,
         t: b.t ?? a.t,
+        f: b.f ?? a.f ?? 0,
+        s: b.s ?? a.s ?? 0,
         rapid: b.rapid,
         change: b.change,
       };
     }
   }
   const last = points[points.length - 1];
-  return { x: last.x, y: last.y, z: last.z || 0, t: last.t, rapid: last.rapid, change: last.change };
+  return { x: last.x, y: last.y, z: last.z || 0, t: last.t, f: last.f || 0, s: last.s || 0, rapid: last.rapid, change: last.change };
 }
 
-function syncTime() {
+function syncTime(pos) {
   const job = current();
   const cycle = job?.timeMin || 0;
   const elapsed = cycle * sim.t;
@@ -350,6 +356,29 @@ function syncTime() {
   set("t-cycle", formatMin(cycle));
   set("t-elapsed", formatMin(elapsed));
   set("t-remain", formatMin(Math.max(0, cycle - elapsed)));
+  const pathJob = opJob || job;
+  const p = pos || (pathJob?.points?.length ? at(pathJob.points, sim.t) : null);
+  const spec = p ? toolSpec(p.t) : null;
+  set("t-tool", spec ? `T${spec.t} ${spec.name}` : "—");
+  if (!p) {
+    set("t-feed", "—");
+    set("t-spindle", "—");
+  } else if (p.change) {
+    set("t-feed", "공구교환");
+    set("t-spindle", p.s ? `S${Math.round(p.s)}` : "—");
+  } else if (p.rapid) {
+    set("t-feed", "급속");
+    set("t-spindle", p.s ? `S${Math.round(p.s)}` : "—");
+  } else {
+    set("t-feed", p.f ? `F${Math.round(p.f)}` : "—");
+    set("t-spindle", p.s ? `S${Math.round(p.s)}` : "—");
+  }
+  document.querySelectorAll("[data-mag]").forEach((el) => {
+    el.classList.toggle("op-on", Number(el.dataset.mag) === Number(p?.t));
+  });
+  document.querySelectorAll("[data-seq]").forEach((el) => {
+    el.classList.toggle("op-on", Number(el.dataset.seq) === opIndex);
+  });
 }
 
 function draw() {
@@ -391,8 +420,10 @@ function draw() {
   ctx.fillStyle = "#d8d8d4";
   ctx.font = `${Math.round(14 * dpr)}px sans-serif`;
   const cycle = job.timeMin || 0;
-  ctx.fillText(`${job.partName}  T${pos.t} ${specNow.name}  ${pos.rapid ? "급속이송" : pos.change ? "공구교환" : "절삭"}  ${sim.speed}x  X${pos.x.toFixed(1)}  Y${pos.y.toFixed(1)}  Z${pos.z.toFixed(1)}  ${formatMin(cycle * sim.t)} / ${formatMin(cycle)}`, 18 * dpr, 28 * dpr);
-  syncTime();
+  const mode = pos.rapid ? "급속이송" : pos.change ? "공구교환" : "절삭";
+  const fs = pos.change ? "" : pos.rapid ? `  S${Math.round(pos.s || 0)}` : `  F${Math.round(pos.f || 0)}  S${Math.round(pos.s || 0)}`;
+  ctx.fillText(`${job.partName}  T${pos.t} ${specNow.name}${fs}  ${mode}  ${sim.speed}x  X${pos.x.toFixed(1)}  Y${pos.y.toFixed(1)}  Z${pos.z.toFixed(1)}  ${formatMin(cycle * sim.t)} / ${formatMin(cycle)}`, 18 * dpr, 28 * dpr);
+  syncTime(pos);
 }
 
 function loop(now = 0) {

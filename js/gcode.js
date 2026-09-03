@@ -290,21 +290,67 @@ export function seedJobs() {
 
 export function collectStats(jobs) {
   const byTool = {};
-  jobs.forEach((job) => {
-    (job.ops || []).forEach((op) => {
-      const key = String(op.tool);
-      if (!byTool[key]) byTool[key] = { tool: op.tool, cuts: 0, length: 0, feed: 0, spindle: 0 };
-      byTool[key].cuts += 1;
-      byTool[key].length += op.length || 0;
-      byTool[key].feed += op.feed || 0;
-      byTool[key].spindle += op.spindle || 0;
-    });
+  const add = (tool, dist, f, s) => {
+    const key = String(tool || 1);
+    if (!byTool[key]) {
+      byTool[key] = {
+        tool: Number(key),
+        length: 0,
+        fw: 0,
+        sw: 0,
+        fSum: 0,
+        sSum: 0,
+        fMin: Infinity,
+        fMax: 0,
+        sMin: Infinity,
+        sMax: 0,
+      };
+    }
+    const row = byTool[key];
+    row.length += dist;
+    if (f) {
+      row.fw += dist;
+      row.fSum += f * dist;
+      row.fMin = Math.min(row.fMin, f);
+      row.fMax = Math.max(row.fMax, f);
+    }
+    if (s) {
+      row.sw += dist;
+      row.sSum += s * dist;
+      row.sMin = Math.min(row.sMin, s);
+      row.sMax = Math.max(row.sMax, s);
+    }
+  };
+  (jobs || []).forEach((job) => {
+    const seq = job.seq || toolOps(job.points || []);
+    seq.forEach((op) => add(op.tool, 0, 0, 0));
+    (job.tools || []).forEach((tool) => add(tool, 0, 0, 0));
+    const pts = job.points || [];
+    if (pts.length > 1) {
+      for (let i = 1; i < pts.length; i += 1) {
+        const a = pts[i - 1];
+        const b = pts[i];
+        if (b.rapid) continue;
+        const dist = Math.hypot(b.x - a.x, b.y - a.y, (b.z || 0) - (a.z || 0));
+        if (dist < 0.01) continue;
+        add(b.t ?? a.t, dist, b.f || a.f, b.s || a.s);
+      }
+      return;
+    }
+    (job.ops || []).forEach((op) => add(op.tool, op.length || 0, op.feed, op.spindle));
   });
-  return Object.values(byTool).map((t) => ({
-    ...t,
-    feed: Math.round(t.feed / Math.max(t.cuts, 1)),
-    spindle: Math.round(t.spindle / Math.max(t.cuts, 1)),
-  })).sort((a, b) => b.length - a.length);
+  return Object.values(byTool).map((row) => {
+    const spec = toolSpec(row.tool);
+    const feed = row.fw ? Math.round(row.fSum / row.fw) : 0;
+    const spindle = row.sw ? Math.round(row.sSum / row.sw) : 0;
+    const feedLabel = row.fMin !== Infinity && row.fMin !== row.fMax
+      ? `${Math.round(row.fMin)}~${Math.round(row.fMax)}`
+      : String(feed || "—");
+    const spindleLabel = row.sMin !== Infinity && row.sMin !== row.sMax
+      ? `${Math.round(row.sMin)}~${Math.round(row.sMax)}`
+      : String(spindle || "—");
+    return { ...row, spec, name: spec.name, feed, spindle, feedLabel, spindleLabel };
+  }).sort((a, b) => a.tool - b.tool);
 }
 
 function dist2(a, b) {

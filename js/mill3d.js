@@ -1,4 +1,4 @@
-import { toolR, toolColor, accTime } from "./gcode.js?v=43";
+import { toolR, toolColor, accTime } from "./gcode.js?v=44";
 
 function bboxOf(job) {
   const b = job?.bbox;
