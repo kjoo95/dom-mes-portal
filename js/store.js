@@ -1,4 +1,4 @@
-import { STORAGE_KEY, defaultState, todayISO } from "./data.js?v=53";
+import { STORAGE_KEY, defaultState, todayISO } from "./data.js?v=54";
 import { seedJobs, parseProgram, toNc, looksBinaryText } from "./gcode.js?v=52";
 
 const BAK = `${STORAGE_KEY}-bak`;
@@ -64,6 +64,8 @@ function mergeModules(base, saved) {
   if (mail) {
     mail.desc = "새 창에서 후이즈 웹메일을 엽니다.";
   }
+  const recs = list.find((item) => item.id === "records");
+  if (recs) recs.desc = "년·월 폴더에서 저장한 기록을 모아 봅니다.";
   const inbound = list.find((item) => item.id === "inbound");
   if (inbound) {
     inbound.desc = "월 폴더에 A4 한 장으로 적습니다. 날짜, 업체, 자재 품명, 개수, 자재 사이즈 순입니다.";
