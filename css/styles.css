@@ -1076,6 +1076,9 @@ table.checks .chk { width: 72px; text-align: center; }
   height: 5.4mm;
 }
 .clim-grid thead th { background: #fafafa; font-weight: 700; }
+.clim-grid th.sun, .clim-grid td.sun { color: #c41e3a; }
+.clim-grid th.sat, .clim-grid td.sat { color: #1d4ed8; }
+.clim-grid td.sun input, .clim-grid td.sat input { color: inherit; }
 .clim-grid col.c-no { width: 8mm; }
 .clim-grid col.c-kind { width: 12mm; }
 .clim-grid col.c-spec { width: 34mm; }
@@ -1097,8 +1100,10 @@ table.checks .chk { width: 72px; text-align: center; }
   font-size: 12px;
   line-height: 1;
 }
-.clim-x.temp { color: #c41e3a; }
-.clim-x.hum { color: #111; }
+.clim-grid td.clim-x.temp { color: #c41e3a; }
+.clim-grid td.clim-x.hum { color: #111; }
+.clim-grid td.clim-x.hum.sun { color: #c41e3a; }
+.clim-grid td.clim-x.hum.sat { color: #1d4ed8; }
 .clim-x:hover { background: #f4f4f2; }
 .clim-grid td.lux { padding: 0; }
 .clim-grid td.lux input {
@@ -1377,7 +1382,10 @@ table.checks .chk { width: 72px; text-align: center; }
     top: 2px;
     margin: 0;
   }
-  .clim-x.temp {
+  .clim-grid th.sun, .clim-grid td.sun { color: #c41e3a !important; }
+  .clim-grid th.sat, .clim-grid td.sat { color: #1d4ed8 !important; }
+  .clim-x.temp,
+  .clim-grid td.clim-x.temp {
     color: #c41e3a !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;

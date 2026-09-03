@@ -1221,15 +1221,22 @@ function shopClimateView(mod, ym) {
   if (!years.includes(year)) years.push(year);
   years.sort((a, b) => a - b);
   const days = Array.from({ length: 31 }, (_, i) => i + 1);
+  const wd = ["일", "월", "화", "수", "목", "금", "토"];
+  const wkClass = (d) => {
+    if (d > n) return "off";
+    const w = weekdayOf(month, d);
+    return w === 0 ? "sun" : w === 6 ? "sat" : "";
+  };
   const temps = [40, 35, 30, 25, 20, 15, 10, 5];
   const hums = [80, 70, 60, 50, 40, 30, 20, 10];
-  const dayHeads = days.map((d) => `<th class="${d > n ? "off" : ""}">${String(d).padStart(2, "0")}</th>`).join("");
+  const dayHeads = days.map((d) => `<th class="${wkClass(d)}">${String(d).padStart(2, "0")}</th>`).join("");
+  const weekHeads = days.map((d) => `<th class="${wkClass(d)}">${d > n ? "" : wd[weekdayOf(month, d)]}</th>`).join("");
   const band = (kind, levels, unit) => levels.map((lv, i) => {
     const cells = days.map((d) => {
       if (d > n) return `<td class="off"></td>`;
       const stored = pack[kind][d] ?? pack[kind][String(d)];
       const on = stored !== "" && stored != null && Number(stored) === lv;
-      return `<td class="clim-x ${kind}${on ? " on" : ""}" data-clim="${kind}" data-day="${d}" data-val="${lv}">${on ? "X" : ""}</td>`;
+      return `<td class="clim-x ${kind}${on ? " on" : ""} ${wkClass(d)}" data-clim="${kind}" data-day="${d}" data-val="${lv}">${on ? "X" : ""}</td>`;
     }).join("");
     const head = i === 0
       ? `<th rowspan="${levels.length}">${kind === "temp" ? "1" : "2"}</th>
@@ -1243,7 +1250,7 @@ function shopClimateView(mod, ym) {
   const luxRow = days.map((d) => {
     if (d > n) return `<td class="off"></td>`;
     const v = pack.lux[d] ?? pack.lux[String(d)] ?? "";
-    return `<td class="lux"><input data-clim-lux data-day="${d}" value="${h(v)}" inputmode="numeric"></td>`;
+    return `<td class="lux ${wkClass(d)}"><input data-clim-lux data-day="${d}" value="${h(v)}" inputmode="numeric"></td>`;
   }).join("");
   return `
     <div class="print-page">
@@ -1275,13 +1282,14 @@ function shopClimateView(mod, ym) {
             </colgroup>
             <thead>
               <tr>
-                <th rowspan="2">NO</th>
-                <th rowspan="2">구분</th>
-                <th rowspan="2">관리기준</th>
-                <th rowspan="2">TIME</th>
+                <th rowspan="3">NO</th>
+                <th rowspan="3">구분</th>
+                <th rowspan="3">관리기준</th>
+                <th rowspan="3">TIME</th>
                 <th colspan="31">일</th>
               </tr>
               <tr>${dayHeads}</tr>
+              <tr>${weekHeads}</tr>
             </thead>
             <tbody>
               ${band("temp", temps, "℃")}
