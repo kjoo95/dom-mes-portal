@@ -880,12 +880,88 @@ table.checks .chk { width: 72px; text-align: center; }
   font-size: 12px;
   background: #fffef8;
 }
+.process-a4 .a4-head-corp {
+  display: grid;
+  grid-template-columns: minmax(28mm, 1fr) auto minmax(84mm, 1fr);
+  align-items: center;
+  min-height: 24mm;
+}
+.process-a4 .a4-head-corp h1 {
+  position: static;
+  left: auto;
+  right: auto;
+  top: auto;
+  grid-column: 2;
+  letter-spacing: 0.04em;
+  font-size: 20px;
+  line-height: 1.2;
+}
+.process-a4 .a4-head-corp > div:first-child {
+  justify-self: start;
+  align-self: start;
+}
+.process-a4 .a4-stamp {
+  justify-self: end;
+  grid-column: 3;
+}
+.process-a4 .a4-meta {
+  table-layout: fixed;
+}
 .process-a4 .a4-meta th,
 .process-a4 .a4-meta td {
-  padding: 2px 5px;
+  padding: 0 5px;
   height: 7.2mm;
+  vertical-align: middle;
+  text-align: center;
 }
 .process-a4 .a4-meta th { width: 18%; background: var(--sheet-head); }
+.process-a4 .a4-meta td { width: 32%; }
+.process-a4 .a4-meta input,
+.process-a4 .a4-meta select {
+  display: block;
+  box-sizing: border-box;
+  height: 7.2mm;
+  padding: 0 4px;
+  line-height: 7.2mm;
+  text-align: center;
+}
+.process-a4 .a4-meta input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+.process-a4 .a4-meta input[type="number"]::-webkit-outer-spin-button,
+.process-a4 .a4-meta input[type="number"]::-webkit-inner-spin-button {
+  appearance: none;
+  margin: 0;
+}
+.process-a4 .a4-meta .date-print-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 7.2mm;
+}
+.process-a4 .a4-meta .date-print-wrap input[type="date"] {
+  text-align: center;
+}
+.process-a4 .a4-meta [data-progress] {
+  display: block;
+  text-align: center;
+  line-height: 7.2mm;
+}
+.process-a4 .detail-row th,
+.process-a4 .detail-row td {
+  height: 18mm;
+  vertical-align: top;
+  text-align: left;
+  padding: 4px 6px;
+}
+.process-a4 .detail-row textarea {
+  min-height: 14mm;
+  height: 14mm;
+  padding: 2px 4px;
+  line-height: 1.4;
+  text-align: left;
+}
 .a4-process-body {
   flex: 1 1 auto;
   min-height: 0;
@@ -898,15 +974,6 @@ table.checks .chk { width: 72px; text-align: center; }
   flex: 0 0 auto;
 }
 .a4-process-main .a4-meta { border: 0; }
-.process-a4 .detail-row th,
-.process-a4 .detail-row td {
-  height: 18mm;
-  vertical-align: top;
-}
-.process-a4 .detail-row textarea {
-  min-height: 14mm;
-  height: 14mm;
-}
 .a4-process-detail h2,
 .a4-process-photo h2 {
   margin: 0;
