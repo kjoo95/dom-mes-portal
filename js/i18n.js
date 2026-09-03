@@ -216,7 +216,7 @@ const en = {
   "CNC 머시닝 일일 점검표를 체크합니다.": "Daily CNC check sheet.",
   "설비일상점검표를 연·월을 바꿔 가며 작성하고 인쇄합니다.": "Fill and print the daily equipment check sheet by year and month.",
   "Mastercam 9.1 프로그램": "Mastercam 9.1 programs",
-  "Mastercam 저장 폴더를 연결하면 가공 후 저장한 프로그램이 자동으로 들어옵니다.": "Connect the Mastercam folder to auto-import saved programs.",
+  "업체를 연 뒤 프로그램을 넣으면 들어온 날이 자동으로 적힙니다.": "Open a vendor, then add programs. The received date is filled in automatically.",
   "카카오톡처럼 현장·검사실·개인 대화를 나눕니다.": "Chat like KakaoTalk for shop, lab, and DMs.",
   "후이즈 웹메일로 이동합니다.": "Opens Whois webmail in a new window.",
   "새 창에서 후이즈 웹메일을 엽니다.": "Opens Whois webmail in a new window.",

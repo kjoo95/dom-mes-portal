@@ -5,11 +5,11 @@ import {
   fieldsFor, flattenChecks, badgeClass, todayISO,
 } from "./data.js?v=54";
 import { loadState, saveState, uid } from "./store.js?v=60";
-import { saveBlob, loadBlob, readAsDataUrl, saveDirHandle, loadDirHandle, removeBlob } from "./files.js?v=39";
+import { saveBlob, loadBlob, readAsDataUrl, removeBlob } from "./files.js?v=39";
 import { parseProgram, decodeCamFile, mayBeCamFile } from "./gcode.js?v=52";
 import { boot, showRecover } from "./safety.js?v=39";
 import { chatView, bindChat } from "./comm.js?v=51";
-import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=64";
+import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=65";
 
 const WHOIS_MAIL = "https://email.whois.co.kr/v2/";
 
@@ -26,7 +26,6 @@ const root = document.getElementById("app");
 let state = loadState();
 let camFolder = state.camFolder || "cam-root";
 let manageId = "inbound";
-let camWatchTimer = 0;
 
 const h = (v) => String(v ?? "")
   .replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
@@ -343,13 +342,11 @@ function render() {
   if (r.page === "home") {
     shell(session, "home", homeView());
     bindHome();
-    ensureCamWatch();
     return;
   }
   if (r.page === "manage") {
     shell(session, "manage", manageView());
     bindManage();
-    ensureCamWatch();
     return;
   }
   if (r.page === "members") {
@@ -376,7 +373,6 @@ function render() {
   const printMode = isPrintPage(mod, r.extra, r.date);
   shell(session, mod.id, moduleView(mod, r.date, r.extra), printMode);
   bindModule(mod, r.date, r.extra);
-  ensureCamWatch();
 }
 
 function renderLogin(mode = "login") {
@@ -2572,23 +2568,21 @@ function camView(mod) {
     <td>${h(j.method || camMethod(j.name, cutCount(j)))}</td>
   </tr>`).join("");
   const path = atRoot ? "업체를 고른 뒤 프로그램을 넣습니다." : `${h(folder.name)} · 프로그램은 넣은 날이 자동으로 적힙니다.`;
+  const headActs = atRoot
+    ? `<button class="btn sm" id="nf" type="button">업체 추가</button>`
+    : `<label class="btn sm">프로그램 넣기<input id="upl" type="file" multiple hidden></label>
+      <button class="btn ghost sm" id="up" type="button">업체 목록</button>`;
   return `<div class="head"><div><h1>${h(mod.title)}</h1><p>${path}</p></div>
     <div class="head-actions">
       ${saveNote()}
       <button class="btn sm" id="folder-save" type="button">${ht("저장")}</button>
+      ${headActs}
       <a class="btn sm" href="./cam-lab.html?v=37">가공 프로그램</a>
     </div></div>
     <section class="panel">
-      <div class="bar">${folder.parent ? `<button class="btn sm" id="up" type="button">업체 목록</button>` : ""}
-        ${atRoot ? `<button class="btn sm" id="nf" type="button">업체 추가</button>` : `<button class="btn sm" id="del-vendor" type="button">이 업체 삭제</button>`}
-        <button class="btn sm" id="cam-link" type="button">${state.cam.watchName ? "폴더 다시 연결" : "Mastercam 저장 폴더 연결"}</button>
-        ${atRoot ? "" : `<label class="btn sm">프로그램 넣기<input id="upl" type="file" multiple hidden></label>
-        <label class="btn sm">폴더 넣기<input id="upl-dir" type="file" hidden webkitdirectory></label>`}</div>
       <p class="mute pad">${atRoot
-    ? "참테크, 인텔릭스처럼 업체를 연 다음 프로그램을 넣으세요. 들어온 날은 따로 고르지 않아도 오늘 날짜로 들어갑니다."
-    : (state.cam.watchName
-      ? `연결됨: ${h(state.cam.watchName)} · 지금 연 업체(${h(folder.name)})로 들어오고, 들어온 날은 자동입니다.`
-      : `${h(folder.name)}에 마스터캠 9.1 파일(.mc9, .nci, .nc)이나 폴더를 넣으세요. 들어온 날은 오늘로 적힙니다.`)}</p>
+    ? "참테크, 인텔릭스처럼 업체를 연 다음 프로그램을 넣으세요. 들어온 날은 오늘로 적힙니다."
+    : `${h(folder.name)}에 마스터캠 9.1 파일(.mc9, .nci, .nc)을 넣으세요. 들어온 날은 오늘로 적힙니다.`}</p>
       <div class="cam-list">
         ${kids.map((f) => `<div class="cam-row">
           <button class="folder-open cam-row-main" data-open="${f.id}" type="button">
@@ -3223,8 +3217,13 @@ function bindCam() {
     }
     state.cam.folders.push({ id: uid("c"), name: name.trim(), parent }); persist(); render();
   });
-  document.getElementById("cam-link")?.addEventListener("click", () => { pickCamWatchDir().catch((err) => alert(err.message || "폴더를 열 수 없습니다.")); });
-  root.querySelectorAll("[data-open]").forEach((b) => b.onclick = () => goCam(b.dataset.open));
+  document.getElementById("upl")?.addEventListener("change", async (e) => {
+    await putCamFiles(e.target.files);
+    e.target.value = "";
+  });
+  root.querySelectorAll("[data-open]").forEach((b) => {
+    b.onclick = () => goCam(b.dataset.open);
+  });
   root.querySelectorAll("[data-job]").forEach((b) => b.onclick = () => {
     const job = (state.cam.jobs || []).find((j) => j.id === b.dataset.job);
     if (!job) return;
@@ -3240,14 +3239,6 @@ function bindCam() {
       if (meta) meta.date = job.date;
       persist(); render();
     });
-  });
-  document.getElementById("upl")?.addEventListener("change", async (e) => {
-    await putCamFiles(e.target.files);
-    e.target.value = "";
-  });
-  document.getElementById("upl-dir")?.addEventListener("change", async (e) => {
-    await putCamFiles(e.target.files);
-    e.target.value = "";
   });
   const camPanel = root.querySelector("section.panel");
   if (camPanel && state.cam.folders.find((f) => f.id === camFolder)?.parent) {
@@ -3287,7 +3278,6 @@ function bindCam() {
     if (ids.has(camFolder)) goCam(row.parent || "cam-root");
     else render();
   };
-  document.getElementById("del-vendor")?.addEventListener("click", () => dropFolder(camFolder));
   root.querySelectorAll("[data-del-folder]").forEach((b) => b.onclick = (e) => {
     e.stopPropagation();
     dropFolder(b.dataset.delFolder);
@@ -3448,68 +3438,6 @@ async function ingestCamFile(file, date = todayISO(), parsedIn) {
     });
     remember("process", keepDate);
   }
-}
-
-async function collectCamFiles(handle, out = []) {
-  for await (const [, entry] of handle.entries()) {
-    if (entry.kind === "file" && isCamNc(entry.name)) out.push(await entry.getFile());
-    else if (entry.kind === "directory") await collectCamFiles(entry, out);
-  }
-  return out;
-}
-
-async function pickCamWatchDir() {
-  if (!window.showDirectoryPicker) {
-    alert("Chrome 또는 Edge에서만 폴더 연결이 됩니다. Mastercam이 프로그램을 저장하는 폴더를 선택하세요.");
-    return;
-  }
-  const handle = await window.showDirectoryPicker({ id: "dom-mcam-nc", mode: "read" });
-  await saveDirHandle(handle);
-  state.cam.watchName = handle.name;
-  if (!state.cam.seen) state.cam.seen = {};
-  const files = await collectCamFiles(handle);
-  for (const file of files) {
-    state.cam.seen[`${file.name}:${file.size}:${file.lastModified}`] = 1;
-  }
-  persist();
-  ensureCamWatch();
-  render();
-}
-
-async function scanCamWatch() {
-  const handle = await loadDirHandle();
-  if (!handle) return;
-  const perm = await handle.queryPermission({ mode: "read" });
-  if (perm !== "granted") return;
-  if (!state.cam.seen) state.cam.seen = {};
-  const files = await collectCamFiles(handle);
-  const fresh = [];
-  for (const file of files) {
-    if (Date.now() - file.lastModified < 2500) continue;
-    const key = `${file.name}:${file.size}:${file.lastModified}`;
-    if (state.cam.seen[key]) continue;
-    if ((state.cam.files || []).some((f) => f.name === file.name && f.size === file.size && f.date === todayISO())) {
-      state.cam.seen[key] = 1;
-      continue;
-    }
-    fresh.push(file);
-    state.cam.seen[key] = 1;
-  }
-  if (fresh.length) {
-    await ingestCamBatch(fresh, todayISO());
-    persist();
-    if (!document.getElementById("modal")?.innerHTML) render();
-  }
-  const keys = Object.keys(state.cam.seen);
-  if (keys.length > 800) {
-    keys.slice(0, keys.length - 500).forEach((k) => { delete state.cam.seen[k]; });
-  }
-}
-
-function ensureCamWatch() {
-  if (camWatchTimer) return;
-  camWatchTimer = setInterval(() => { scanCamWatch().catch(() => {}); }, 4000);
-  scanCamWatch().catch(() => {});
 }
 
 function bindClimate(mod, date) {
