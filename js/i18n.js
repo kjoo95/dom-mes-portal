@@ -75,6 +75,7 @@ const en = {
   "다음달": "Next month",
   "저장": "Save",
   "저장했습니다.": "Saved.",
+  "이 컴퓨터에 저장했습니다.": "Saved on this computer.",
   "취소": "Cancel",
   "삭제": "Delete",
   "수정": "Edit",

@@ -9,7 +9,7 @@ import { saveBlob, loadBlob, readAsDataUrl, saveDirHandle, loadDirHandle, remove
 import { parseProgram, decodeCamFile, mayBeCamFile } from "./gcode.js?v=52";
 import { boot, showRecover } from "./safety.js?v=39";
 import { chatView, bindChat } from "./comm.js?v=51";
-import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=63";
+import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=64";
 
 const WHOIS_MAIL = "https://email.whois.co.kr/v2/";
 
@@ -39,7 +39,7 @@ function persist() {
 
 function flashSaved() {
   const n = document.getElementById("save-note");
-  const msg = t("저장했습니다.");
+  const msg = t("이 컴퓨터에 저장했습니다.");
   if (!n) {
     alert(msg);
     return;
@@ -257,10 +257,10 @@ function monthTally(mod, ym) {
 function timeFolderActions(mod) {
   if (isMonthFolder(mod) || mod.type === "equipment") {
     return `<button class="btn sm" id="open-month" type="button">${ht("월 열기")}</button>
-      <a class="btn red sm" href="#/${mod.id}/${thisMonth()}">${ht("이번 달 표")}</a>`;
+      <a class="btn sm" href="#/${mod.id}/${thisMonth()}">${ht("이번 달 표")}</a>`;
   }
   return `<button class="btn sm" id="open-date" type="button">${ht("날짜 열기")}</button>
-    <a class="btn red sm" href="#/${mod.id}/${todayISO()}">${ht("오늘 표")}</a>`;
+    <a class="btn sm" href="#/${mod.id}/${todayISO()}">${ht("오늘 표")}</a>`;
 }
 
 function yearFolderView(mod) {
@@ -277,8 +277,6 @@ function yearFolderView(mod) {
         <p>${ht("년 폴더를 연 뒤 달을 고르세요.")}</p>
       </div>
       <div class="head-actions">
-        ${saveNote()}
-        <button class="btn" id="folder-save" type="button">${ht("저장")}</button>
         ${timeFolderActions(mod)}
       </div>
     </div>
@@ -302,8 +300,6 @@ function monthFolderView(mod, year) {
         <p>${ht("월 폴더를 누르면 그달 기록이 열립니다.")}</p>
       </div>
       <div class="head-actions">
-        ${saveNote()}
-        <button class="btn" id="folder-save" type="button">${ht("저장")}</button>
         ${timeFolderActions(mod)}
       </div>
     </div>
@@ -1044,8 +1040,8 @@ function folderBrowse(mod, ym = "") {
       <div class="bar compact-bar">
         <b>${h(dateLabel(mod, d))}</b>
         <span class="mute">${count(mod, d)}</span>
-        <a class="btn sm red" href="#/${mod.id}/${d}">${ht("표 열기")}</a>
-        <button class="btn sm red" data-add-date="${h(d)}" type="button">${ht("추가")}</button>
+        <a class="btn sm" href="#/${mod.id}/${d}">${ht("표 열기")}</a>
+        <button class="btn sm" data-add-date="${h(d)}" type="button">${ht("추가")}</button>
       </div>
       ${tableOf(mod, rows, d, true)}
     </section>`;
@@ -1065,8 +1061,6 @@ function folderBrowse(mod, ym = "") {
         <p>${h(t(mod.desc))}</p>
       </div>
       <div class="head-actions">
-        ${saveNote()}
-        <button class="btn" id="folder-save" type="button">${ht("저장")}</button>
         ${timeFolderActions(mod)}
       </div>
     </div>
@@ -1089,7 +1083,7 @@ function inboundBrowse(mod) {
       <div class="bar compact-bar">
         <b>${h(inboundMonthTitle(ym))}</b>
         <span class="mute">${ht("{n}건", { n: rows.length })}</span>
-        <a class="btn sm red" href="#/${mod.id}/${ym}">${ht("표 열기")}</a>
+        <a class="btn sm" href="#/${mod.id}/${ym}">${ht("표 열기")}</a>
       </div>
       <div class="scroll"><table class="rows rec-table"><thead><tr>
         <th>${ht("날짜")}</th><th>${ht("업체")}</th><th>${ht("자재 품명")}</th><th>${ht("개수")}</th><th>${ht("자재 사이즈")}</th><th></th>
@@ -1104,9 +1098,7 @@ function inboundBrowse(mod) {
         <p>${h(t(mod.desc))}</p>
       </div>
       <div class="head-actions">
-        ${saveNote()}
-        <button class="btn" id="folder-save" type="button">${ht("저장")}</button>
-        <a class="btn red sm" href="#/${mod.id}/${thisMonth()}">${ht("이번 달 표")}</a>
+        <a class="btn sm" href="#/${mod.id}/${thisMonth()}">${ht("이번 달 표")}</a>
       </div>
     </div>
     ${blocks || `<section class="panel"><p class="mute pad">${ht("아직 기록이 없습니다. 이번 달 표에서 적으세요.")}</p></section>`}`;
@@ -1181,7 +1173,7 @@ function monthSheetBrowse(mod) {
       <div class="bar compact-bar">
         <b>${h(monthLabel(ym))}</b>
         <span class="mute">${count(mod, ym)}</span>
-        <a class="btn sm red" href="#/${mod.id}/${ym}">${ht("표 열기")}</a>
+        <a class="btn sm" href="#/${mod.id}/${ym}">${ht("표 열기")}</a>
       </div>
       <div class="scroll"><table class="rows rec-table"><thead><tr>${heads}</tr></thead>
       <tbody>${body || `<tr><td colspan="5">${ht("이 달에 적힌 점검이 없습니다.")}</td></tr>`}</tbody></table></div>
@@ -1194,10 +1186,8 @@ function monthSheetBrowse(mod) {
         <p>${h(t(mod.desc))}</p>
       </div>
       <div class="head-actions">
-        ${saveNote()}
-        <button class="btn" id="folder-save" type="button">${ht("저장")}</button>
         <button class="btn sm" id="open-month" type="button">${ht("월 열기")}</button>
-        <a class="btn red sm" href="#/${mod.id}/${thisMonth()}">${ht("이번 달 표")}</a>
+        <a class="btn sm" href="#/${mod.id}/${thisMonth()}">${ht("이번 달 표")}</a>
       </div>
     </div>
     ${blocks || `<section class="panel"><p class="mute pad">${ht("아직 기록이 없습니다. 이번 달 표에서 적으세요.")}</p></section>`}`;
@@ -1220,7 +1210,7 @@ function deliveryBrowse(mod, ym = "") {
       <div class="bar compact-bar">
         <b>${h(camDay(d))}</b>
         <span class="mute">${ht("{n}건", { n: rows.length })}</span>
-        <a class="btn sm red" href="#/${mod.id}/${d}">${ht("표 열기")}</a>
+        <a class="btn sm" href="#/${mod.id}/${d}">${ht("표 열기")}</a>
       </div>
       <div class="scroll"><table class="rows rec-table"><thead><tr>
         <th>${ht("품번")}</th><th>${ht("품명")}</th><th>${ht("단위")}</th><th>${ht("수량")}</th><th>${ht("금액")}</th><th></th>
@@ -1243,8 +1233,6 @@ function deliveryBrowse(mod, ym = "") {
         <p>${h(t(mod.desc))}</p>
       </div>
       <div class="head-actions">
-        ${saveNote()}
-        <button class="btn" id="folder-save" type="button">${ht("저장")}</button>
         ${timeFolderActions(mod)}
       </div>
     </div>
@@ -1262,7 +1250,7 @@ function dateIndex(mod) {
     <div class="head compact-head"><div><h1>${h(t(mod.title))}</h1><p>${h(t(mod.desc))}</p></div><a class="btn ghost sm" href="#/home">${ht("운영 폴더")}</a></div>
     <section class="panel dates-panel">
       <div class="bar compact-bar"><b>${ht(month ? "월" : "날짜")}</b>
-        <button class="btn sm red" id="add-date" type="button">${ht(month ? "월 추가" : "날짜 추가")}</button></div>
+        <button class="btn sm" id="add-date" type="button">${ht(month ? "월 추가" : "날짜 추가")}</button></div>
       <div class="date-list">${folders}</div>
     </section>`;
 }
@@ -1281,13 +1269,11 @@ function dayView(mod, date) {
   return `
     <div class="head compact-head"><div><h1>${h(t(mod.title))}</h1><p>${h(camDay(date))}</p></div>
       <div class="head-actions">
-        ${saveNote()}
-        <button class="btn sm" id="folder-save" type="button">${ht("저장")}</button>
         <a class="btn ghost sm" href="#/${mod.id}/${monthKey(date) || date}">${ht("뒤로가기")}</a>
       </div></div>
     <section class="panel">
       <div class="bar compact-bar"><b>${h(date)}</b>
-        <button class="btn sm red" id="add-row" type="button">${ht("추가")}</button></div>
+        <button class="btn sm" id="add-row" type="button">${ht("추가")}</button></div>
       ${tableOf(mod, rows, date)}
     </section>`;
 }
@@ -1545,7 +1531,7 @@ function tableOf(mod, rows, date, quiet = false) {
       ? `<td>${(r.photos || []).length ? (r.photos || []).map((s) => `<img class="thumb" src="${s}" alt="">`).join("") : "-"}</td>`
       : "";
     return `<tr><td class="act"><a class="btn sm" href="#/${mod.id}/${date}/${r.id}">${ht("수정")}</a>
-        <a class="btn sm red" href="#/${mod.id}/${date}/${r.id}">${ht("보기·인쇄")}</a></td>${cells}${pics}</tr>`;
+        <a class="btn sm" href="#/${mod.id}/${date}/${r.id}">${ht("보기·인쇄")}</a></td>${cells}${pics}</tr>`;
   }).join("");
   const cols = fields.length + (extra ? 1 : 0) + 1;
   const hint = quiet ? "" : `<p class="mute pad">${ht("수정 또는 보기·인쇄를 누르면 A4 표에서 바로 고칠 수 있습니다.")}</p>`;
@@ -1556,7 +1542,7 @@ function tableOf(mod, rows, date, quiet = false) {
 function qualitySheet(rows, date, modId, quiet = false) {
   const body = rows.map((r) => `<tr class="qa-row">
       <td class="act"><a class="btn sm" href="#/${modId}/${date}/${r.id}">수정</a>
-        <a class="btn sm red" href="#/${modId}/${date}/${r.id}">보기·인쇄</a></td>
+        <a class="btn sm" href="#/${modId}/${date}/${r.id}">보기·인쇄</a></td>
       <td>${h(r.partNo)}</td>
       <td>${h(r.partName)}</td>
       <td>${h(r.lot)}</td>
@@ -1576,7 +1562,7 @@ function qualitySheet(rows, date, modId, quiet = false) {
 function deliverySheet(rows, date, modId, quiet = false) {
   const body = rows.map((r) => `<tr class="qa-row">
       <td class="act"><a class="btn sm" href="#/${modId}/${date}">${ht("수정")}</a>
-        <a class="btn sm red" href="#/${modId}/${date}">${ht("표 열기")}</a></td>
+        <a class="btn sm" href="#/${modId}/${date}">${ht("표 열기")}</a></td>
       <td>${h(r.partNo)}</td>
       <td>${h(r.partName)}</td>
       <td>${h(r.unit)}</td>
@@ -2297,8 +2283,6 @@ function eqView(mod, date) {
       ])}</p>
       <p>설비를 누르면 설비일상점검표가 열립니다. 사진과 연·월은 표에서 넣습니다.</p></div>
       <div class="head-actions">
-        ${saveNote()}
-        <button class="btn sm" id="folder-save" type="button">${ht("저장")}</button>
         ${timeFolderActions(mod)}
       </div></div>
     <section class="panel dates-panel">${blocks}</section>`;
@@ -2592,13 +2576,13 @@ function camView(mod) {
     <div class="head-actions">
       ${saveNote()}
       <button class="btn sm" id="folder-save" type="button">${ht("저장")}</button>
-      <a class="btn red sm" href="./cam-lab.html?v=37">가공 프로그램</a>
+      <a class="btn sm" href="./cam-lab.html?v=37">가공 프로그램</a>
     </div></div>
     <section class="panel">
       <div class="bar">${folder.parent ? `<button class="btn sm" id="up" type="button">업체 목록</button>` : ""}
         ${atRoot ? `<button class="btn sm" id="nf" type="button">업체 추가</button>` : `<button class="btn sm" id="del-vendor" type="button">이 업체 삭제</button>`}
         <button class="btn sm" id="cam-link" type="button">${state.cam.watchName ? "폴더 다시 연결" : "Mastercam 저장 폴더 연결"}</button>
-        ${atRoot ? "" : `<label class="btn sm red">프로그램 넣기<input id="upl" type="file" multiple hidden></label>
+        ${atRoot ? "" : `<label class="btn sm">프로그램 넣기<input id="upl" type="file" multiple hidden></label>
         <label class="btn sm">폴더 넣기<input id="upl-dir" type="file" hidden webkitdirectory></label>`}</div>
       <p class="mute pad">${atRoot
     ? "참테크, 인텔릭스처럼 업체를 연 다음 프로그램을 넣으세요. 들어온 날은 따로 고르지 않아도 오늘 날짜로 들어갑니다."

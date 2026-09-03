@@ -51,9 +51,10 @@ input[type="file"] { width: auto; margin: 0; padding: 0; border: 0; }
 .err { color: var(--red); min-height: 18px; }
 .note { color: #2f6b3a; min-height: 18px; font-size: 13px; }
 
-.btn { display: inline-flex; align-items: center; justify-content: center; height: 40px; padding: 0 14px; border: 0; border-radius: 10px; cursor: pointer; font-weight: 700; background: #f4f4f2; }
-.btn.red { background: var(--red); color: #fff; width: auto; }
-.login .btn.red { width: 100%; margin-top: 8px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; height: 40px; padding: 0 14px; border: 0; border-radius: 10px; cursor: pointer; font-weight: 700; background: #f4f4f2; color: var(--ink); }
+.btn.red { background: #f2d0d5; color: #7a2c3b; width: auto; }
+.btn.red:hover { background: #ebc0c7; }
+.login .btn.red { width: 100%; margin-top: 8px; background: #d98a96; color: #fff; }
 .auth-card { width: min(440px, 92vw); }
 .auth-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 16px 0 8px; }
 .auth-tab {
