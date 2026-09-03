@@ -37,10 +37,15 @@ export function createMill(job) {
   const topZ = Math.max(high, 0) + 5;
   const spanX = Math.max(maxX - minX, 8);
   const spanY = Math.max(maxY - minY, 8);
-  const cols = Math.max(64, Math.min(92, Math.round(spanX / 1.05)));
-  const rows = Math.max(48, Math.min(72, Math.round(spanY / 1.05)));
-  const dx = (maxX - minX) / cols;
-  const dy = (maxY - minY) / rows;
+  const cell = 0.34;
+  let cols = Math.round(spanX / cell);
+  let rows = Math.round(spanY / cell);
+  const maxN = 220;
+  const over = Math.max(cols / maxN, rows / maxN, 1);
+  cols = Math.max(96, Math.round(cols / over));
+  rows = Math.max(72, Math.round(rows / over));
+  const dx = (maxX - minX) / Math.max(1, cols - 1);
+  const dy = (maxY - minY) / Math.max(1, rows - 1);
   const height = new Float32Array(cols * rows);
   const base = new Float32Array(cols * rows);
   let pts = pts0;
@@ -57,19 +62,22 @@ export function createMill(job) {
   fillStock();
 
   function millAt(x, y, z, r) {
-    const r2 = r * r;
-    const c0 = Math.floor((x - minX) / dx);
-    const r0 = Math.floor((y - minY) / dy);
-    const span = Math.ceil(r / Math.min(dx, dy)) + 2;
+    const pad = Math.hypot(dx, dy) * 0.55;
+    const rHit = r + pad;
+    const r2 = rHit * rHit;
+    const cut = Math.max(minZ + 0.2, z);
+    const c0 = Math.round((x - minX) / dx);
+    const r0 = Math.round((y - minY) / dy);
+    const span = Math.ceil(rHit / Math.min(dx, dy)) + 2;
     for (let rr = r0 - span; rr <= r0 + span; rr += 1) {
       if (rr < 0 || rr >= rows) continue;
+      const py = minY + rr * dy;
       for (let cc = c0 - span; cc <= c0 + span; cc += 1) {
         if (cc < 0 || cc >= cols) continue;
-        const cx = minX + (cc + 0.5) * dx;
-        const cy = minY + (rr + 0.5) * dy;
-        if ((cx - x) * (cx - x) + (cy - y) * (cy - y) > r2) continue;
+        const px = minX + cc * dx;
+        if ((px - x) * (px - x) + (py - y) * (py - y) > r2) continue;
         const i = rr * cols + cc;
-        if (height[i] > z) height[i] = Math.max(minZ + 0.25, z);
+        if (height[i] > cut) height[i] = cut;
       }
     }
   }
@@ -77,7 +85,7 @@ export function createMill(job) {
   function carve(fromT, toT) {
     const a0 = fromT * total;
     const a1 = toT * total;
-    const step = Math.max(0.45, Math.min(dx, dy) * 0.7);
+    const step = Math.max(0.18, Math.min(dx, dy) * 0.42);
     for (let i = 1; i < pts.length; i += 1) {
       const s0 = acc[i - 1];
       const s1 = acc[i];
@@ -173,7 +181,7 @@ export function createMill(job) {
     ctx.moveTo(a.x, a.y);
     ctx.lineTo(b.x, b.y);
     ctx.lineTo(c.x, c.y);
-    ctx.lineTo(d.x, d.y);
+    if (d && (d !== c)) ctx.lineTo(d.x, d.y);
     ctx.closePath();
     ctx.fillStyle = fill;
     ctx.fill();
@@ -296,58 +304,56 @@ export function createMill(job) {
     const push = (a, b, c, d, hex) => {
       faces.push({ a, b, c, d, hex, depth: (a.d + b.d + c.d + d.d) / 4 });
     };
+    const pushTri = (a, b, c, hex) => {
+      faces.push({ a, b, c, d: c, hex, depth: (a.d + b.d + c.d) / 3 });
+    };
 
     push(pr(minX - 10, minY - 10, minZ - 1.4), pr(maxX + 10, minY - 10, minZ - 1.4),
       pr(maxX + 10, maxY + 10, minZ - 1.4), pr(minX - 10, maxY + 10, minZ - 1.4), "#262624");
-    push(pr(minX, minY, minZ), pr(maxX, minY, minZ), pr(maxX, maxY, minZ), pr(minX, maxY, minZ), "#6e747c");
 
-    for (let r = 0; r < rows; r += 1) {
+    for (let r = 0; r < rows - 1; r += 1) {
       const y0 = minY + r * dy;
-      const y1 = y0 + dy;
-      push(pr(minX, y0, minZ), pr(minX, y1, minZ), pr(minX, y1, zAt(0, r)), pr(minX, y0, zAt(0, r)), "#5c626a");
-      push(pr(maxX, y0, minZ), pr(maxX, y1, minZ), pr(maxX, y1, zAt(cols - 1, r)), pr(maxX, y0, zAt(cols - 1, r)), "#4a5058");
+      const y1 = minY + (r + 1) * dy;
+      push(pr(minX, y0, minZ), pr(minX, y1, minZ), pr(minX, y1, zAt(0, r + 1)), pr(minX, y0, zAt(0, r)), "#5c626a");
+      push(pr(maxX, y0, minZ), pr(maxX, y0, zAt(cols - 1, r)), pr(maxX, y1, zAt(cols - 1, r + 1)), pr(maxX, y1, minZ), "#4a5058");
     }
-    for (let c = 0; c < cols; c += 1) {
+    for (let c = 0; c < cols - 1; c += 1) {
       const x0 = minX + c * dx;
-      const x1 = x0 + dx;
-      push(pr(x0, minY, minZ), pr(x1, minY, minZ), pr(x1, minY, zAt(c, 0)), pr(x0, minY, zAt(c, 0)), "#686e76");
-      push(pr(x0, maxY, minZ), pr(x1, maxY, minZ), pr(x1, maxY, zAt(c, rows - 1)), pr(x0, maxY, zAt(c, rows - 1)), "#3e444c");
+      const x1 = minX + (c + 1) * dx;
+      push(pr(x0, minY, minZ), pr(x1, minY, minZ), pr(x1, minY, zAt(c + 1, 0)), pr(x0, minY, zAt(c, 0)), "#686e76");
+      push(pr(x0, maxY, minZ), pr(x0, maxY, zAt(c, rows - 1)), pr(x1, maxY, zAt(c + 1, rows - 1)), pr(x1, maxY, minZ), "#3e444c");
     }
 
-    for (let r = 0; r < rows; r += 1) {
-      for (let c = 0; c < cols; c += 1) {
+    for (let r = 0; r < rows - 1; r += 1) {
+      for (let c = 0; c < cols - 1; c += 1) {
         const x0 = minX + c * dx;
         const y0 = minY + r * dy;
-        const x1 = x0 + dx;
-        const y1 = y0 + dy;
+        const x1 = minX + (c + 1) * dx;
+        const y1 = minY + (r + 1) * dy;
         const z00 = zAt(c, r);
         const z10 = zAt(c + 1, r);
         const z11 = zAt(c + 1, r + 1);
         const z01 = zAt(c, r + 1);
+        const gx = dx * 0.08;
+        const gy = dy * 0.08;
+        const p00 = pr(x0 - gx, y0 - gy, z00);
+        const p10 = pr(x1 + gx, y0 - gy, z10);
+        const p11 = pr(x1 + gx, y1 + gy, z11);
+        const p01 = pr(x0 - gx, y1 + gy, z01);
         const avg = (z00 + z10 + z11 + z01) / 4;
-        const cut = avg < topZ - 0.08;
-        push(pr(x0, y0, z00), pr(x1, y0, z10), pr(x1, y1, z11), pr(x0, y1, z01),
-          cut ? "#c2ccd4" : "#eceff2");
-
-        if (c < cols - 1) {
-          const zN = zAt(c + 1, r);
-          if (Math.abs(z00 - zN) > 0.06) {
-            const zLo = Math.min(z00, zN);
-            const zHi = Math.max(z00, zN);
-            push(pr(x1, y0, zLo), pr(x1, y1, zLo), pr(x1, y1, zHi), pr(x1, y0, zHi), "#8e98a2");
-          }
-        }
-        if (r < rows - 1) {
-          const zN = zAt(c, r + 1);
-          if (Math.abs(z00 - zN) > 0.06) {
-            const zLo = Math.min(z00, zN);
-            const zHi = Math.max(z00, zN);
-            push(pr(x0, y1, zLo), pr(x1, y1, zLo), pr(x1, y1, zHi), pr(x0, y1, zHi), "#7a848e");
-          }
+        const hex = avg < topZ - 0.08 ? "#c2ccd4" : "#eceff2";
+        if (Math.abs(z00 - z11) <= Math.abs(z10 - z01)) {
+          pushTri(p00, p10, p11, hex);
+          pushTri(p00, p11, p01, hex);
+        } else {
+          pushTri(p00, p10, p01, hex);
+          pushTri(p10, p11, p01, hex);
         }
       }
     }
 
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
     faces.sort((a, b) => a.depth - b.depth);
     for (const f of faces) paint(ctx, f.a, f.b, f.c, f.d, shade(f.hex, f.a, f.b, f.c));
 

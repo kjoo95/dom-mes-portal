@@ -2,7 +2,7 @@ import { getSession, logout, isInternalNetwork } from "./auth.js?v=43";
 import { loadState, saveState, uid } from "./store.js";
 import { collectStats, optimizeJob, toNc, toJson } from "./gcode.js";
 import { boot } from "./safety.js";
-import { createMill } from "./mill3d.js?v=17";
+import { createMill } from "./mill3d.js?v=21";
 import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=42";
 
 const root = document.getElementById("app");
