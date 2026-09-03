@@ -1,6 +1,12 @@
-import { toolSpec, accTime } from "./gcode.js?v=47";
+import { toolSpec, accTime } from "./gcode.js?v=48";
 
 function bboxOf(job) {
+  const st = job?.stock;
+  if (st?.fromNci && st.w > 1 && st.d > 1) {
+    const ox = Number(st.x) || 0;
+    const oy = Number(st.y) || 0;
+    return { minX: ox, minY: oy, maxX: ox + st.w, maxY: oy + st.d };
+  }
   const b = job?.bbox;
   if (b) return b;
   const pts = job?.points || [];
@@ -232,10 +238,10 @@ export function createMill(job) {
   const maxY = b.maxY + pad;
   const pts0 = job.points || [];
   const cutZ = pts0.filter((p) => !p.rapid).map((p) => p.z || 0);
-  const deep = cutZ.length ? Math.min(...cutZ) : -8;
+  const deep = cutZ.length ? Math.min(...cutZ) : (job.stock?.h ? -Math.abs(job.stock.h) : -8);
   const high = cutZ.length ? Math.max(...cutZ) : 0;
-  const minZ = deep - 0.2;
-  const topZ = Math.max(high, 0);
+  const minZ = job.stock?.fromNci && job.stock.h ? Math.min(deep, -(Number(job.stock.h) || 8)) - 0.2 : deep - 0.2;
+  const topZ = job.stock?.fromNci ? Math.max(high, 0) : Math.max(high, 0);
   const spanX = Math.max(maxX - minX, 8);
   const spanY = Math.max(maxY - minY, 8);
   const spanZ = Math.max(topZ - minZ, 8);

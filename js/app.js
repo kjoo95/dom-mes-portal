@@ -3,9 +3,9 @@ import {
   CUSTOMERS, MILL_SHOPS, CNC_CHECKS, MACHINES, FIVE_S_SHOP, FIVE_S_LAB,
   fieldsFor, flattenChecks, badgeClass, todayISO,
 } from "./data.js?v=43";
-import { loadState, saveState, uid } from "./store.js?v=45";
+import { loadState, saveState, uid } from "./store.js?v=46";
 import { saveBlob, loadBlob, readAsDataUrl, saveDirHandle, loadDirHandle } from "./files.js?v=39";
-import { parseProgram } from "./gcode.js?v=47";
+import { parseProgram, decodeCamFile, isCamFileName } from "./gcode.js?v=48";
 import { boot, showRecover } from "./safety.js?v=39";
 import { chatView, bindChat } from "./comm.js?v=50";
 import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=48";
@@ -328,7 +328,7 @@ function shell(session, active, inner, printMode = false) {
           ${link("home", "운영 폴더")}
           ${link("manage", "수정·삭제")}
           ${isAdmin(session) ? `<a class="${"members" === active ? "on" : ""}" href="#/members">${ht("가입 승인")}${wait ? ` (${wait})` : ""}</a>` : ""}
-          <a href="./cam-lab.html?v=29">${ht("가공 프로그램")}</a>
+          <a href="./cam-lab.html?v=30">${ht("가공 프로그램")}</a>
         </div>
         <div class="side-block comm">
           <p class="side-label">${ht("소통")}</p>
@@ -1215,7 +1215,7 @@ function camView(mod, date) {
     <td>${j.fromNc ? "NC 해석" : "추정 경로"}</td>
   </tr>`).join("");
   return `<div class="head"><div><h1>${h(mod.title)}</h1><p>${h(date)}</p></div>
-    <a class="btn red sm" href="./cam-lab.html?v=29">가공 프로그램</a></div>
+    <a class="btn red sm" href="./cam-lab.html?v=30">가공 프로그램</a></div>
     <section class="panel">
       <div class="bar">${folder.parent ? `<button class="btn sm" id="up" type="button">상위</button>` : ""}
         <button class="btn sm" id="nf" type="button">폴더</button>
@@ -1527,21 +1527,13 @@ function bindCam(date) {
 }
 
 function isCamNc(name) {
-  return /\.(nc|nci|cnc|tap|txt|iso|eia|min|ncc)$/i.test(name || "");
+  return isCamFileName(name);
 }
 
 async function readNcText(file) {
-  const buf = await file.slice(0, 2_000_000).arrayBuffer().catch(() => null);
+  const buf = await file.slice(0, 12_000_000).arrayBuffer().catch(() => null);
   if (!buf) return "";
-  const u8 = new Uint8Array(buf);
-  if (u8.length >= 2 && u8[0] === 0xFF && u8[1] === 0xFE) return new TextDecoder("utf-16le").decode(buf);
-  if (u8.length >= 2 && u8[0] === 0xFE && u8[1] === 0xFF) return new TextDecoder("utf-16be").decode(buf);
-  if (u8.length >= 3 && u8[0] === 0xEF && u8[1] === 0xBB && u8[2] === 0xBF) return new TextDecoder("utf-8").decode(buf);
-  let zeros = 0;
-  const n = Math.min(u8.length, 400);
-  for (let i = 1; i < n; i += 2) if (u8[i] === 0) zeros += 1;
-  if (zeros > n / 4) return new TextDecoder("utf-16le").decode(buf);
-  return new TextDecoder("utf-8").decode(buf);
+  return decodeCamFile(buf, file.name);
 }
 
 async function ingestCamFile(file, date = todayISO()) {
@@ -1553,7 +1545,12 @@ async function ingestCamFile(file, date = todayISO()) {
   const folderId = camFolder || "cam-root";
   state.cam.files.push({ id, folderId, name: file.name, size: file.size, date, auto: true });
   const text = await readNcText(file);
-  const job = { ...parseProgram(file.name, text), id: uid("job"), fileId: id, folderId, date };
+  const parsed = parseProgram(file.name, text);
+  if (!parsed?.points?.length) {
+    remember("mastercam", date);
+    return;
+  }
+  const job = { ...parsed, id: uid("job"), fileId: id, folderId, date };
   state.cam.jobs.push(job);
   state.records.process.unshift({
     id: uid("pr"),

@@ -1,8 +1,8 @@
 import { getSession, logout, isInternalNetwork } from "./auth.js?v=45";
 import { loadState, saveState, uid } from "./store.js";
-import { collectStats, parseProgram, toNc, toJson, accTime, toolOps, toolSpec } from "./gcode.js?v=47";
+import { collectStats, parseProgram, toNc, toJson, accTime, toolOps, toolSpec, decodeCamFile, isCamFileName } from "./gcode.js?v=48";
 import { boot } from "./safety.js";
-import { createMill } from "./mill3d.js?v=27";
+import { createMill } from "./mill3d.js?v=28";
 import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=42";
 import { todayISO } from "./data.js?v=43";
 
@@ -40,21 +40,30 @@ function current() {
 }
 
 function isCamNc(name) {
-  return /\.(nc|nci|cnc|tap|txt|iso|eia|min|ncc)$/i.test(name || "");
+  return isCamFileName(name);
 }
 
 async function readNcText(file) {
-  const buf = await file.slice(0, 2_000_000).arrayBuffer().catch(() => null);
+  const buf = await file.slice(0, 12_000_000).arrayBuffer().catch(() => null);
   if (!buf) return "";
-  const u8 = new Uint8Array(buf);
-  if (u8.length >= 2 && u8[0] === 0xFF && u8[1] === 0xFE) return new TextDecoder("utf-16le").decode(buf);
-  if (u8.length >= 2 && u8[0] === 0xFE && u8[1] === 0xFF) return new TextDecoder("utf-16be").decode(buf);
-  if (u8.length >= 3 && u8[0] === 0xEF && u8[1] === 0xBB && u8[2] === 0xBF) return new TextDecoder("utf-8").decode(buf);
-  let zeros = 0;
-  const n = Math.min(u8.length, 400);
-  for (let i = 1; i < n; i += 2) if (u8[i] === 0) zeros += 1;
-  if (zeros > n / 4) return new TextDecoder("utf-16le").decode(buf);
-  return new TextDecoder("utf-8").decode(buf);
+  return decodeCamFile(buf, file.name);
+}
+
+function preferCamFiles(files) {
+  const list = [...files];
+  const by = new Map();
+  list.forEach((f) => {
+    const stem = String(f.name || "").replace(/\.[^.]+$/, "").toLowerCase();
+    if (!by.has(stem)) by.set(stem, []);
+    by.get(stem).push(f);
+  });
+  const rank = (n) => (/\.nci$/i.test(n) ? 0 : /\.(nc|cnc|tap|min)$/i.test(n) ? 1 : /\.mc9$/i.test(n) ? 2 : 3);
+  const out = [];
+  by.forEach((group) => {
+    group.sort((a, b) => rank(a.name) - rank(b.name));
+    out.push(group[0]);
+  });
+  return out.length ? out : list;
 }
 
 async function ingestLabFile(file) {
@@ -161,7 +170,7 @@ function render() {
   const stock = view?.stock || mill?.stock;
   const spec = curOp ? toolSpec(curOp.tool, job?.toolLib) : null;
   const statLine = job
-    ? `${h(job.partName || job.name)}${focusOp >= 0 ? ` · T${curOp?.tool}만 보기` : ` · ${seq.map((o) => `T${o.tool}`).join(" → ")}`} · 소재 ${stock ? `${stock.w}×${stock.d}×${stock.h} mm` : "—"}`
+    ? `${h(job.partName || job.name)}${focusOp >= 0 ? ` · T${curOp?.tool}만 보기` : ` · ${seq.map((o) => `T${o.tool}`).join(" → ")}`} · 소재 ${stock ? `${stock.w}×${stock.d}×${stock.h} mm` : "—"}${job.material ? ` · ${h(job.material)}` : ""}`
     : "프로그램 찾기로 NC 또는 NCI를 넣으면 여기 보입니다.";
   root.innerHTML = `
     <div class="app lab">
@@ -174,7 +183,7 @@ function render() {
         <div class="side-actions">
           <button class="btn red sm" id="open-prog" type="button">프로그램 찾기</button>
           <button class="btn sm" id="open-folder" type="button">폴더에서 넣기</button>
-          <input id="open-nc" type="file" multiple hidden accept=".nc,.nci,.cnc,.tap,.txt,.iso,.eia,.min,.ncc">
+          <input id="open-nc" type="file" multiple hidden accept=".nc,.nci,.cnc,.tap,.txt,.iso,.eia,.min,.ncc,.mc9,.mc8">
           <input id="open-dir" type="file" hidden webkitdirectory>
         </div>
         <input class="job-q" id="job-q" type="search" placeholder="이름 찾기" value="${h(jobQuery)}" autocomplete="off">
@@ -241,8 +250,8 @@ function render() {
     render();
   });
   const takeFiles = async (files) => {
-    const list = [...files].filter((f) => isCamNc(f.name));
-    if (!list.length) return alert("NC 또는 NCI 파일이 없습니다.");
+    const list = preferCamFiles([...files].filter((f) => isCamNc(f.name)));
+    if (!list.length) return alert("NC, NCI 또는 Mastercam 9(MC9) 파일이 없습니다.");
     let last = null;
     let miss = 0;
     for (const file of list) {
@@ -250,7 +259,7 @@ function render() {
       if (job) last = job;
       else miss += 1;
     }
-    if (!last) return alert("프로그램을 읽지 못했습니다. 마스터캠에서 포스트한 NC 또는 NCI를 선택하세요.");
+    if (!last) return alert("공구경로를 읽지 못했습니다. 마스터캠에서 NCI를 저장하거나 NC로 포스트한 파일을 넣어 주세요. MC9만 있으면 같은 폴더의 NCI/NC를 함께 넣어 주세요.");
     selectedId = last.id;
     focusOp = -1;
     opIndex = 0;

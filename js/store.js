@@ -1,5 +1,5 @@
 import { STORAGE_KEY, defaultState, todayISO } from "./data.js?v=43";
-import { seedJobs, parseProgram, toNc } from "./gcode.js?v=47";
+import { seedJobs, parseProgram, toNc, looksBinaryText } from "./gcode.js?v=48";
 
 const BAK = `${STORAGE_KEY}-bak`;
 
@@ -9,13 +9,14 @@ function refreshJob(job) {
   if (!src) return job;
   try {
     const parsed = parseProgram(job.name || "job.nc", src);
+    if (!parsed?.points?.length && job.points?.length) return job;
     return {
       ...parsed,
       id: job.id,
       date: job.date,
       folderId: job.folderId,
       optimized: job.optimized,
-      source: job.source || src,
+      source: looksBinaryText(job.source || "") ? (parsed.source || "") : (job.source || src),
     };
   } catch {
     return job;

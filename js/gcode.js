@@ -107,6 +107,120 @@ function decodeNc(text) {
   return s.replace(/[\u2013\u2014]/g, "-");
 }
 
+export function looksBinaryText(s) {
+  const str = String(s || "");
+  const n = Math.min(str.length, 4000);
+  if (!n) return false;
+  let weird = 0;
+  for (let i = 0; i < n; i += 1) {
+    const c = str.charCodeAt(i);
+    if (c === 9 || c === 10 || c === 13) continue;
+    if (c < 32 || c === 0xFFFD) weird += 1;
+  }
+  return weird > n * 0.08;
+}
+
+function isBinaryBytes(u8) {
+  const n = Math.min(u8.length, 4000);
+  if (!n) return false;
+  let weird = 0;
+  for (let i = 0; i < n; i += 1) {
+    const b = u8[i];
+    if (b === 9 || b === 10 || b === 13) continue;
+    if (b < 32) weird += 1;
+  }
+  return weird > n * 0.08;
+}
+
+function decodeWith(u8, enc) {
+  try {
+    return new TextDecoder(enc, { fatal: false }).decode(u8);
+  } catch {
+    return "";
+  }
+}
+
+function bestDecode(u8) {
+  const cands = ["utf-8", "euc-kr", "windows-949", "latin1"]
+    .map((enc) => {
+      const t = decodeWith(u8, enc);
+      const bad = (t.match(/\uFFFD/g) || []).length;
+      return { enc, t, bad };
+    })
+    .filter((c) => c.t);
+  cands.sort((a, b) => a.bad - b.bad);
+  return cands[0]?.t || decodeWith(u8, "latin1");
+}
+
+function looksGcode(text) {
+  return /[GMTXYZFS]\s*-?(?:\d|\.)/i.test(String(text || ""));
+}
+
+function salvageCamText(text) {
+  const lines = String(text || "").split(/\r?\n/).map((l) => l.replace(/\u0000/g, "").trim()).filter((l) => {
+    if (!l) return false;
+    if (looksBinaryText(l) && l.length > 80) return false;
+    return /[\x20-\x7e가-힣]/.test(l);
+  });
+  return lines.join("\n");
+}
+
+function extractCamText(u8) {
+  const chunks = [];
+  let cur = [];
+  const flush = () => {
+    if (cur.length < 12) {
+      cur = [];
+      return;
+    }
+    chunks.push(Uint8Array.from(cur));
+    cur = [];
+  };
+  for (let i = 0; i < u8.length; i += 1) {
+    const b = u8[i];
+    if (b === 9 || b === 10 || b === 13 || (b >= 32 && b !== 127)) cur.push(b);
+    else flush();
+  }
+  flush();
+  const joined = chunks.map((c) => bestDecode(c)).join("\n");
+  const utf16 = [];
+  let run = "";
+  for (let i = 0; i + 1 < Math.min(u8.length, 4_000_000); i += 2) {
+    if (u8[i + 1] === 0 && u8[i] >= 32 && u8[i] < 127) run += String.fromCharCode(u8[i]);
+    else {
+      if (run.length >= 12) utf16.push(run);
+      run = "";
+    }
+  }
+  if (run.length >= 12) utf16.push(run);
+  const mixed = [joined, utf16.join("\n")].filter(Boolean).join("\n");
+  const clean = salvageCamText(mixed);
+  if (looksNci(clean) || looksGcode(clean)) return clean;
+  return "";
+}
+
+export function decodeCamFile(buffer, name = "") {
+  const u8 = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer || []);
+  if (!u8.length) return "";
+  if (u8.length >= 2 && u8[0] === 0xFF && u8[1] === 0xFE) return decodeNc(new TextDecoder("utf-16le").decode(u8));
+  if (u8.length >= 2 && u8[0] === 0xFE && u8[1] === 0xFF) return decodeNc(new TextDecoder("utf-16be").decode(u8));
+  if (u8.length >= 3 && u8[0] === 0xEF && u8[1] === 0xBB && u8[2] === 0xBF) return decodeNc(new TextDecoder("utf-8").decode(u8));
+  let zeros = 0;
+  const n = Math.min(u8.length, 400);
+  for (let i = 1; i < n; i += 2) if (u8[i] === 0) zeros += 1;
+  if (zeros > n / 4) return decodeNc(new TextDecoder("utf-16le").decode(u8));
+  const binary = isBinaryBytes(u8) || /\.mc9$/i.test(name);
+  if (binary) {
+    const extracted = extractCamText(u8);
+    if (extracted) return extracted;
+  }
+  return decodeNc(bestDecode(u8));
+}
+
+export function isCamFileName(name) {
+  return /\.(nc|nci|cnc|tap|txt|iso|eia|min|ncc|mc9|mc8)$/i.test(name || "");
+}
+
 function stripComments(text) {
   return String(text || "").replace(/\([^)]*\)/g, " ").replace(/;.*$/gm, " ");
 }
@@ -207,7 +321,7 @@ function looksNci(text) {
     if (!numeric && !quoted && !/^\d/.test(next) && !/"/.test(next)) continue;
     pairs += 1;
     const g = Number(lines[i]);
-    if (g === 0 || g === 1 || g === 2 || g === 3 || g === 4 || g === 1001 || g === 1002 || g === 1013 || g === 1016) hits += 1;
+    if (g === 0 || g === 1 || g === 2 || g === 3 || g === 4 || g === 1001 || g === 1002 || g === 1013 || g === 1016 || g === 1020 || g === 1050) hits += 1;
   }
   return pairs >= 4 && hits >= 2;
 }
@@ -256,6 +370,13 @@ function parseNci(name, text) {
   let pendingDia = 0;
   let pendingName = "";
   let metric = null;
+  let stockW = 0;
+  let stockD = 0;
+  let stockH = 0;
+  let stockX = 0;
+  let stockY = 0;
+  let material = "";
+  let partHint = "";
   const putLib = (tn, d, nm) => {
     if (!tn) return;
     const prev = toolLib[tn] || {};
@@ -288,10 +409,26 @@ function parseNci(name, text) {
     if (g >= 0 && g <= 30000) i += 1;
     const n = nciNums(data);
     const nm = nciName(data);
-    if (g === 1013) {
+    if (g === 1050) {
+      const path = data.replace(/^[-0-9eE.\s]+/, "").trim();
+      if (path) partHint = path.split(/[/\\]/).pop().replace(/\.[^.]+$/, "");
+    } else if (g === 1008 || g === 1005) {
+      const c = data.replace(/^[-0-9eE.\s]+/, "").trim() || nm;
+      if (c && !pendingName) pendingName = c.slice(0, 40);
+    } else if (g === 1020) {
+      if (n[0]) stockW = Math.abs(n[0]);
+      if (n[1]) stockD = Math.abs(n[1]);
+      if (n[2]) stockH = Math.abs(n[2]);
+      if (n[3] !== undefined) stockX = n[3];
+      if (n[4] !== undefined) stockY = n[4];
+      material = nciName(data) || data.replace(/^[-0-9eE.\s]+/, "").trim().slice(0, 40);
+    } else if (g === 1013) {
       const dia = n[1] || 0;
       if (dia) pendingDia = dia;
-      if (nm) pendingName = nm;
+      const fromPath = (data.match(/([^\\/]+)\.(mc9|tl9)/i) || [])[1];
+      if (fromPath) pendingName = fromPath.replace(/[_-]+/g, " ").slice(0, 40);
+      else if (nm && !/[\\/]/.test(nm)) pendingName = nm;
+      else if (nm) pendingName = nm.split(/[/\\]/).pop().replace(/\.[^.]+$/, "").slice(0, 40);
       if (metric == null && n[9] !== undefined) metric = Number(n[9]) !== 0;
     } else if (g === 1016) {
       if (n[9] !== undefined) metric = Number(n[9]) !== 0;
@@ -318,7 +455,7 @@ function parseNci(name, text) {
         z = n[12] !== undefined ? n[12] : z;
         pushPt({ x, y, z, rapid: true, f, s, t });
       }
-      pendingDia = toolLib[t]?.d || pendingDia;
+      pendingDia = 0;
       pendingName = "";
     } else if (g === 0 || g === 1) {
       const nx = n[1];
@@ -388,7 +525,17 @@ function parseNci(name, text) {
     p.d = spec.d;
     p.feedMm = (p.f || 0) * toMm;
   });
-  return finishJob(name, points, ops, [...tools], cut, rapid, true, rawText, toolLib);
+  const job = finishJob(name, points, ops, [...tools], cut, rapid, true, looksBinaryText(rawText) ? "" : rawText, toolLib);
+  if (partHint) job.partName = partHint.replace(/[_-]+/g, " ");
+  if (material) job.material = material;
+  if (stockW > 0 && stockD > 0) {
+    const w = Number((stockW * toMm).toFixed(1));
+    const d = Number((stockD * toMm).toFixed(1));
+    const h = Number(((stockH || job.stock.h || 10) * toMm).toFixed(1));
+    job.stock = { w, d, h, x: stockX * toMm, y: stockY * toMm, fromNci: true, material };
+    job.bbox = { minX: stockX * toMm, minY: stockY * toMm, maxX: stockX * toMm + w, maxY: stockY * toMm + d };
+  }
+  return job;
 }
 
 function expandSubs(text) {
@@ -538,12 +685,16 @@ export function toolOps(points, lib) {
 }
 
 export function parseProgram(name, text) {
-  const rawText = decodeNc(text);
+  let rawText = decodeNc(text);
+  if (looksBinaryText(rawText) || /\.mc9$/i.test(name || "")) {
+    const salvaged = salvageCamText(rawText);
+    if (looksNci(salvaged) || looksGcode(salvaged)) rawText = salvaged;
+  }
   if (looksNci(rawText) || /\.nci$/i.test(name || "")) return parseNci(name, rawText);
-  const looksNc = /[GMTXYZFS]\s*-?(?:\d|\.)/i.test(rawText);
+  const looksNc = looksGcode(rawText);
   if (!looksNc) {
-    if (/\.(nc|cnc|tap|iso|eia|min|ncc)$/i.test(name || "")) {
-      return finishJob(name, [], [], [], 0, 0, true, rawText, {});
+    if (isCamFileName(name)) {
+      return finishJob(name, [], [], [], 0, 0, true, looksBinaryText(rawText) ? "" : rawText, {});
     }
     return syntheticJob(name);
   }
@@ -688,7 +839,7 @@ export function parseProgram(name, text) {
     const spec = toolSpec(p.t, toolLib);
     if (spec.d) p.d = spec.d;
   });
-  return finishJob(name, points, ops, [...tools], cut, rapid, true, rawText, toolLib);
+  return finishJob(name, points, ops, [...tools], cut, rapid, true, looksBinaryText(rawText) ? "" : rawText, toolLib);
 }
 
 function syntheticJob(name) {
@@ -759,6 +910,7 @@ function finishJob(name, points, ops, tools, cut, rapid, fromNc, source, toolLib
     timeMin: Number(timeMin.toFixed(2)),
     bbox: bbox(points.filter((p) => !p.rapid).length ? points.filter((p) => !p.rapid) : points),
     stock: stockSize(points),
+    material: "",
   };
 }
 
@@ -899,7 +1051,7 @@ export function optimizeJob(job, stats = []) {
 
 export function toNc(job) {
   const src = String(job?.source || "");
-  if (src && job.fromNc && /[GMTXYZFS]/i.test(src) && !looksNci(src)) return src.endsWith("\n") ? src : `${src}\n`;
+  if (src && job.fromNc && !looksBinaryText(src) && /[GMTXYZFS]/i.test(src) && !looksNci(src)) return src.endsWith("\n") ? src : `${src}\n`;
   const lines = ["%", `O1100 (${(job.partName || job.name || "DOM").slice(0, 32)})`, "G21 G90 G17"];
   Object.entries(job.toolLib || {}).forEach(([tn, spec]) => {
     if (!spec) return;
