@@ -83,7 +83,14 @@ input[type="file"] { width: auto; margin: 0; padding: 0; border: 0; }
 .login .lang-pick { margin: 8px 0 0; }
 .side { background: #fff; border-right: 1px solid var(--line); padding: 16px 12px 24px; overflow: auto; display: flex; flex-direction: column; gap: 6px; color: var(--ink); }
 .side-block { padding: 8px 2px 10px; }
-.side-label { margin: 2px 10px 8px; font-size: 11px; font-weight: 700; color: var(--mute); letter-spacing: 0.04em; }
+.side-label {
+  margin: 0 0 2px;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: 0;
+}
 .side a { display: block; padding: 8px 10px; border-radius: 8px; font-size: 13px; color: var(--ink); }
 .side a.on { background: #fdecef; font-weight: 700; color: var(--red); }
 .side a:hover { background: #f7f7f7; }
@@ -250,7 +257,18 @@ main { padding: 28px 32px 48px; overflow: auto; background: #f6f6f6; }
   cursor: pointer;
   color: var(--ink);
 }
-.nav-group-head::after { content: "▾"; color: var(--mute); font-weight: 400; }
+.nav-group-head::after {
+  content: "▾";
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--ink);
+  font-weight: 700;
+}
 .nav-group.open .nav-group-head::after { content: "▴"; }
 .nav-group-head:hover { background: #f7f7f7; }
 .nav-group-body { display: none; padding: 0 4px 8px; }
