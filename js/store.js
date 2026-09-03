@@ -116,7 +116,17 @@ function hydrate(parsed) {
   migrateLabClimate(state, base);
   migrateInbound(state);
   migrateMonthFolders(state);
+  migrateCamFolders(state, base);
   return state;
+}
+
+function migrateCamFolders(state, base) {
+  if (!state.cam) state.cam = { folders: [], files: [], jobs: [] };
+  if (!Array.isArray(state.cam.folders)) state.cam.folders = [];
+  (base.cam?.folders || []).forEach((seed) => {
+    const has = state.cam.folders.some((f) => f.id === seed.id || (f.parent === seed.parent && f.name === seed.name));
+    if (!has) state.cam.folders.push({ ...seed });
+  });
 }
 
 function migrateWhoisWeb(web) {

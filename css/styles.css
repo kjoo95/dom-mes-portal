@@ -281,6 +281,18 @@ main { padding: 28px 32px 48px; overflow: auto; background: #f6f6f6; }
 .folder h2 { margin: 0 0 4px; font-size: 15px; }
 .folder p { margin: 0; color: var(--mute); font-size: 13px; }
 .folder.small { min-height: 120px; }
+.vendor-card { justify-content: space-between; gap: 8px; }
+.folder-open {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+}
+.file-acts { display: flex; gap: 4px; flex-wrap: wrap; }
 .file b { word-break: break-all; }
 
 .date-list {
