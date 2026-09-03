@@ -1,4 +1,4 @@
-import { STORAGE_KEY, defaultState, todayISO } from "./data.js?v=48";
+import { STORAGE_KEY, defaultState, todayISO } from "./data.js?v=49";
 import { seedJobs, parseProgram, toNc, looksBinaryText } from "./gcode.js?v=50";
 
 const BAK = `${STORAGE_KEY}-bak`;

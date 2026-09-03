@@ -327,6 +327,30 @@ main { padding: 28px 32px 48px; overflow: auto; background: #f6f6f6; }
   word-break: break-all;
 }
 .cam-row-main span { color: var(--mute); font-size: 13px; white-space: nowrap; }
+a.rec-folder { color: inherit; }
+a.rec-folder:hover { background: #fafafa; }
+a.rec-folder .cam-row-main {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+a.rec-folder .cam-row-main span {
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.rec-pack .cam-list { padding-bottom: 4px; }
+.rec-pack .cam-row:last-child { border-bottom: 0; }
+.rec-fold { font-weight: 700; }
+.rec-fold:hover { color: var(--red); }
+.rec-st { font-weight: 700; font-size: 12px; }
+.rec-st.ok { color: #2f6f4e; }
+.rec-st.warn { color: #b7791f; }
+.rec-st.bad { color: var(--red); }
+.rec-table td { vertical-align: middle; }
+[data-rec][hidden] { display: none !important; }
 
 .date-list {
   display: flex;

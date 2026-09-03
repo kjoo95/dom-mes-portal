@@ -3,13 +3,13 @@ import {
   CUSTOMERS, MILL_SHOPS, MACHINES, FIVE_S_SHOP, FIVE_S_LAB, QA_MEASURE_ITEMS,
   EQ_ITEMS, EQ_MARKS,
   fieldsFor, flattenChecks, badgeClass, todayISO,
-} from "./data.js?v=48";
-import { loadState, saveState, uid } from "./store.js?v=54";
+} from "./data.js?v=49";
+import { loadState, saveState, uid } from "./store.js?v=55";
 import { saveBlob, loadBlob, readAsDataUrl, saveDirHandle, loadDirHandle, removeBlob } from "./files.js?v=39";
 import { parseProgram, decodeCamFile, mayBeCamFile } from "./gcode.js?v=51";
 import { boot, showRecover } from "./safety.js?v=39";
 import { chatView, bindChat } from "./comm.js?v=51";
-import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=54";
+import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=55";
 
 const WHOIS_MAIL = "https://email.whois.co.kr/v2/";
 
@@ -310,6 +310,7 @@ function recCount(mod) {
   if (mod.type === "five-s") return Object.values(state.fiveS.dates || {}).filter((p) => p?.shop && Object.keys(p.shop).length).length;
   if (mod.type === "lab-5s") return Object.values(state.fiveS.dates || {}).filter((p) => p?.lab && Object.keys(p.lab).some((k) => k.startsWith("l"))).length;
   if (mod.type === "mastercam") return (state.cam.files || []).length;
+  if (mod.type === "inbound") return (state.records[mod.id] || []).filter(inboundUsed).length;
   if (mod.type === "chat") return (state.chat?.messages || []).length;
   if (mod.type === "mail") return (state.mail?.drafts || []).length;
   return (state.records[mod.id] || []).length;
@@ -323,7 +324,7 @@ function sideFolders(active) {
   return state.modules.filter((m) => !isCommMod(m)).map((m) => {
     const open = active === m.id ? "open" : "";
     const lines = m.type === "records"
-      ? `<a href="#/records">${ht("기록 관리 열기")}</a>`
+      ? `<a href="#/records">${ht("기록 목록")}</a>`
       : m.type === "mastercam"
         ? `<a href="#/mastercam">${ht("업체 목록")}</a>`
         : `<a href="#/${m.id}">${ht(isMonthFolder(m) ? "월 목록" : "날짜 목록")}</a>`;
@@ -347,8 +348,9 @@ function bindShell() {
       });
       if (willOpen) box.classList.add("open");
       else box.classList.remove("open");
-      if (b.dataset.fold === "mastercam" && location.hash !== "#/mastercam") {
-        location.hash = "#/mastercam";
+      if ((b.dataset.fold === "mastercam" && location.hash !== "#/mastercam")
+        || (b.dataset.fold === "records" && !location.hash.startsWith("#/records"))) {
+        location.hash = b.dataset.fold === "mastercam" ? "#/mastercam" : "#/records";
       }
     };
   });
@@ -382,7 +384,7 @@ function shell(session, active, inner, printMode = false) {
           ${link("home", "운영 폴더")}
           ${link("manage", "수정·삭제")}
           ${isAdmin(session) ? `<a class="${"members" === active ? "on" : ""}" href="#/members">${ht("가입 승인")}${wait ? ` (${wait})` : ""}</a>` : ""}
-          <a href="./cam-lab.html?v=35">${ht("가공 프로그램")}</a>
+          <a href="./cam-lab.html?v=36">${ht("가공 프로그램")}</a>
         </div>
         <div class="side-block comm">
           <p class="side-label">${ht("소통")}</p>
@@ -563,39 +565,186 @@ function bindMembers() {
   });
 }
 
-function recordsView() {
-  const mods = recordMods();
-  const mod = mods.find((m) => m.id === manageId) || mods[0];
-  if (!mod) {
-    return `<div class="head"><div><h1>${ht("기록 관리")}</h1><p>${ht("수정할 폴더가 없습니다.")}</p></div></div>`;
+function isRecordListMod(mod) {
+  return isSheetMod(mod);
+}
+
+function recRowsOf(mod) {
+  const list = state.records[mod.id] || [];
+  if (mod.type === "inbound") return list.filter(inboundUsed);
+  return list.filter(Boolean);
+}
+
+function recTitle(row, type) {
+  if (type === "inbound") return [row.supplier, row.item, row.size].filter(Boolean).join(" · ");
+  if (type === "process") return [row.partNo, row.partName, row.line].filter(Boolean).join(" · ");
+  if (type === "delivery") return [row.customer, row.partNo, row.partName].filter(Boolean).join(" · ");
+  if (type === "quality") return [row.partNo, row.partName, row.customer].filter(Boolean).join(" · ");
+  if (type === "defect") return [row.partNo, row.partName, row.type].filter(Boolean).join(" · ");
+  if (type === "inventory") return [row.kind, row.item, row.lot].filter(Boolean).join(" · ");
+  return [row.item, row.partName, row.customer, row.owner].filter(Boolean).join(" · ") || row.id;
+}
+
+function recOpenHash(mod, row) {
+  const d = recDate(row, mod.type);
+  if (mod.type === "inbound") {
+    const ym = monthKey(d) || row.month || "";
+    return ym ? `#/${mod.id}/${ym}` : `#/${mod.id}`;
   }
-  const rows = (state.records[mod.id] || []).map((r) => `
-    <tr>
-      <td><button class="btn sm" data-edit="${r.id}" type="button">${ht("수정")}</button>
-          <button class="btn sm" data-del="${r.id}" type="button">${ht("삭제")}</button></td>
-      <td>${h(recDate(r, mod.type))}</td>
-      <td>${h(r.item || r.partName || r.customer || r.id)}</td>
-      <td>${h(r.status)}</td>
+  if (d && row.id) return `#/${mod.id}/${d}/${row.id}`;
+  if (d) return `#/${mod.id}/${d}`;
+  return `#/${mod.id}`;
+}
+
+function recHay(mod, row) {
+  return `${t(mod.title)} ${recDate(row, mod.type)} ${recTitle(row, mod.type)} ${row.status || ""} ${row.partNo || ""} ${row.lot || ""} ${row.supplier || ""} ${row.item || ""} ${row.customer || ""}`.toLowerCase();
+}
+
+function recStatus(row) {
+  const s = row.status || "";
+  if (!s) return "—";
+  return `<span class="rec-st ${badgeClass(s)}">${h(s)}</span>`;
+}
+
+function recAllEntries() {
+  return recordMods().filter(isRecordListMod).flatMap((mod) => recRowsOf(mod).map((row) => ({ mod, row })));
+}
+
+function recFolderHref(mod) {
+  return isRecordListMod(mod) ? `#/records/${mod.id}` : `#/${mod.id}`;
+}
+
+function recFolderGroups() {
+  return homeGroups().map((g) => ({
+    title: g.title,
+    mods: g.mods.filter((m) => m.type !== "records"),
+  })).filter((g) => g.mods.length);
+}
+
+function recCell(mod, row, field) {
+  if (field.key === "progress") return `${processProgress(row.planQty, row.doneQty)}%`;
+  if (field.type === "date" || field.key === "date" || field.key === "workDate" || field.key === "startDate") {
+    return camDay(row[field.key] || recDate(row, mod.type));
+  }
+  const v = row[field.key];
+  if (v === 0 || v === "0") return "0";
+  return v ? String(v) : "—";
+}
+
+function recAct(mod, row) {
+  return `<td class="act">
+    <a class="btn sm" href="${h(recOpenHash(mod, row))}">${ht("열기")}</a>
+    <button class="btn sm" data-del="${h(row.id)}" data-mod="${h(mod.id)}" type="button">${ht("삭제")}</button>
+  </td>`;
+}
+
+function recordsView(folderId = "") {
+  const mods = recordMods().filter(isRecordListMod);
+  const picked = mods.find((m) => m.id === folderId);
+  if (picked) return recordsFolderView(picked);
+  const groups = recFolderGroups();
+  const entries = recAllEntries().sort((a, b) => {
+    const da = recDate(a.row, a.mod.type);
+    const db = recDate(b.row, b.mod.type);
+    return String(db).localeCompare(String(da)) || String(a.mod.title).localeCompare(String(b.mod.title));
+  });
+  const recent = entries.map(({ mod, row }) => `<tr data-rec="${h(recHay(mod, row))}">
+      ${recAct(mod, row)}
+      <td><a class="rec-fold" href="#/records/${mod.id}">${h(t(mod.title))}</a></td>
+      <td>${h(camDay(recDate(row, mod.type)))}</td>
+      <td>${h(recTitle(row, mod.type) || "—")}</td>
+      <td>${recStatus(row)}</td>
     </tr>`).join("");
   return `
-    <div class="head"><div><h1>${ht("기록 관리")}</h1><p>${ht("폴더를 고른 뒤 기록을 수정하거나 삭제합니다.")}</p></div></div>
-    <section class="panel">
-      <div class="bar"><b>${ht("폴더")}</b>
-        <select id="pick">${mods.map((m) => `<option value="${m.id}" ${m.id === mod.id ? "selected" : ""}>${h(t(m.title))}</option>`).join("")}</select>
+    <div class="page-head">
+      <div>
+        <h1>${ht("기록 관리")}</h1>
+        <p>${ht("모든 폴더의 기록을 한곳에서 찾아 고칩니다.")}</p>
       </div>
-      <table class="rows"><thead><tr><th></th><th>${ht("날짜")}</th><th>${ht("항목")}</th><th>${ht("상태")}</th></tr></thead>
-      <tbody>${rows || `<tr><td colspan="4">${ht("이 폴더에 기록이 없습니다.")}</td></tr>`}</tbody></table>
+      <input id="q" type="search" placeholder="${ht("검색")}" autocomplete="off" />
+    </div>
+    ${groups.map((g) => `<section class="panel rec-pack" data-band>
+      <div class="bar compact-bar"><b>${ht(g.title)}</b></div>
+      <div class="cam-list">${g.mods.map((m) => {
+        const n = recCount(m);
+        return `<a class="cam-row rec-folder" href="${h(recFolderHref(m))}" data-rec="${h(`${t(m.title)} ${t(m.desc)}`.toLowerCase())}">
+          <span class="cam-row-main"><b>${h(t(m.title))}</b><span>${h(t(m.desc))}</span></span>
+          <span>${ht("{n}건", { n })}</span>
+        </a>`;
+      }).join("")}</div>
+    </section>`).join("")}
+    <section class="panel rec-pack" data-band>
+      <div class="bar compact-bar"><b>${ht("전체 기록")}</b><span class="mute">${ht("{n}건", { n: entries.length })}</span></div>
+      <div class="scroll"><table class="rows rec-table"><thead><tr>
+        <th></th><th>${ht("폴더")}</th><th>${ht("날짜")}</th><th>${ht("내용")}</th><th>${ht("상태")}</th>
+      </tr></thead>
+      <tbody>${recent || `<tr><td colspan="5">${ht("아직 모아 둔 기록이 없습니다.")}</td></tr>`}</tbody></table></div>
     </section>`;
 }
 
-function bindRecords(mod) {
-  const pick = document.getElementById("pick");
-  if (pick) pick.onchange = (e) => { manageId = e.target.value; render(); };
-  if (mod) bindRows(mod);
+function recordsFolderView(mod) {
+  const fields = fieldsFor(mod.type, true).filter((f) => f.key !== "date" && f.key !== "workDate");
+  const rows = recRowsOf(mod).slice().sort((a, b) => String(recDate(b, mod.type)).localeCompare(String(recDate(a, mod.type))));
+  const body = rows.map((r) => `<tr data-rec="${h(recHay(mod, r))}">
+      ${recAct(mod, r)}
+      <td>${h(camDay(recDate(r, mod.type)))}</td>
+      ${fields.map((f) => `<td>${h(recCell(mod, r, f))}</td>`).join("")}
+    </tr>`).join("");
+  const cols = fields.length + 2;
+  return `
+    <div class="page-head">
+      <div>
+        <h1>${h(t(mod.title))}</h1>
+        <p>${ht("이 폴더에 모인 기록입니다. 열기를 누르면 원래 표로 갑니다.")}</p>
+      </div>
+      <input id="q" type="search" placeholder="${ht("검색")}" autocomplete="off" />
+    </div>
+    <section class="panel rec-pack">
+      <div class="bar compact-bar">
+        <a class="btn ghost sm" href="#/records">${ht("기록 목록")}</a>
+        <a class="btn sm" href="#/${mod.id}">${ht("폴더 열기")}</a>
+        <span class="mute">${ht("{n}건", { n: rows.length })}</span>
+      </div>
+      <div class="scroll"><table class="rows rec-table"><thead><tr>
+        <th></th><th>${ht("날짜")}</th>${fields.map((f) => `<th>${h(t(f.label))}</th>`).join("")}
+      </tr></thead>
+      <tbody>${body || `<tr><td colspan="${cols}">${ht("이 폴더에 기록이 없습니다.")}</td></tr>`}</tbody></table></div>
+    </section>`;
+}
+
+function bindRecords(folderId) {
+  if (folderId) manageId = folderId;
+  const q = document.getElementById("q");
+  const filter = () => {
+    const needle = (q?.value || "").trim().toLowerCase();
+    document.querySelectorAll("[data-rec]").forEach((el) => {
+      const hay = `${el.getAttribute("data-rec") || ""} ${el.textContent || ""}`.toLowerCase();
+      el.hidden = Boolean(needle) && !hay.includes(needle);
+    });
+    document.querySelectorAll("[data-band]").forEach((band) => {
+      const items = [...band.querySelectorAll("[data-rec]")];
+      band.hidden = items.length > 0 && items.every((el) => el.hidden);
+    });
+  };
+  q?.addEventListener("input", filter);
+  q?.addEventListener("keyup", filter);
+  q?.addEventListener("compositionend", filter);
+  root.querySelectorAll("[data-del]").forEach((b) => {
+    b.onclick = () => {
+      const id = b.dataset.mod;
+      const rowId = b.dataset.del;
+      const row = (state.records[id] || []).find((x) => x.id === rowId);
+      const label = row ? (recTitle(row, state.modules.find((m) => m.id === id)?.type) || rowId) : rowId;
+      if (!confirm(`‘${label}’을 지울까요?`)) return;
+      state.records[id] = (state.records[id] || []).filter((x) => x.id !== rowId);
+      persist();
+      render();
+    };
+  });
 }
 
 function moduleView(mod, date, extra) {
-  if (mod.type === "records") return recordsView();
+  if (mod.type === "records") return recordsView(date);
   if (mod.type === "chat") return chatView(state, h, date);
   if (mod.type === "mastercam") {
     applyCamRoute(date);
@@ -1848,7 +1997,7 @@ function camView(mod) {
   </tr>`).join("");
   const path = atRoot ? "업체를 고른 뒤 프로그램을 넣습니다." : `${h(folder.name)} · 프로그램은 넣은 날이 자동으로 적힙니다.`;
   return `<div class="head"><div><h1>${h(mod.title)}</h1><p>${path}</p></div>
-    <a class="btn red sm" href="./cam-lab.html?v=35">가공 프로그램</a></div>
+    <a class="btn red sm" href="./cam-lab.html?v=36">가공 프로그램</a></div>
     <section class="panel">
       <div class="bar">${folder.parent ? `<button class="btn sm" id="up" type="button">업체 목록</button>` : ""}
         ${atRoot ? `<button class="btn sm" id="nf" type="button">업체 추가</button>` : `<button class="btn sm" id="del-vendor" type="button">이 업체 삭제</button>`}
@@ -1887,7 +2036,7 @@ function camView(mod) {
 
 function bindModule(mod, date, extra) {
   if (mod.type === "records") {
-    bindRecords(recordMods().find((m) => m.id === manageId) || recordMods()[0]);
+    bindRecords(date);
     return;
   }
   if (mod.type === "chat") {
