@@ -567,7 +567,7 @@ export function parseProgram(name, text) {
   const pushPt = (pt) => {
     const tool = pt.t || t || 1;
     const spec = toolSpec(tool, toolLib);
-    const next = { ...pt, t: tool, f: pt.f ?? f, s: pt.s ?? s, feedMm: (pt.f ?? f || 0) * toMm, d: spec.d };
+    const next = { ...pt, t: tool, f: pt.f ?? f, s: pt.s ?? s, feedMm: ((pt.f ?? f) || 0) * toMm, d: spec.d };
     const prev = points[points.length - 1];
     const dist = prev ? Math.hypot(next.x - prev.x, next.y - prev.y, (next.z || 0) - (prev.z || 0)) : 0;
     if (next.rapid) rapid += dist; else cut += dist;
