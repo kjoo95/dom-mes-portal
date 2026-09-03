@@ -1,3 +1,6 @@
 .DS_Store
 data/chat.json
 data/users.json
+data/*.xls
+data/*.html
+data/*.files/
