@@ -603,6 +603,10 @@ table.checks .chk { width: 72px; text-align: center; }
 }
 .a4-wrap { display: flex; justify-content: center; width: 100%; }
 .a4-sheet {
+  --sheet-red: #c41e3a;
+  --sheet-head: #f4f4f2;
+  --sheet-line: #222;
+  --sheet-fill: #fffef8;
   width: 210mm;
   height: 297mm;
   min-height: 297mm;
@@ -616,6 +620,10 @@ table.checks .chk { width: 72px; text-align: center; }
   flex-direction: column;
   overflow: hidden;
   font-size: 13px;
+}
+.a4-sheet th {
+  background: var(--sheet-head);
+  color: #111;
 }
 .a4-head {
   position: relative;
@@ -650,12 +658,12 @@ table.checks .chk { width: 72px; text-align: center; }
   justify-content: space-between;
   align-items: flex-start;
   gap: 8px;
-  border-bottom: 2px solid #111;
+  border-bottom: 2px solid var(--sheet-red);
   padding-bottom: 6px;
   margin-bottom: 6px;
   min-height: 24mm;
 }
-.a4-head-corp b { color: #111; letter-spacing: 0.08em; }
+.a4-head-corp b { color: var(--sheet-red); letter-spacing: 0.08em; }
 .a4-head-corp h1 {
   position: absolute;
   left: 0;
@@ -690,7 +698,7 @@ table.checks .chk { width: 72px; text-align: center; }
   padding: 0;
 }
 .a4-stamp thead th {
-  background: #173a63;
+  background: var(--sheet-red);
   color: #fff;
   font-weight: 700;
   height: 7mm;
@@ -699,8 +707,8 @@ table.checks .chk { width: 72px; text-align: center; }
 }
 .a4-stamp .stamp-side {
   width: 8mm;
-  background: #e8eef5;
-  color: #173a63;
+  background: var(--sheet-head);
+  color: var(--sheet-red);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.18em;
@@ -736,7 +744,7 @@ table.checks .chk { width: 72px; text-align: center; }
   padding: 2px 5px;
   height: 7.2mm;
 }
-.process-a4 .a4-meta th { width: 18%; background: #eef2f6; }
+.process-a4 .a4-meta th { width: 18%; background: var(--sheet-head); }
 .a4-process-body {
   flex: 1 1 auto;
   min-height: 0;
@@ -762,8 +770,8 @@ table.checks .chk { width: 72px; text-align: center; }
 .a4-process-photo h2 {
   margin: 0;
   padding: 4px 8px;
-  background: #173a63;
-  color: #fff;
+  background: var(--sheet-head);
+  color: #111;
   font-size: 11px;
   letter-spacing: 0.12em;
   flex: 0 0 auto;
@@ -956,6 +964,9 @@ table.checks .chk { width: 72px; text-align: center; }
   min-height: 12mm;
   flex: 0 0 auto;
   column-gap: 8px;
+  border-bottom: 2px solid var(--sheet-red);
+  padding-bottom: 6px;
+  margin-bottom: 4px;
 }
 .eq-head-left {
   justify-self: start;
@@ -991,7 +1002,7 @@ table.checks .chk { width: 72px; text-align: center; }
   font-size: 11px;
 }
 .eq-stamp th {
-  background: #f4d56a;
+  background: var(--sheet-head);
   width: 14mm;
   height: 5mm;
   padding: 0;
@@ -1008,7 +1019,7 @@ table.checks .chk { width: 72px; text-align: center; }
   font-size: 11px;
 }
 .eq-info th {
-  background: #f4d56a;
+  background: var(--sheet-head);
   width: 18mm;
   white-space: nowrap;
   -webkit-print-color-adjust: exact;
@@ -1016,7 +1027,7 @@ table.checks .chk { width: 72px; text-align: center; }
 }
 .eq-info td { padding: 0; }
 .eq-guide th {
-  background: #f4d56a;
+  background: var(--sheet-head);
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
@@ -1051,7 +1062,7 @@ table.checks .chk { width: 72px; text-align: center; }
   font-size: 11px;
 }
 .eq-grid { table-layout: fixed; font-size: 11px; }
-.eq-grid th { background: #fafafa; font-weight: 700; }
+.eq-grid th { background: var(--sheet-head); font-weight: 700; }
 .eq-grid td.item { text-align: left; padding-left: 4px; }
 .eq-grid td.cyc { width: 18mm; font-size: 10px; }
 .eq-grid th.off, .eq-grid td.off { background: #ececec; }
@@ -1072,8 +1083,8 @@ table.checks .chk { width: 72px; text-align: center; }
 }
 .eq-hist { display: flex; flex-direction: column; min-height: 0; }
 .eq-hist-h {
-  background: #f4d56a;
-  border: 1px solid #111;
+  background: var(--sheet-head);
+  border: 1px solid #222;
   border-bottom: 0;
   padding: 3px 8px;
   font-weight: 700;
@@ -1083,7 +1094,7 @@ table.checks .chk { width: 72px; text-align: center; }
 }
 .eq-hist-h span { font-weight: 400; font-size: 11px; }
 .eq-hist table { flex: 1; }
-.eq-hist th { background: #fafafa; font-size: 11px; }
+.eq-hist th { background: var(--sheet-head); font-size: 11px; }
 .eq-hist td { padding: 0; height: 6.6mm; }
 .eq-legend { margin: 4px 0 2px; font-size: 12px; }
 .eq-foot-fields { display: grid; grid-template-columns: 1fr 2fr; gap: 8px; align-items: center; }
@@ -1098,10 +1109,10 @@ table.checks .chk { width: 72px; text-align: center; }
   margin: 0;
 }
 .eq-machine b {
-  background: #f4d56a;
+  background: var(--sheet-head);
   padding: 3px 8px;
   font-size: 12px;
-  border-bottom: 1px solid #111;
+  border-bottom: 1px solid #222;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
@@ -1138,6 +1149,7 @@ table.checks .chk { width: 72px; text-align: center; }
 .month-scroll { overflow: auto; flex: 1; min-height: 0; }
 .month-grid { width: 100%; height: 100%; border-collapse: collapse; font-size: 11px; }
 .month-grid th, .month-grid td { border: 1px solid #222; padding: 2px 1px; text-align: center; }
+.month-grid th { background: var(--sheet-head); }
 .month-grid td.item { text-align: left; padding-left: 4px; min-width: 32mm; width: 32mm; }
 .month-grid th:first-child { width: 14mm; }
 .month-grid input[type="checkbox"] { width: 13px; height: 13px; }
@@ -1174,7 +1186,20 @@ table.checks .chk { width: 72px; text-align: center; }
   position: relative;
   text-align: center;
   margin: 0 0 6px;
-  min-height: 10mm;
+  min-height: 12mm;
+  border-bottom: 2px solid var(--sheet-red);
+  padding-bottom: 6px;
+}
+.sheet-5s-head::before,
+.clim-head::before {
+  content: "DOM";
+  position: absolute;
+  left: 0;
+  bottom: 6px;
+  color: var(--sheet-red);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.06em;
 }
 .sheet-5s-head h1 {
   margin: 0;
@@ -1198,7 +1223,7 @@ table.checks .chk { width: 72px; text-align: center; }
 }
 .sheet-5s-ym-print { display: none; margin: 0; font-size: 13px; }
 .sheet-5s th.g {
-  background: #c5e4f3;
+  background: var(--sheet-head);
   font-weight: 700;
   width: 13mm;
   -webkit-print-color-adjust: exact;
@@ -1256,10 +1281,10 @@ table.checks .chk { width: 72px; text-align: center; }
 }
 .sheet-5s-note b {
   display: block;
-  background: #c5e4f3;
+  background: var(--sheet-head);
   padding: 3px 8px;
   font-size: 12px;
-  border-bottom: 1px solid #111;
+  border-bottom: 1px solid #222;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
@@ -1293,8 +1318,10 @@ table.checks .chk { width: 72px; text-align: center; }
 .clim-head {
   position: relative;
   text-align: center;
-  min-height: 10mm;
+  min-height: 12mm;
   margin: 0 0 4px;
+  border-bottom: 2px solid var(--sheet-red);
+  padding-bottom: 6px;
 }
 .clim-head h1 {
   margin: 0;
@@ -1330,7 +1357,7 @@ table.checks .chk { width: 72px; text-align: center; }
   padding: 0;
   height: 5.4mm;
 }
-.clim-grid thead th { background: #fafafa; font-weight: 700; }
+.clim-grid thead th { background: var(--sheet-head); font-weight: 700; }
 .clim-grid th.sun, .clim-grid td.sun { color: #c41e3a; }
 .clim-grid th.sat, .clim-grid td.sat { color: #1d4ed8; }
 .clim-grid td.sun input, .clim-grid td.sat input { color: inherit; }
@@ -1386,14 +1413,14 @@ table.checks .chk { width: 72px; text-align: center; }
   vertical-align: top;
 }
 .clim-cond thead th, .clim-sign thead th {
-  background: #f3f3f3;
+  background: var(--sheet-head);
   text-align: center;
   font-size: 12px;
 }
 .clim-cond tbody th, .clim-sign tbody th {
   width: 22mm;
   text-align: center;
-  background: #fafafa;
+  background: var(--sheet-head);
   vertical-align: middle;
 }
 .clim-sign td { height: 8mm; vertical-align: middle; }
