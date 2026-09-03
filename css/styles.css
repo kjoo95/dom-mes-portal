@@ -863,6 +863,10 @@ table.checks .chk { width: 72px; text-align: center; }
   font-size: 12px;
 }
 .eq-sheet table { width: 100%; border-collapse: collapse; }
+.eq-sheet table.eq-stamp {
+  width: 28mm;
+  max-width: 28mm;
+}
 .eq-sheet th, .eq-sheet td { border: 1px solid #111; padding: 2px 3px; }
 .eq-sheet input, .eq-sheet select, .eq-sheet textarea {
   background: transparent;
