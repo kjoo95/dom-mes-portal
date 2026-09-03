@@ -1,10 +1,9 @@
 const SESSION_KEY = "dom-session";
-const LOCK_KEY = "dom-login-lock";
 const USERS_KEY = "dom-users-v1";
 const DOMAIN = "domeng.co.kr";
 const SESSION_MS = 12 * 60 * 60 * 1000;
-const FAIL_LIMIT = 5;
-const LOCK_MS = 10 * 60 * 1000;
+
+try { localStorage.removeItem("dom-login-lock"); } catch { /* unlock leftover */ }
 
 const HARRY = {
   id: "thswlsvy1021",
@@ -60,18 +59,6 @@ export function isInternalNetwork() {
   if (/^10\.\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(host)) return true;
   if (/^172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3}$/.test(host)) return true;
   return false;
-}
-
-function lockInfo() {
-  try {
-    return JSON.parse(localStorage.getItem(LOCK_KEY) || "null") || { fails: 0, until: 0 };
-  } catch {
-    return { fails: 0, until: 0 };
-  }
-}
-
-function setLock(info) {
-  localStorage.setItem(LOCK_KEY, JSON.stringify(info));
 }
 
 async function digest(text) {
@@ -131,10 +118,7 @@ function ensureSeed() {
   const rest = list.filter((u) => !isSeedAdmin(u));
   const prev = list.find((u) => isSeedAdmin(u));
   const next = [{ ...HARRY, created: prev?.created || 0, updated: Date.now() }, ...rest].map(normalizeUser);
-  if (JSON.stringify(list) !== JSON.stringify(next)) {
-    writeUsers(next);
-    localStorage.removeItem(LOCK_KEY);
-  }
+  if (JSON.stringify(list) !== JSON.stringify(next)) writeUsers(next);
   return next;
 }
 
@@ -247,16 +231,10 @@ export async function login(email, password) {
   if (!isInternalNetwork()) {
     return { ok: false, message: "내부 네트워크에서만 로그인할 수 있습니다." };
   }
-  const lock = lockInfo();
-  if (lock.until > Date.now()) {
-    const min = Math.ceil((lock.until - Date.now()) / 60000);
-    return { ok: false, message: `로그인이 잠시 잠겼습니다. ${min}분 뒤에 다시 시도하세요.` };
-  }
   await pullUsers();
   const user = findUser(email);
   const ok = user && (await hashPass(foldText(password), user.salt)) === user.hash;
   if (ok) {
-    setLock({ fails: 0, until: 0 });
     const status = userStatus(user);
     if (status === "pending") {
       return { ok: false, message: "가입 신청이 아직 승인되지 않았습니다. 관리자 승인 후 로그인하세요." };
@@ -267,10 +245,6 @@ export async function login(email, password) {
     startSession(user);
     return { ok: true };
   }
-  const fails = (lock.fails || 0) + 1;
-  const until = fails >= FAIL_LIMIT ? Date.now() + LOCK_MS : 0;
-  setLock({ fails, until });
-  if (until) return { ok: false, message: "로그인 실패가 반복되어 10분간 잠겼습니다." };
   return { ok: false, message: "아이디 또는 비밀번호가 올바르지 않습니다." };
 }
 
