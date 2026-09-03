@@ -1,15 +1,4 @@
-function accLen(points) {
-  const arr = [0];
-  for (let i = 1; i < points.length; i += 1) {
-    const a = points[i - 1], b = points[i];
-    arr.push(arr[i - 1] + Math.hypot(b.x - a.x, b.y - a.y, (b.z || 0) - (a.z || 0)));
-  }
-  return arr;
-}
-
-function toolR(t) {
-  return 2.6 + ((Number(t) || 1) % 4) * 0.85;
-}
+import { toolR, toolColor, accTime } from "./gcode.js?v=43";
 
 function bboxOf(job) {
   const b = job?.bbox;
@@ -49,7 +38,7 @@ export function createMill(job) {
   const height = new Float32Array(cols * rows);
   const base = new Float32Array(cols * rows);
   let pts = pts0;
-  let acc = accLen(pts);
+  let acc = accTime(pts);
   let total = acc[acc.length - 1] || 1;
   let lastT = 0;
 
@@ -107,7 +96,7 @@ export function createMill(job) {
 
   function loadPath(nextJob) {
     pts = nextJob?.points || [];
-    acc = accLen(pts);
+    acc = accTime(pts);
     total = acc[acc.length - 1] || 1;
     lastT = 0;
   }
@@ -139,11 +128,11 @@ export function createMill(job) {
   }
 
   function mix(hex, k) {
-    const n = parseInt(hex.slice(1), 16);
+    const n = parseInt(String(hex).replace("#", ""), 16);
     const r = Math.round(((n >> 16) & 255) * k);
     const g = Math.round(((n >> 8) & 255) * k);
     const b = Math.round((n & 255) * k);
-    return `rgb(${r},${g},${b})`;
+    return `#${[r, g, b].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
   }
 
   function shade(hex, a, b, c) {
@@ -195,12 +184,14 @@ export function createMill(job) {
 
   function drawTool(ctx, pr, tool, push, paintFaces) {
     const tipZ = tool.z ?? topZ;
-    const cutR = Math.max(toolR(tool.t), Math.min(spanX, spanY) * 0.014, 3.2);
-    const neckR = cutR * 0.62;
-    const shankR = cutR * 0.78;
-    const holdR = cutR * 2.15;
-    const nutR = cutR * 2.55;
-    const fluteH = Math.max(18, (topZ - minZ) * 0.42);
+    const cutR = Math.max(toolR(tool.t), 0.9);
+    const body = toolColor(tool.t);
+    const bodyDk = mix(body, 0.72);
+    const neckR = Math.max(cutR * 0.55, 0.7);
+    const shankR = Math.max(cutR * 0.72, 1.1);
+    const holdR = Math.max(cutR * 1.85, 4.2);
+    const nutR = Math.max(cutR * 2.2, 5);
+    const fluteH = Math.max(12, cutR * 4.2, (topZ - minZ) * 0.32);
     const neckH = 8;
     const shankH = Math.max(22, (topZ - minZ) * 0.5);
     const holdH = 14;
@@ -258,20 +249,20 @@ export function createMill(job) {
     const stubLo = ring(z6, shankR * 0.7);
     const stubHi = ring(z7, shankR * 0.55);
 
-    tube(tip, fluteLo, "#7a1a28", "#c41e3a");
-    tube(fluteLo, fluteHi, "#c41e3a", "#9a1830");
+    tube(tip, fluteLo, mix(body, 0.55), body);
+    tube(fluteLo, fluteHi, body, bodyDk);
     tube(fluteHi, neckLo, "#6a6e74", "#5a5e64");
     tube(neckLo, neckHi, "#8a9098", "#7a8088");
     tube(neckHi, shankLo, "#9aa0a8", "#8a9098");
     tube(shankLo, shankHi, "#c8ced4", "#b4bac0");
     tube(shankHi, holdLo, "#4a4e54", "#3a3e44");
     tube(holdLo, holdHi, "#2a2e34", "#3a3e44");
-    tube(holdHi, nutLo, "#c41e3a", "#a0182c");
+    tube(holdHi, nutLo, body, mix(body, 0.8));
     tube(nutLo, nutHi, "#d8dee4", "#c4cad0");
     tube(nutHi, stubLo, "#6a7078", "#5a6068");
     tube(stubLo, stubHi, "#3a3e44", "#2a2e34");
     cap(stubHi, z7, shankR * 0.55, "#e8ecee", true);
-    cap(tip, z0, cutR * 0.15, "#5a1018", false);
+    cap(tip, z0, cutR * 0.15, mix(body, 0.4), false);
 
     paintFaces();
 

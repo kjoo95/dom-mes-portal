@@ -53,6 +53,37 @@ M30
 %`,
 };
 
+export const TOOL_TABLE = {
+  1: { d: 10, name: "Ø10 엔드밀" },
+  2: { d: 6, name: "Ø6 엔드밀" },
+  3: { d: 4, name: "Ø4 엔드밀" },
+  4: { d: 12, name: "Ø12 엔드밀" },
+  5: { d: 8, name: "Ø8 엔드밀" },
+  6: { d: 3, name: "Ø3 엔드밀" },
+  7: { d: 16, name: "Ø16 페이스" },
+  8: { d: 2, name: "Ø2 볼엔드밀" },
+  9: { d: 20, name: "Ø20 페이스" },
+  10: { d: 1.5, name: "Ø1.5 드릴" },
+};
+
+const TOOL_COLORS = ["#c41e3a", "#1d4ed8", "#15803d", "#b45309", "#7c3aed", "#0f766e", "#be123c", "#1e3a8a"];
+
+export function toolSpec(t) {
+  const n = Math.max(1, Number(t) || 1);
+  const row = TOOL_TABLE[n];
+  if (row) return { t: n, d: row.d, r: row.d / 2, name: row.name, color: TOOL_COLORS[(n - 1) % TOOL_COLORS.length] };
+  const d = 3 + ((n * 1.7) % 9);
+  return { t: n, d, r: d / 2, name: `Ø${d.toFixed(1)} T${n}`, color: TOOL_COLORS[(n - 1) % TOOL_COLORS.length] };
+}
+
+export function toolR(t) {
+  return toolSpec(t).r;
+}
+
+export function toolColor(t) {
+  return toolSpec(t).color;
+}
+
 function num(map, key, fallback) {
   return map[key] !== undefined ? map[key] : fallback;
 }
@@ -65,6 +96,83 @@ function wordMap(line) {
   return map;
 }
 
+function motionG(line, current) {
+  const codes = [];
+  const re = /G\s*(0*\d+)/gi;
+  let m;
+  while ((m = re.exec(line))) codes.push(Number(m[1]));
+  const move = [...codes].reverse().find((n) => n === 0 || n === 1 || n === 2 || n === 3);
+  return move === undefined ? current : move;
+}
+
+function arcSteps(x, y, z, nx, ny, nz, i, j, clockwise) {
+  const cx = x + (i || 0);
+  const cy = y + (j || 0);
+  let a0 = Math.atan2(y - cy, x - cx);
+  let a1 = Math.atan2(ny - cy, nx - cx);
+  let delta = a1 - a0;
+  if (clockwise) {
+    while (delta >= -1e-6) delta -= Math.PI * 2;
+    if (delta > -1e-6) delta = -Math.PI * 2;
+  } else {
+    while (delta <= 1e-6) delta += Math.PI * 2;
+    if (delta < 1e-6) delta = Math.PI * 2;
+  }
+  const radius = Math.max(Math.hypot(x - cx, y - cy), 0.2);
+  const n = Math.max(6, Math.ceil((Math.abs(delta) * radius) / 0.7));
+  const out = [];
+  for (let k = 1; k <= n; k += 1) {
+    const u = k / n;
+    const a = a0 + delta * u;
+    out.push({
+      x: cx + Math.cos(a) * radius,
+      y: cy + Math.sin(a) * radius,
+      z: z + (nz - z) * u,
+    });
+  }
+  return out;
+}
+
+export function segmentMin(a, b) {
+  const dist = Math.hypot(b.x - a.x, b.y - a.y, (b.z || 0) - (a.z || 0));
+  const dwell = b.change || ((b.t || 1) !== (a.t || 1)) ? 0.07 : 0;
+  if (b.change && dist < 1e-6) return dwell;
+  if (b.rapid) return dwell + dist / 4000;
+  return dwell + dist / Math.max(b.f || a.f || 200, 1);
+}
+
+export function accTime(points) {
+  const arr = [0];
+  for (let i = 1; i < points.length; i += 1) {
+    arr.push(arr[i - 1] + segmentMin(points[i - 1], points[i]));
+  }
+  return arr;
+}
+
+export function toolOps(points) {
+  const acc = accTime(points);
+  const total = acc[acc.length - 1] || 1;
+  const ops = [];
+  (points || []).forEach((p, i) => {
+    const tool = p.t || 1;
+    const last = ops[ops.length - 1];
+    if (!last || last.tool !== tool) {
+      ops.push({
+        tool,
+        i0: i,
+        i1: i,
+        t0: acc[i] / total,
+        t1: acc[i] / total,
+        spec: toolSpec(tool),
+      });
+    } else {
+      last.i1 = i;
+      last.t1 = acc[i] / total;
+    }
+  });
+  return ops;
+}
+
 export function parseProgram(name, text) {
   const lines = String(text || "").split(/\r?\n/);
   const gHits = lines.filter((l) => /\bG0*[0123]\b/i.test(l) || /\bX-?\d/.test(l)).length;
@@ -75,23 +183,42 @@ export function parseProgram(name, text) {
   let cut = 0;
   let rapid = 0;
   const tools = new Set();
+  const pushPt = (pt) => {
+    const prev = points[points.length - 1];
+    const dist = prev ? Math.hypot(pt.x - prev.x, pt.y - prev.y, (pt.z || 0) - (prev.z || 0)) : 0;
+    if (pt.rapid) rapid += dist; else cut += dist;
+    points.push(pt);
+    if (!pt.rapid && dist > 0.01) ops.push({ tool: pt.t, feed: pt.f, spindle: pt.s, length: Number(dist.toFixed(2)), kind: "cut" });
+  };
   lines.forEach((raw) => {
     const line = raw.replace(/\(.*?\)/g, "").replace(/;.*$/, "").trim();
     if (!line || line === "%") return;
     const w = wordMap(line);
-    if (w.T !== undefined) { t = w.T; tools.add(t); }
+    g = motionG(line, g);
     if (w.S !== undefined) s = w.S;
     if (w.F !== undefined) f = w.F;
-    if (w.G !== undefined) g = w.G;
+    if (w.T !== undefined) {
+      const nextT = w.T;
+      if (nextT !== t) {
+        t = nextT;
+        tools.add(t);
+        if (points.length) {
+          const last = points[points.length - 1];
+          pushPt({ x: last.x, y: last.y, z: last.z, rapid: true, change: true, f, s, t });
+        }
+      } else tools.add(t);
+    }
+    if (w.X === undefined && w.Y === undefined && w.Z === undefined) return;
     const nx = num(w, "X", x);
     const ny = num(w, "Y", y);
     const nz = num(w, "Z", z);
-    if (w.X === undefined && w.Y === undefined && w.Z === undefined) return;
-    const dist = Math.hypot(nx - x, ny - y, nz - z);
     const rapidMove = g === 0;
-    if (rapidMove) rapid += dist; else cut += dist;
-    points.push({ x: nx, y: ny, z: nz, rapid: rapidMove, f, s, t });
-    if (!rapidMove && dist > 0.01) ops.push({ tool: t, feed: f, spindle: s, length: Number(dist.toFixed(2)), kind: "cut" });
+    if (g === 2 || g === 3) {
+      const steps = arcSteps(x, y, z, nx, ny, nz, w.I || 0, w.J || 0, g === 2);
+      steps.forEach((p) => pushPt({ ...p, rapid: false, f, s, t }));
+    } else {
+      pushPt({ x: nx, y: ny, z: nz, rapid: rapidMove, f, s, t });
+    }
     x = nx; y = ny; z = nz;
   });
   return finishJob(name, points, ops, [...tools], cut, rapid, true);
@@ -130,15 +257,17 @@ function syntheticJob(name) {
 }
 
 function finishJob(name, points, ops, tools, cut, rapid, fromNc) {
-  const feed = ops[0]?.feed || 200;
-  const timeMin = cut / Math.max(feed, 1) + rapid / 4000;
+  const acc = accTime(points);
+  const timeMin = acc[acc.length - 1] || 0;
   const part = name.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ");
+  const seq = toolOps(points);
   return {
     name,
     partName: part,
     fromNc,
-    tools,
+    tools: tools.length ? tools : seq.map((o) => o.tool),
     ops,
+    seq,
     points,
     cutMm: Number(cut.toFixed(1)),
     rapidMm: Number(rapid.toFixed(1)),
@@ -199,27 +328,30 @@ function cutRuns(points) {
 export function optimizeJob(job, stats = []) {
   const runs = cutRuns(job.points || []);
   if (!runs.length) return job;
-  const preferred = stats[0]?.tool;
-  const ordered = [...runs].sort((a, b) => {
-    const ta = a[0]?.t ?? 99, tb = b[0]?.t ?? 99;
-    if (preferred !== undefined && ta === preferred && tb !== preferred) return -1;
-    if (preferred !== undefined && tb === preferred && ta !== preferred) return 1;
-    return ta - tb || a[0].z - b[0].z;
+  const groups = [];
+  runs.forEach((run) => {
+    const tool = run[0]?.t ?? 1;
+    const last = groups[groups.length - 1];
+    if (!last || last.tool !== tool) groups.push({ tool, runs: [run] });
+    else last.runs.push(run);
   });
-  const used = new Set();
   const seq = [];
-  let last = { x: 0, y: 0 };
-  while (seq.length < ordered.length) {
-    let best = -1, bestD = Infinity;
-    ordered.forEach((run, i) => {
-      if (used.has(i)) return;
-      const d = dist2(last, run[0]);
-      if (d < bestD) { bestD = d; best = i; }
-    });
-    used.add(best);
-    seq.push(ordered[best]);
-    last = ordered[best][ordered[best].length - 1];
-  }
+  groups.forEach((group) => {
+    const used = new Set();
+    let last = group.runs[0][0];
+    while (used.size < group.runs.length) {
+      let best = -1, bestD = Infinity;
+      group.runs.forEach((run, i) => {
+        if (used.has(i)) return;
+        const d = dist2(last, run[0]);
+        if (d < bestD) { bestD = d; best = i; }
+      });
+      used.add(best);
+      seq.push(group.runs[best]);
+      last = group.runs[best][group.runs[best].length - 1];
+    }
+  });
+  void stats;
   const points = [];
   seq.forEach((run) => {
     const start = run[0];
@@ -234,17 +366,10 @@ export function optimizeJob(job, stats = []) {
     const d = Math.hypot(b.x - a.x, b.y - a.y, b.z - a.z);
     if (b.rapid) rapid += d; else cut += d;
   }
-  return {
-    ...job,
-    name: job.name.replace(/(\.[^.]+)?$/, "") + "-opt.nc",
-    partName: (job.partName || job.name) + " 최적 경로",
-    points,
-    cutMm: Number(cut.toFixed(1)),
-    rapidMm: Number(rapid.toFixed(1)),
-    timeMin: Number((cut / Math.max(job.ops?.[0]?.feed || 200, 1) + rapid / 4000).toFixed(2)),
-    optimized: true,
-    bbox: bbox(points),
-  };
+  const next = finishJob(job.name.replace(/(\.[^.]+)?$/, "") + "-opt.nc", points, job.ops || [], job.tools || [], cut, rapid, true);
+  next.optimized = true;
+  next.partName = `${job.partName || job.name} 최적 경로`;
+  return next;
 }
 
 export function toNc(job) {

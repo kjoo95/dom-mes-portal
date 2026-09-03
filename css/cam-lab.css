@@ -36,7 +36,7 @@
   border-radius: 10px;
   padding: 12px;
 }
-.stat { color: var(--mute); font-size: 13px; }
+.op-on { color: var(--red); font-weight: 700; }
 .times { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 12px 0 4px; }
 .time-box { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
 .time-box span { display: block; color: var(--mute); font-size: 12px; margin-bottom: 4px; }

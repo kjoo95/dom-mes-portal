@@ -1,8 +1,8 @@
 import { getSession, logout, isInternalNetwork } from "./auth.js?v=43";
 import { loadState, saveState, uid } from "./store.js";
-import { collectStats, optimizeJob, toNc, toJson } from "./gcode.js";
+import { collectStats, optimizeJob, toNc, toJson, accTime, toolOps, toolSpec } from "./gcode.js?v=43";
 import { boot } from "./safety.js";
-import { createMill } from "./mill3d.js?v=21";
+import { createMill } from "./mill3d.js?v=22";
 import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=42";
 
 const root = document.getElementById("app");
@@ -13,7 +13,7 @@ let state = loadState();
 let selected = 0;
 let mill = null;
 let opJob = null;
-let stage = 1;
+let opIndex = 0;
 let sim = { playing: false, t: 0, last: 0, raf: 0, speed: 64 };
 const SPEEDS = [1, 4, 16, 32, 64, 120, 300];
 const CAM0 = { yaw: 0.86, pitch: 0.72, scale: 1.45, panX: 0, panY: 12 };
@@ -63,14 +63,18 @@ function render() {
     opJob = job;
   }
   const stats = collectStats(list);
+  const seq = job?.seq || toolOps(job?.points || []);
+  if (opIndex >= seq.length) opIndex = Math.max(0, seq.length - 1);
+  const curOp = seq[opIndex];
   const cycle = job?.timeMin || 0;
   const elapsed = cycle * sim.t;
   const remain = Math.max(0, cycle - elapsed);
-  const allMin = list.reduce((n, j) => n + (Number(j.timeMin) || 0), 0);
   const stock = mill?.stock;
-  const nextLabel = stage === 1 ? "2차 가공" : `${stage + 1}차 추가 가공`;
+  const nextOp = seq[opIndex + 1];
+  const nextLabel = nextOp ? `다음 공구 T${nextOp.tool}` : "마지막 공구";
+  const spec = curOp ? toolSpec(curOp.tool) : null;
   const statLine = job
-    ? `${stage}차 가공 · ${h(job.partName || job.name)} · 소재 ${stock ? `${stock.w}×${stock.d}×${stock.h} mm` : "—"} (프로그램 +5mm)`
+    ? `${h(job.partName || job.name)} · ${seq.map((o, i) => `${i === opIndex ? "▶ " : ""}T${o.tool}`).join(" → ")} · 소재 ${stock ? `${stock.w}×${stock.d}×${stock.h} mm` : "—"}`
     : "마스터캠 폴더에 프로그램을 올리면 여기 쌓입니다.";
   root.innerHTML = `
     <div class="app lab">
@@ -88,6 +92,8 @@ function render() {
           <button class="btn sm" id="del-opt" type="button">최적 경로만 지우기</button>
           <button class="btn sm" id="del-all" type="button">축적 데이터 모두 지우기</button>
         </div>
+        <p class="side-label">프로그램 가공 순서</p>
+        ${seq.map((o, i) => `<p class="mute pad ${i === opIndex ? "op-on" : ""}">T${o.tool} ${h(o.spec?.name || "")}${i === opIndex ? " · 진행 중" : ""}</p>`).join("") || `<p class="mute pad">없음</p>`}
         <p class="side-label">공구 통계</p>
         ${stats.map((s) => `<p class="mute pad">T${s.tool} · ${Math.round(s.length)}mm · F${s.feed} · S${s.spindle}</p>`).join("")}
       </aside>
@@ -99,14 +105,14 @@ function render() {
             <div class="time-box"><span>예상 가공 시간</span><b id="t-cycle">${formatMin(cycle)}</b></div>
             <div class="time-box"><span>경과</span><b id="t-elapsed">${formatMin(elapsed)}</b></div>
             <div class="time-box"><span>남은 시간</span><b id="t-remain">${formatMin(remain)}</b></div>
-            <div class="time-box"><span>가공 차수</span><b>${stage}차</b></div>
+            <div class="time-box"><span>현재 공구</span><b>${spec ? `T${spec.t} ${spec.name}` : "—"}</b></div>
           </div>
           <div class="lab-tools">
             <button class="btn red" id="opt" type="button">최적 경로 생성</button>
             <button class="btn red" id="next-op" type="button">${nextLabel}</button>
-            <button class="btn" id="raw" type="button">원자재부터 1차</button>
+            <button class="btn" id="raw" type="button">프로그램 처음부터</button>
             <button class="btn" id="play" type="button">${sim.playing ? "일시정지" : "시뮬레이션"}</button>
-            <button class="btn" id="reset" type="button">이번 차수 처음으로</button>
+            <button class="btn" id="reset" type="button">이 공구 처음으로</button>
             <button class="btn" id="view" type="button">시점 초기화</button>
             <span class="speeds" id="speeds">${SPEEDS.map((n) => `<button class="btn sm ${n === sim.speed ? "on" : ""}" data-speed="${n}" type="button">${n}x</button>`).join("")}</span>
             <button class="btn" id="nc" type="button">NC 출력</button>
@@ -126,7 +132,12 @@ function render() {
   document.getElementById("out").onclick = () => { logout(); location.href = "./portal.html?v=42"; };
   root.querySelectorAll("[data-i]").forEach((b) => b.onclick = () => {
     selected = Number(b.dataset.i);
+    const next = current();
+    mill = next?.points?.length ? createMill(next) : null;
+    opJob = next;
+    opIndex = 0;
     sim.playing = false;
+    sim.t = 0;
     render();
   });
   root.querySelectorAll("[data-del]").forEach((b) => b.onclick = (event) => {
@@ -158,7 +169,7 @@ function render() {
     selected = 0;
     mill = null;
     opJob = null;
-    stage = 1;
+    opIndex = 0;
     persist();
     sim.playing = false;
     sim.t = 0;
@@ -187,10 +198,12 @@ function render() {
   };
   document.getElementById("reset").onclick = () => {
     sim.playing = false;
-    sim.t = 0;
+    const jobNow = current();
+    const seqNow = jobNow?.seq || toolOps(jobNow?.points || []);
+    sim.t = seqNow[opIndex]?.t0 || 0;
     const btn = document.getElementById("play");
     if (btn) btn.textContent = "시뮬레이션";
-    mill?.rewindOp?.();
+    mill?.setProgress?.(sim.t);
     syncTime();
     draw();
   };
@@ -199,7 +212,7 @@ function render() {
     if (!src) return;
     mill = createMill(src);
     opJob = src;
-    stage = 1;
+    opIndex = 0;
     sim.playing = false;
     sim.t = 0;
     render();
@@ -207,13 +220,16 @@ function render() {
   document.getElementById("next-op")?.addEventListener("click", () => {
     const src = current();
     if (!src) return;
+    const seqNow = src.seq || toolOps(src.points || []);
+    if (!seqNow.length) return;
     if (!mill) mill = createMill(src);
-    mill.commit();
-    mill.loadPath(src);
+    const cur = seqNow[Math.min(opIndex, seqNow.length - 1)];
+    sim.t = cur?.t1 ?? 1;
+    mill.setProgress(sim.t);
+    if (opIndex < seqNow.length - 1) opIndex += 1;
     opJob = src;
-    stage += 1;
     sim.playing = false;
-    sim.t = 0;
+    sim.last = 0;
     render();
   });
   root.querySelectorAll("[data-speed]").forEach((b) => b.onclick = () => {
@@ -304,7 +320,7 @@ function lengths(points) {
 
 function at(points, t) {
   if (!points.length) return { x: 0, y: 0, z: 0, t: 1 };
-  const acc = lengths(points);
+  const acc = accTime(points);
   const total = acc[acc.length - 1] || 1;
   const target = t * total;
   for (let i = 1; i < acc.length; i += 1) {
@@ -316,13 +332,14 @@ function at(points, t) {
         x: a.x + (b.x - a.x) * u,
         y: a.y + (b.y - a.y) * u,
         z: (a.z || 0) + ((b.z || 0) - (a.z || 0)) * u,
-        t: b.t || a.t,
+        t: b.t ?? a.t,
         rapid: b.rapid,
+        change: b.change,
       };
     }
   }
   const last = points[points.length - 1];
-  return { x: last.x, y: last.y, z: last.z || 0, t: last.t, rapid: last.rapid };
+  return { x: last.x, y: last.y, z: last.z || 0, t: last.t, rapid: last.rapid, change: last.change };
 }
 
 function syncTime() {
@@ -353,6 +370,11 @@ function draw() {
   }
   const pathJob = opJob || job;
   const pos = at(pathJob.points, sim.t);
+  const seqNow = pathJob.seq || toolOps(pathJob.points || []);
+  let hit = 0;
+  seqNow.forEach((o, i) => { if (sim.t >= o.t0 - 1e-6) hit = i; });
+  opIndex = hit;
+  const specNow = toolSpec(pos.t);
   try {
     if (!mill) {
       mill = createMill(pathJob);
@@ -369,7 +391,7 @@ function draw() {
   ctx.fillStyle = "#d8d8d4";
   ctx.font = `${Math.round(14 * dpr)}px sans-serif`;
   const cycle = job.timeMin || 0;
-  ctx.fillText(`원자재 가공  ${job.partName}  ${sim.speed}x  X${pos.x.toFixed(1)}  Y${pos.y.toFixed(1)}  Z${pos.z.toFixed(1)}  ${formatMin(cycle * sim.t)} / ${formatMin(cycle)}`, 18 * dpr, 28 * dpr);
+  ctx.fillText(`${job.partName}  T${pos.t} ${specNow.name}  ${pos.rapid ? "급속이송" : pos.change ? "공구교환" : "절삭"}  ${sim.speed}x  X${pos.x.toFixed(1)}  Y${pos.y.toFixed(1)}  Z${pos.z.toFixed(1)}  ${formatMin(cycle * sim.t)} / ${formatMin(cycle)}`, 18 * dpr, 28 * dpr);
   syncTime();
 }
 
