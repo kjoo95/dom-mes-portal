@@ -884,7 +884,6 @@ function a4Head(title, date, ready = false) {
   return `<header class="a4-head">
           <div><b>DOM</b><span>${ht("디오엠")}</span></div>
           <h1>${h(ready ? title : t(title))}</h1>
-          <p>A4 · ${h(date || "")}</p>
         </header>`;
 }
 
@@ -1050,7 +1049,6 @@ function processA4(r) {
         <header class="a4-head a4-head-corp">
           <div>
             <b>DOM</b><span>${ht("디오엠")}</span>
-            <p>FORM-PR-01 · A4 · ${h(r.workDate || r.startDate || "")}</p>
           </div>
           <h1>가공 작업 현황</h1>
           ${processStamp(r)}
