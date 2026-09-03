@@ -9,7 +9,7 @@ import { saveBlob, loadBlob, readAsDataUrl, saveDirHandle, loadDirHandle, remove
 import { parseProgram, decodeCamFile, mayBeCamFile } from "./gcode.js?v=51";
 import { boot, showRecover } from "./safety.js?v=39";
 import { chatView, bindChat } from "./comm.js?v=51";
-import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=56";
+import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=57";
 
 const WHOIS_MAIL = "https://email.whois.co.kr/v2/";
 
@@ -322,37 +322,14 @@ function isCommMod(m) {
 
 function sideFolders(active) {
   return state.modules.filter((m) => !isCommMod(m)).map((m) => {
-    const open = active === m.id ? "open" : "";
-    const lines = m.type === "records"
-      ? `<a href="#/records">${ht("기록 목록")}</a>`
-      : m.type === "mastercam"
-        ? `<a href="#/mastercam">${ht("업체 목록")}</a>`
-        : `<a href="#/${m.id}">${ht(isMonthFolder(m) ? "월 목록" : "날짜 목록")}</a>`;
-    return `<div class="nav-fold ${open}">
-      <button class="nav-head ${m.id === active ? "on" : ""}" data-fold="${m.id}" type="button">${h(t(m.title))}</button>
-      <div class="nav-drop">${lines}</div>
-    </div>`;
+    const on = m.id === active ? "on" : "";
+    return `<a class="nav-head ${on}" href="#/${m.id}">${h(t(m.title))}</a>`;
   }).join("");
 }
 
 function bindShell() {
   root.querySelectorAll("[data-group]").forEach((b) => {
     b.onclick = () => b.parentElement.classList.toggle("open");
-  });
-  root.querySelectorAll("[data-fold]").forEach((b) => {
-    b.onclick = () => {
-      const box = b.parentElement;
-      const willOpen = !box.classList.contains("open");
-      box.parentElement?.querySelectorAll(":scope > .nav-fold.open").forEach((el) => {
-        if (el !== box) el.classList.remove("open");
-      });
-      if (willOpen) box.classList.add("open");
-      else box.classList.remove("open");
-      if ((b.dataset.fold === "mastercam" && location.hash !== "#/mastercam")
-        || (b.dataset.fold === "records" && !location.hash.startsWith("#/records"))) {
-        location.hash = b.dataset.fold === "mastercam" ? "#/mastercam" : "#/records";
-      }
-    };
   });
   root.querySelectorAll("a[href*='whois']").forEach((a) => {
     a.target = "_blank";
@@ -701,7 +678,7 @@ function recordsFolderView(mod) {
     </div>
     <section class="panel rec-pack">
       <div class="bar compact-bar">
-        <a class="btn ghost sm" href="#/records">${ht("기록 목록")}</a>
+        <a class="btn ghost sm" href="#/records">${ht("뒤로가기")}</a>
         <a class="btn sm" href="#/${mod.id}">${ht("폴더 열기")}</a>
         <span class="mute">${ht("{n}건", { n: rows.length })}</span>
       </div>
@@ -756,7 +733,8 @@ function moduleView(mod, date, extra) {
     if (mod.type === "equipment") return eqView(mod, thisMonth());
     if (mod.type === "climate") return shopClimateView(mod, thisMonth());
     if (mod.type === "lab-climate") return shopClimateView(mod, thisMonth());
-    return dateIndex(mod);
+    if (mod.type === "inbound") return inboundBrowse(mod);
+    return folderBrowse(mod);
   }
   if (mod.type === "climate") {
     if (extra === "map") return climateView(mod, monthKey(date) || date);
@@ -781,11 +759,76 @@ function moduleView(mod, date, extra) {
   return dayView(mod, date);
 }
 
+function dateLabel(mod, date) {
+  if (mod.type === "inbound") return inboundMonthTitle(date);
+  if (isMonthFolder(mod)) return monthLabel(date);
+  return camDay(date);
+}
+
+function folderBrowse(mod) {
+  const dates = datesOf(mod);
+  const blocks = dates.map((d) => {
+    const rows = rowsOn(mod, d);
+    return `<section class="panel rec-pack">
+      <div class="bar compact-bar">
+        <b>${h(dateLabel(mod, d))}</b>
+        <span class="mute">${count(mod, d)}</span>
+        <button class="btn sm red" data-add-date="${h(d)}" type="button">${ht("추가")}</button>
+      </div>
+      ${tableOf(mod, rows, d, true)}
+    </section>`;
+  }).join("");
+  return `
+    <div class="page-head">
+      <div>
+        <h1>${h(t(mod.title))}</h1>
+        <p>${h(t(mod.desc))}</p>
+      </div>
+      <button class="btn red sm" id="add-row" type="button">${ht("추가")}</button>
+    </div>
+    ${blocks || `<section class="panel"><p class="mute pad">${ht("아직 기록이 없습니다. 추가로 넣으세요.")}</p></section>`}`;
+}
+
+function inboundBrowse(mod) {
+  const months = datesOf(mod);
+  const blocks = months.map((ym) => {
+    const rows = rowsOn(mod, ym).filter(inboundUsed);
+    const body = rows.map((r) => `<tr>
+        <td>${h(camDay(r.date))}</td>
+        <td>${h(r.supplier || "—")}</td>
+        <td>${h(r.item || "—")}</td>
+        <td>${h(r.qty || "—")}</td>
+        <td>${h(r.size || "—")}</td>
+        <td class="act"><a class="btn sm" href="#/${mod.id}/${ym}">${ht("열기")}</a></td>
+      </tr>`).join("");
+    return `<section class="panel rec-pack">
+      <div class="bar compact-bar">
+        <b>${h(inboundMonthTitle(ym))}</b>
+        <span class="mute">${ht("{n}건", { n: rows.length })}</span>
+        <a class="btn sm red" href="#/${mod.id}/${ym}">${ht("표 열기")}</a>
+      </div>
+      <div class="scroll"><table class="rows rec-table"><thead><tr>
+        <th>${ht("날짜")}</th><th>${ht("업체")}</th><th>${ht("자재 품명")}</th><th>${ht("개수")}</th><th>${ht("자재 사이즈")}</th><th></th>
+      </tr></thead>
+      <tbody>${body || `<tr><td colspan="6">${ht("이 달에 적힌 입고가 없습니다.")}</td></tr>`}</tbody></table></div>
+    </section>`;
+  }).join("");
+  return `
+    <div class="page-head">
+      <div>
+        <h1>${h(t(mod.title))}</h1>
+        <p>${h(t(mod.desc))}</p>
+      </div>
+      <a class="btn red sm" href="#/${mod.id}/${thisMonth()}">${ht("이번 달 표")}</a>
+    </div>
+    ${blocks || `<section class="panel"><p class="mute pad">${ht("아직 기록이 없습니다. 이번 달 표에서 적으세요.")}</p></section>`}`;
+}
+
 function dateIndex(mod) {
   const month = isMonthFolder(mod);
   const folders = datesOf(mod).map((d) => `
     <a class="date-line" href="#/${mod.id}/${d}">
-      <strong>${h(mod.type === "inbound" ? inboundMonthTitle(d) : month ? monthLabel(d) : d)}</strong>
+      <strong>${h(dateLabel(mod, d))}</strong>
       <span>${count(mod, d)}</span>
     </a>`).join("");
   return `
@@ -819,8 +862,8 @@ function count(mod, date) {
 function dayView(mod, date) {
   const rows = rowsOn(mod, date);
   return `
-    <div class="head compact-head"><div><h1>${h(t(mod.title))}</h1><p>${h(date)}</p></div>
-      <a class="btn ghost sm" href="#/${mod.id}">${ht(isMonthFolder(mod) ? "월 목록" : "날짜")}</a></div>
+    <div class="head compact-head"><div><h1>${h(t(mod.title))}</h1><p>${h(camDay(date))}</p></div>
+      <a class="btn ghost sm" href="#/${mod.id}">${ht("뒤로가기")}</a></div>
     <section class="panel">
       <div class="bar compact-bar"><b>${h(date)}</b>
         <button class="btn sm red" id="add-row" type="button">${ht("추가")}</button></div>
@@ -922,9 +965,9 @@ function processProgress(plan, done) {
   return Math.min(100, Math.round((d / p) * 100));
 }
 
-function tableOf(mod, rows, date) {
-  if (mod.type === "quality") return qualitySheet(rows, date, mod.id);
-  if (mod.type === "delivery") return deliverySheet(rows, date, mod.id);
+function tableOf(mod, rows, date, quiet = false) {
+  if (mod.type === "quality") return qualitySheet(rows, date, mod.id, quiet);
+  if (mod.type === "delivery") return deliverySheet(rows, date, mod.id, quiet);
   const fields = fieldsFor(mod.type, true);
   const extra = (mod.type === "quality" || mod.type === "defect" || mod.type === "process") ? "<th>사진</th>" : "";
   const body = rows.map((r) => {
@@ -939,12 +982,12 @@ function tableOf(mod, rows, date) {
         <a class="btn sm red" href="#/${mod.id}/${date}/${r.id}">${ht("보기·인쇄")}</a></td>${cells}${pics}</tr>`;
   }).join("");
   const cols = fields.length + (extra ? 1 : 0) + 1;
-  return `<p class="mute pad">${ht("수정 또는 보기·인쇄를 누르면 A4 표에서 바로 고칠 수 있습니다.")}</p>
-    <div class="scroll"><table class="rows"><thead><tr><th></th>${fields.map((f) => `<th>${h(t(f.label))}</th>`).join("")}${extra}</tr></thead>
+  const hint = quiet ? "" : `<p class="mute pad">${ht("수정 또는 보기·인쇄를 누르면 A4 표에서 바로 고칠 수 있습니다.")}</p>`;
+  return `${hint}<div class="scroll"><table class="rows"><thead><tr><th></th>${fields.map((f) => `<th>${h(t(f.label))}</th>`).join("")}${extra}</tr></thead>
     <tbody>${body || `<tr><td colspan="${cols}">${ht("이 날짜 기록이 없습니다.")}</td></tr>`}</tbody></table></div>`;
 }
 
-function qualitySheet(rows, date, modId) {
+function qualitySheet(rows, date, modId, quiet = false) {
   const body = rows.map((r) => `<tr class="qa-row">
       <td class="act"><a class="btn sm" href="#/${modId}/${date}/${r.id}">수정</a>
         <a class="btn sm red" href="#/${modId}/${date}/${r.id}">보기·인쇄</a></td>
@@ -957,14 +1000,14 @@ function qualitySheet(rows, date, modId) {
       <td>${h(r.qtyOut ?? "")}</td>
       <td>${h(r.status)}</td>
     </tr>`).join("");
-  return `<p class="mute pad">표 페이지에서 검사 내용을 고치고 인쇄할 수 있습니다.</p>
+  return `${quiet ? "" : `<p class="mute pad">표 페이지에서 검사 내용을 고치고 인쇄할 수 있습니다.</p>`}
     <div class="scroll"><table class="rows">
     <thead><tr><th></th><th>품번</th><th>품명</th><th>LOT</th><th>가공 회사</th><th>납품처</th><th>품질실 입고</th><th>납품 출고</th><th>판정</th></tr></thead>
     <tbody>${body || `<tr><td colspan="9">이 날짜 기록이 없습니다. 추가로 검사 내용을 넣으세요.</td></tr>`}</tbody>
   </table></div>`;
 }
 
-function deliverySheet(rows, date, modId) {
+function deliverySheet(rows, date, modId, quiet = false) {
   const body = rows.map((r) => `<tr class="qa-row">
       <td class="act"><a class="btn sm" href="#/${modId}/${date}/${r.id}">수정</a>
         <a class="btn sm red" href="#/${modId}/${date}/${r.id}">보기·인쇄</a></td>
@@ -975,7 +1018,7 @@ function deliverySheet(rows, date, modId) {
       <td>${h(r.qty ?? "")}</td>
       <td>${h(r.status)}</td>
     </tr>`).join("");
-  return `<p class="mute pad">표 페이지에서 납품 내용을 고치고 인쇄할 수 있습니다.</p>
+  return `${quiet ? "" : `<p class="mute pad">표 페이지에서 납품 내용을 고치고 인쇄할 수 있습니다.</p>`}
     <div class="scroll"><table class="rows">
     <thead><tr><th></th><th>납품 회사</th><th>품번</th><th>품명</th><th>LOT</th><th>수량</th><th>상태</th></tr></thead>
     <tbody>${body || `<tr><td colspan="7">이 날짜 기록이 없습니다. 추가로 납품 내용을 넣으세요.</td></tr>`}</tbody>
@@ -2057,6 +2100,8 @@ function bindModule(mod, date, extra) {
       return bindShopClimate(mod);
     }
     if (mod.type === "equipment") return bindEq(thisMonth(), "");
+    if (mod.type === "inbound") return;
+    bindFolderBrowse(mod);
     return;
   }
   remember(mod.id, date); persist();
@@ -2068,6 +2113,23 @@ function bindModule(mod, date, extra) {
   if (mod.type === "inbound") return bindInboundMonth(mod, date);
   if (mod.type === "equipment") return bindEq(date, extra);
   bindRows(mod, date, extra);
+}
+
+function bindFolderBrowse(mod) {
+  document.getElementById("add-row")?.addEventListener("click", () => {
+    const d = todayISO();
+    const row = addBlank(mod, d);
+    persist();
+    location.hash = `#/${mod.id}/${d}/${row.id}`;
+  });
+  root.querySelectorAll("[data-add-date]").forEach((b) => {
+    b.onclick = () => {
+      const d = b.dataset.addDate;
+      const row = addBlank(mod, d);
+      persist();
+      location.hash = `#/${mod.id}/${d}/${row.id}`;
+    };
+  });
 }
 
 function bindRows(mod, date, extra) {

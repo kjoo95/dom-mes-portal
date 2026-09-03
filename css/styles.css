@@ -101,6 +101,7 @@ main { padding: 28px 32px 48px; overflow: auto; background: #f6f6f6; }
 .page-head input[type="text"] { width: min(240px, 100%); margin: 0; background: #fff; padding: 8px 12px; border: 1px solid var(--line); }
 .page-head input[type="search"]:focus,
 .page-head input[type="text"]:focus { outline: none; border-color: var(--red); }
+.page-head .btn { width: auto; flex: 0 0 auto; height: 36px; }
 .home-board {
   background: #fff;
   border: 1px solid var(--line);
@@ -238,8 +239,9 @@ main { padding: 28px 32px 48px; overflow: auto; background: #f6f6f6; }
 .nav-group-head::after { content: "▾"; color: var(--mute); font-weight: 400; }
 .nav-group.open .nav-group-head::after { content: "▴"; }
 .nav-group-head:hover { background: #f7f7f7; }
-.nav-group-body { display: none; padding: 0 4px 8px 10px; }
-.nav-group.open .nav-group-body { display: block; }
+.nav-group-body { display: none; padding: 0 4px 8px; }
+.nav-group.open .nav-group-body { display: flex; flex-direction: column; gap: 2px; }
+.nav-group-body .nav-head { box-sizing: border-box; }
 .nav-fold { display: flex; flex-direction: column; }
 .nav-head {
   display: block;
@@ -341,6 +343,7 @@ a.rec-folder .cam-row-main span {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+.rec-pack .compact-bar b { flex: 1; min-width: 0; }
 .rec-pack .cam-list { padding-bottom: 4px; }
 .rec-pack .cam-row:last-child { border-bottom: 0; }
 .rec-fold { font-weight: 700; }
