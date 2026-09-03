@@ -950,16 +950,25 @@ table.checks .chk { width: 72px; text-align: center; }
   align-items: flex-start;
   gap: 12px;
 }
+.process-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  min-width: 0;
+  gap: 2.2mm;
+}
 .process-head .brand-logo { height: 13mm; }
 .process-head h1 {
   position: static;
   display: block;
-  margin: 8px 0 0;
+  margin: 0;
   padding: 0;
-  text-align: center;
-  font-size: 18px;
-  line-height: 1.3;
-  letter-spacing: 0.16em;
+  text-align: left;
+  font-size: 6.8mm;
+  line-height: 1.1;
+  letter-spacing: 0.08em;
+  font-weight: 800;
   pointer-events: auto;
 }
 .process-head .a4-stamp {

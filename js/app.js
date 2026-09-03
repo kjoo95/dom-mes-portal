@@ -1995,10 +1995,12 @@ function processA4(r) {
       <article class="a4-sheet process-a4">
         <header class="process-head">
           <div class="process-head-top">
-            ${brandMark()}
+            <div class="process-brand">
+              ${brandMark()}
+              <h1>가공 작업 현황</h1>
+            </div>
             ${processStamp(r)}
           </div>
-          <h1>가공 작업 현황</h1>
         </header>
         <div class="a4-process-body">
           <div class="a4-process-main">
