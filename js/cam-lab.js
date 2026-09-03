@@ -1,5 +1,5 @@
 import { getSession, logout, isInternalNetwork } from "./auth.js?v=45";
-import { loadState, saveState, uid } from "./store.js?v=49";
+import { loadState, saveState, uid } from "./store.js?v=53";
 import { collectStats, parseProgram, toNc, toJson, accTime, toolOps, toolSpec, decodeCamFile, mayBeCamFile } from "./gcode.js?v=51";
 import { boot } from "./safety.js";
 import { createMill } from "./mill3d.js?v=29";
@@ -204,11 +204,6 @@ function render() {
   if (!isInternalNetwork() || !getSession()) {
     location.href = "./portal.html?v=42";
     return;
-  }
-  const kept = (state.cam.jobs || []).filter((j) => !j.optimized && (j.points || []).filter((p) => !p.rapid && !p.change).length >= 2);
-  if (kept.length !== (state.cam.jobs || []).length) {
-    state.cam.jobs = kept;
-    persist();
   }
   const session = getSession();
   const list = allJobs();

@@ -9,17 +9,22 @@ function refreshJob(job) {
     return { ...job, points: [], source: "" };
   }
   const src = looksBinaryText(job.source || "") ? "" : (job.source || (job.points?.length ? toNc(job) : ""));
-  if (!src) return (job.points || []).length >= 2 ? { ...job, source: "" } : { ...job, points: [], source: "" };
+  if (!src) return job;
   try {
     const parsed = parseProgram(job.name || "job.nc", src);
     if ((parsed?.points || []).filter((p) => !p.rapid && !p.change).length < 2) {
-      return (job.points || []).filter((p) => !p.rapid && !p.change).length >= 2 ? job : { ...job, points: [], source: "" };
+      return job;
     }
     return {
+      ...job,
       ...parsed,
       id: job.id,
       date: job.date,
       folderId: job.folderId,
+      fileId: job.fileId,
+      partName: job.partName || parsed.partName,
+      method: job.method,
+      fromNc: job.fromNc,
       optimized: job.optimized,
       source: parsed.source || src,
     };
@@ -86,7 +91,7 @@ function hydrate(parsed) {
   const base = defaultState();
   const cam = { ...base.cam, ...(parsed.cam || {}) };
   cam.jobs = Array.isArray(parsed.cam?.jobs) && parsed.cam.jobs.length
-    ? parsed.cam.jobs.map(refreshJob).filter((j) => (j?.points || []).filter((p) => !p.rapid && !p.change).length >= 2 && !j.optimized)
+    ? parsed.cam.jobs.map(refreshJob).filter((j) => j && !j.optimized)
     : withJobMeta(seedJobs());
   cam.seen = parsed.cam?.seen || {};
   cam.watchName = parsed.cam?.watchName || "";

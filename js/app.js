@@ -4,7 +4,7 @@ import {
   EQ_ITEMS, EQ_MARKS,
   fieldsFor, flattenChecks, badgeClass, todayISO,
 } from "./data.js?v=47";
-import { loadState, saveState, uid } from "./store.js?v=51";
+import { loadState, saveState, uid } from "./store.js?v=53";
 import { saveBlob, loadBlob, readAsDataUrl, saveDirHandle, loadDirHandle, removeBlob } from "./files.js?v=39";
 import { parseProgram, decodeCamFile, mayBeCamFile } from "./gcode.js?v=51";
 import { boot, showRecover } from "./safety.js?v=39";
@@ -377,7 +377,7 @@ function shell(session, active, inner, printMode = false) {
           ${link("home", "운영 폴더")}
           ${link("manage", "수정·삭제")}
           ${isAdmin(session) ? `<a class="${"members" === active ? "on" : ""}" href="#/members">${ht("가입 승인")}${wait ? ` (${wait})` : ""}</a>` : ""}
-          <a href="./cam-lab.html?v=33">${ht("가공 프로그램")}</a>
+          <a href="./cam-lab.html?v=34">${ht("가공 프로그램")}</a>
         </div>
         <div class="side-block comm">
           <p class="side-label">${ht("소통")}</p>
@@ -1730,6 +1730,40 @@ function camFileStem(name) {
   return String(name || "").replace(/\.[^.]+$/, "").toLowerCase();
 }
 
+function camMethod(name, cuts) {
+  if (cuts >= 2 && /\.nci$/i.test(name)) return "NCI 해석";
+  if (cuts >= 2 && /\.(nc|cnc|tap|iso|eia|min|ncc)$/i.test(name)) return "NC 해석";
+  if (cuts >= 2 && /\.mc[89]$/i.test(name)) return "MC9 추출";
+  if (/\.mc[89]$/i.test(name)) return "MC9 원본";
+  return cuts >= 2 ? "NC 해석" : "파일 등록";
+}
+
+function camPartName(fileName, parsed) {
+  const fromFile = String(fileName || "").replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").trim();
+  const fromParse = String(parsed?.partName || "").trim();
+  if (fromParse && fromParse.toLowerCase() !== fromFile.toLowerCase()) return fromParse;
+  return fromParse || fromFile || fileName;
+}
+
+function camJobFields(file, parsed) {
+  const cuts = (parsed?.points || []).filter((p) => !p.rapid && !p.change).length;
+  return {
+    ...(parsed || {}),
+    name: file.name,
+    partName: camPartName(file.name, parsed),
+    fromNc: cuts >= 2,
+    method: camMethod(file.name, cuts),
+    tools: parsed?.tools || [],
+    cutMm: Number(parsed?.cutMm) || 0,
+    timeMin: Number(parsed?.timeMin) || 0,
+    points: parsed?.points || [],
+  };
+}
+
+function cutCount(job) {
+  return (job?.points || []).filter((p) => !p.rapid && !p.change).length;
+}
+
 function camRank(name) {
   if (/\.nci$/i.test(name)) return 3;
   if (/\.(nc|cnc|tap|iso|eia|min|ncc)$/i.test(name)) return 2;
@@ -1737,9 +1771,9 @@ function camRank(name) {
   return 0;
 }
 
-function camCount(folderId, date) {
-  const files = (state.cam.files || []).filter((f) => f.folderId === folderId && f.date === date).length;
-  const jobs = (state.cam.jobs || []).filter((j) => (j.folderId || "cam-root") === folderId && j.date === date).length;
+function camCount(folderId) {
+  const files = (state.cam.files || []).filter((f) => f.folderId === folderId).length;
+  const jobs = (state.cam.jobs || []).filter((j) => (j.folderId || "cam-root") === folderId).length;
   return Math.max(files, jobs);
 }
 
@@ -1764,21 +1798,22 @@ function camView(mod, date) {
   const folder = state.cam.folders.find((f) => f.id === camFolder) || state.cam.folders[0];
   const atRoot = !folder.parent;
   const kids = state.cam.folders.filter((f) => f.parent === folder.id);
-  const files = state.cam.files.filter((f) => f.folderId === folder.id && f.date === date);
-  const jobs = (state.cam.jobs || []).filter((j) => (j.folderId || "cam-root") === folder.id && j.date === date);
+  const files = state.cam.files.filter((f) => f.folderId === folder.id);
+  const jobs = (state.cam.jobs || []).filter((j) => (j.folderId || "cam-root") === folder.id);
   const jobRows = jobs.map((j) => `<tr>
     <td class="act">
       <button class="btn sm" data-job="${j.id}" type="button">수정</button>
       <button class="btn sm" data-del-job="${j.id}" type="button">삭제</button>
     </td>
-    <td>${h(j.name)}</td><td>${h(j.partName)}</td>
+    <td>${h(j.name)}</td><td>${h(j.partName || camPartName(j.name, j))}</td>
     <td>${(j.tools || []).join(", ") || "—"}</td>
-    <td>${j.cutMm} mm</td><td>${j.timeMin} 분</td>
-    <td>${j.fromNc ? "NC 해석" : "추정 경로"}</td>
+    <td>${j.cutMm ? `${j.cutMm} mm` : "—"}</td>
+    <td>${j.timeMin ? `${j.timeMin} 분` : "—"}</td>
+    <td>${h(j.method || camMethod(j.name, cutCount(j)))}</td>
   </tr>`).join("");
   const path = atRoot ? "업체를 고른 뒤 프로그램을 넣습니다." : `${h(folder.name)} · ${date}`;
   return `<div class="head"><div><h1>${h(mod.title)}</h1><p>${path}</p></div>
-    <a class="btn red sm" href="./cam-lab.html?v=33">가공 프로그램</a></div>
+    <a class="btn red sm" href="./cam-lab.html?v=34">가공 프로그램</a></div>
     <section class="panel">
       <div class="bar">${folder.parent ? `<button class="btn sm" id="up" type="button">업체 목록</button>` : ""}
         ${atRoot ? `<button class="btn sm" id="nf" type="button">업체 추가</button>` : `<button class="btn sm" id="del-vendor" type="button">이 업체 삭제</button>`}
@@ -1794,7 +1829,7 @@ function camView(mod, date) {
         ${kids.map((f) => `<div class="cam-row">
           <button class="folder-open cam-row-main" data-open="${f.id}" type="button">
             <b>${h(f.name)}</b>
-            <span>${camCount(f.id, date)}개 프로그램</span>
+            <span>${camCount(f.id)}개 프로그램</span>
           </button>
           <button class="btn sm" data-del-folder="${f.id}" type="button">삭제</button>
         </div>`).join("")}
@@ -2289,6 +2324,10 @@ function bindEq(date, machineId) {
 }
 
 function bindCam(date) {
+  const folder = state.cam.folders.find((f) => f.id === camFolder);
+  if (folder?.parent) {
+    hydrateCamJobs(folder.id).then((dirty) => { if (dirty) render(); });
+  }
   document.getElementById("up")?.addEventListener("click", () => {
     const cur = state.cam.folders.find((f) => f.id === camFolder);
     if (cur?.parent) camFolder = cur.parent; persist(); render();
@@ -2390,8 +2429,7 @@ async function putCamFiles(fileList, date) {
     persist();
     render();
     if (!result.tried) alert("마스터캠 9.1 프로그램 파일(.mc9, .nci, .nc)을 넣으세요.");
-    else if (!result.jobs && result.files) alert("파일은 들어갔습니다. 가공 경로를 보려면 같은 이름의 NCI 또는 NC를 같이 넣으세요.");
-    else if (!result.jobs && !result.files) alert("이 파일에서 가공 경로를 읽지 못했습니다. 마스터캠에서 포스트한 NCI 또는 NC를 넣으세요.");
+    else if (!result.jobs) alert("파일은 들어갔습니다. 품명·시간은 파일 이름으로 올렸습니다. NCI 또는 NC를 같이 넣으면 경로가 채워집니다.");
   } catch (err) {
     alert(err.message || "프로그램을 넣을 수 없습니다.");
   }
@@ -2423,10 +2461,49 @@ async function ingestCamBatch(fileList, date = todayISO()) {
     if (best) {
       await ingestCamFile(best.file, date, best.parsed);
       kept += 1;
-      if (best.cuts >= 2) jobs += 1;
+      jobs += 1;
     }
   }
   return { tried: files.length, files: kept, jobs };
+}
+
+async function hydrateCamJobs(folderId) {
+  const files = (state.cam.files || []).filter((f) => f.folderId === folderId);
+  if (!files.length) return false;
+  if (!state.cam.jobs) state.cam.jobs = [];
+  let dirty = false;
+  for (const meta of files) {
+    const stem = camFileStem(meta.name);
+    const idx = state.cam.jobs.findIndex((j) => (j.folderId || "cam-root") === folderId && camFileStem(j.name) === stem);
+    const blob = await loadBlob(meta.id).catch(() => null);
+    let parsed = null;
+    if (blob) {
+      const file = blob instanceof File ? blob : new File([blob], meta.name);
+      parsed = parseProgram(meta.name, await readNcText(file));
+    }
+    const fields = camJobFields({ name: meta.name }, parsed);
+    if (idx >= 0) {
+      const cur = state.cam.jobs[idx];
+      const better = cutCount(fields) > cutCount(cur);
+      if (!better && cur.partName && cur.method) continue;
+      state.cam.jobs[idx] = {
+        ...cur,
+        ...(better ? fields : {}),
+        partName: better ? fields.partName : (cur.partName || fields.partName),
+        method: better ? fields.method : (cur.method || fields.method),
+        id: cur.id,
+        fileId: meta.id,
+        folderId,
+        date: cur.date || meta.date,
+      };
+      dirty = true;
+      continue;
+    }
+    state.cam.jobs.push({ ...fields, id: uid("job"), fileId: meta.id, folderId, date: meta.date });
+    dirty = true;
+  }
+  if (dirty) persist();
+  return dirty;
 }
 
 async function ingestCamFile(file, date = todayISO(), parsedIn) {
@@ -2434,56 +2511,53 @@ async function ingestCamFile(file, date = todayISO(), parsedIn) {
   if (!state.cam.files) state.cam.files = [];
   if (!state.records.process) state.records.process = [];
   const folderId = camFolder || "cam-root";
-  const stem = file.name.replace(/\.[^.]+$/, "").toLowerCase();
-  const sameFile = (state.cam.files || []).find((f) => f.folderId === folderId && f.date === date && f.name === file.name && f.size === file.size);
-  if (sameFile) {
-    remember("mastercam", date);
-    return;
-  }
-  const dupFile = (state.cam.files || []).find((f) => f.folderId === folderId && f.date === date && camFileStem(f.name) === stem);
-  if (dupFile) await removeCamFile(dupFile.id);
-  const id = uid("file");
-  await saveBlob(id, file).catch(() => {
-    throw new Error("파일이 너무 크거나 저장할 수 없습니다.");
-  });
-  state.cam.files.push({ id, folderId, name: file.name, size: file.size, date, auto: true });
-  const text = parsedIn ? "" : await readNcText(file);
-  const parsed = parsedIn || parseProgram(file.name, text);
-  const cuts = (parsed?.points || []).filter((p) => !p.rapid && !p.change).length;
-  if (cuts < 2) {
-    remember("mastercam", date);
-    return;
+  const stem = camFileStem(file.name);
+  const parsed = parsedIn || parseProgram(file.name, await readNcText(file));
+  const fields = camJobFields(file, parsed);
+  const sameFile = (state.cam.files || []).find((f) => f.folderId === folderId && f.name === file.name && f.size === file.size);
+  let fileId = sameFile?.id;
+  if (!fileId) {
+    const dupFile = (state.cam.files || []).find((f) => f.folderId === folderId && camFileStem(f.name) === stem);
+    if (dupFile) await removeCamFile(dupFile.id);
+    fileId = uid("file");
+    await saveBlob(fileId, file).catch(() => {
+      throw new Error("파일이 너무 크거나 저장할 수 없습니다.");
+    });
+    state.cam.files.push({ id: fileId, folderId, name: file.name, size: file.size, date, auto: true });
   }
   const idx = state.cam.jobs.findIndex((j) => camFileStem(j.name) === stem && (j.folderId || "cam-root") === folderId);
   if (idx >= 0) {
-    const oldCuts = (state.cam.jobs[idx].points || []).filter((p) => !p.rapid && !p.change).length;
-    if (cuts <= oldCuts) {
+    const oldCuts = cutCount(state.cam.jobs[idx]);
+    if (cutCount(fields) < oldCuts && oldCuts >= 2) {
       remember("mastercam", date);
       return;
     }
+    const id = state.cam.jobs[idx].id;
     state.cam.jobs.splice(idx, 1);
+    state.cam.jobs.push({ ...fields, id, fileId, folderId, date });
+  } else {
+    const job = { ...fields, id: uid("job"), fileId, folderId, date };
+    state.cam.jobs.push(job);
+    state.records.process.unshift({
+      id: uid("pr"),
+      partNo: file.name.replace(/\.[^.]+$/, ""),
+      partName: job.partName,
+      lot: "",
+      line: "Mastercam 9.1",
+      wo: fileId,
+      startDate: date,
+      workDate: date,
+      endDate: "",
+      progress: 0,
+      planQty: 1,
+      doneQty: 0,
+      detail: `공구 ${(job.tools || []).join(",") || "-"} · 절삭 ${job.cutMm || "-"}mm · 예상 ${job.timeMin || "-"}분`,
+      owner: "",
+      status: "프로그램 등록",
+    });
+    remember("process", date);
   }
-  const job = { ...parsed, id: uid("job"), fileId: id, folderId, date };
-  state.cam.jobs.push(job);
-  state.records.process.unshift({
-    id: uid("pr"),
-    partNo: file.name.replace(/\.[^.]+$/, ""),
-    partName: job.partName,
-    lot: "",
-    line: "Mastercam 9.1",
-    wo: id,
-    startDate: date,
-    workDate: date,
-    endDate: "",
-    progress: 0,
-    planQty: 1,
-    doneQty: 0,
-    detail: `공구 ${(job.tools || []).join(",") || "-"} · 절삭 ${job.cutMm}mm · 예상 ${job.timeMin}분`,
-    owner: "",
-    status: "프로그램 등록",
-  });
   remember("mastercam", date);
-  remember("process", date);
 }
 
 async function collectCamFiles(handle, out = []) {
