@@ -1,14 +1,15 @@
 import { getSession, login, signup, logout, isInternalNetwork, pullUsers, isAdmin, listUsers, pendingCount, setUserStatus } from "./auth.js?v=45";
 import {
-  CUSTOMERS, MILL_SHOPS, CNC_CHECKS, MACHINES, FIVE_S_SHOP, FIVE_S_LAB,
+  CUSTOMERS, MILL_SHOPS, MACHINES, FIVE_S_SHOP, FIVE_S_LAB,
+  EQ_ITEMS, EQ_MARKS,
   fieldsFor, flattenChecks, badgeClass, todayISO,
-} from "./data.js?v=44";
+} from "./data.js?v=45";
 import { loadState, saveState, uid } from "./store.js?v=49";
 import { saveBlob, loadBlob, readAsDataUrl, saveDirHandle, loadDirHandle, removeBlob } from "./files.js?v=39";
 import { parseProgram, decodeCamFile, isCamFileName } from "./gcode.js?v=49";
 import { boot, showRecover } from "./safety.js?v=39";
 import { chatView, bindChat } from "./comm.js?v=50";
-import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=49";
+import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=50";
 
 const WHOIS_MAIL = "https://email.whois.co.kr/v2/";
 const root = document.getElementById("app");
@@ -135,10 +136,11 @@ function isSheetMod(mod) {
 }
 
 function isPrintPage(mod, extra, date) {
+  if (mod?.type === "equipment") return Boolean(extra) || MACHINES.some((m) => m.id === date);
   if (isMonthMod(mod) && date && extra !== "map") return true;
   if (mod?.type === "inbound" && date && !extra) return true;
   if (!extra) return false;
-  if (isSheetMod(mod) || mod.type === "equipment") return true;
+  if (isSheetMod(mod)) return true;
   return false;
 }
 
@@ -554,6 +556,7 @@ function moduleView(mod, date, extra) {
   if (mod.type === "chat") return chatView(state, h, date);
   if (!date) {
     if (mod.type === "five-s") return shopFiveSView(mod, thisMonth());
+    if (mod.type === "equipment") return eqView(mod, thisMonth());
     return dateIndex(mod);
   }
   if (mod.type === "climate" || mod.type === "lab-climate") {
@@ -567,7 +570,10 @@ function moduleView(mod, date, extra) {
     padInboundRows(mod, ym);
     return inboundMonthView(mod, ym);
   }
-  if (mod.type === "equipment") return extra ? eqPrintView(mod, date, extra) : eqView(mod, date);
+  if (mod.type === "equipment") {
+    const eq = eqRoute(date, extra);
+    return eq.machineId ? eqSheetView(mod, eq.ym, eq.machineId) : eqView(mod, eq.ym);
+  }
   if (mod.type === "mastercam") return camView(mod, date);
   if (isSheetMod(mod) && extra) return printDocView(mod, date, extra);
   return dayView(mod, date);
@@ -1225,79 +1231,191 @@ function climateView(mod, date) {
 }
 
 function eqView(mod, date) {
-  const log = state.equipment[date] || {};
-  const photos = state.eqPhotos || {};
+  const ym = monthKey(date) || thisMonth();
   const groups = [...new Set(MACHINES.map((m) => m.group))];
   const blocks = groups.map((g) => {
     const lines = MACHINES.filter((m) => m.group === g).map((m) => {
-      const row = log[m.id] || { checks: {} };
-      const done = CNC_CHECKS.filter((_, i) => row.checks[i]).length;
-      const pic = photos[m.id]
-        ? `<img class="eq-thumb" src="${photos[m.id]}" alt="">`
+      const pic = eqPhotoBag(m.id).machine;
+      const thumb = pic
+        ? `<img class="eq-thumb" src="${pic}" alt="">`
         : `<span class="eq-thumb empty">사진</span>`;
-      return `<a class="date-line eq-line" href="#/${mod.id}/${date}/${m.id}">
-        ${pic}
+      return `<a class="date-line eq-line" href="#/${mod.id}/${ym}/${m.id}">
+        ${thumb}
         <strong>${h(m.name)}</strong>
-        <span>${done}/${CNC_CHECKS.length} · 보기·인쇄</span>
+        <span>${h(m.no || "")} · 점검표</span>
       </a>`;
     }).join("");
     return `<div class="bar compact-bar"><b>${h(g)}</b></div><div class="date-list">${lines}</div>`;
   }).join("");
   return `
-    <div class="head compact-head"><div><h1>${h(mod.title)}</h1><p>${h(date)} · 보기·인쇄를 누르면 점검표 페이지가 열립니다.</p></div>
-      <a class="btn ghost sm" href="#/${mod.id}">날짜</a></div>
+    <div class="head compact-head"><div><h1>${h(mod.title)}</h1><p>설비를 누르면 설비일상점검표가 열립니다. 사진과 연·월은 표에서 넣습니다.</p></div>
+      <a class="btn ghost sm" href="#/home">${ht("운영 폴더")}</a></div>
     <section class="panel dates-panel">${blocks}</section>`;
 }
 
-function eqPrintView(mod, date, id) {
-  const machine = MACHINES.find((m) => m.id === id);
-  if (!machine) return eqView(mod, date);
+function eqRoute(date, extra) {
+  if (MACHINES.some((m) => m.id === date) && !extra) return { ym: thisMonth(), machineId: date };
+  if (extra) return { ym: monthKey(date) || thisMonth(), machineId: extra };
+  return { ym: monthKey(date) || thisMonth(), machineId: "" };
+}
+
+function eqPhotoBag(id) {
+  if (!state.eqPhotos) state.eqPhotos = {};
+  const cur = state.eqPhotos[id];
+  if (!cur) state.eqPhotos[id] = { machine: "", items: {} };
+  else if (typeof cur === "string") state.eqPhotos[id] = { machine: cur, items: {} };
+  if (!state.eqPhotos[id].items) state.eqPhotos[id].items = {};
+  return state.eqPhotos[id];
+}
+
+function eqPack(ym, id) {
+  const m = MACHINES.find((x) => x.id === id) || { name: "", no: "", model: "", process: "" };
+  if (!state.equipment[ym] || typeof state.equipment[ym] !== "object") state.equipment[ym] = {};
+  let pack = state.equipment[ym][id];
+  if (!pack || pack.checks) {
+    pack = {
+      no: pack?.no || m.no || "",
+      name: pack?.name || m.name || "",
+      model: pack?.model || m.model || "",
+      process: pack?.process || m.process || "MCT 가공",
+      writer: pack?.writer || "",
+      approver: pack?.approver || "",
+      owner: pack?.owner || pack?.inspector || "",
+      remark: pack?.remark || "",
+      cells: pack?.cells || {},
+      issues: pack?.issues || [{}, {}, {}, {}, {}],
+    };
+    state.equipment[ym][id] = pack;
+  }
+  if (!pack.cells) pack.cells = {};
+  if (!Array.isArray(pack.issues)) pack.issues = [];
+  while (pack.issues.length < 5) pack.issues.push({});
+  return pack;
+}
+
+function eqCell(pack, itemId, day) {
+  return pack.cells?.[itemId]?.[day] ?? pack.cells?.[itemId]?.[String(day)] ?? "";
+}
+
+function eqSheetView(mod, ym, machineId) {
+  const month = monthKey(ym) || thisMonth();
+  const [year, mon] = month.split("-").map(Number);
+  const n = daysInMonth(month);
+  const machine = MACHINES.find((m) => m.id === machineId);
+  if (!machine) return eqView(mod, month);
+  const pack = eqPack(month, machineId);
+  const pics = eqPhotoBag(machineId);
+  const y0 = new Date().getFullYear();
+  const years = Array.from({ length: 8 }, (_, i) => y0 - 4 + i);
+  if (!years.includes(year)) years.push(year);
+  years.sort((a, b) => a - b);
+  const days = Array.from({ length: 31 }, (_, i) => i + 1);
+  const dayHeads = days.map((d) => `<th class="${d > n ? "off" : ""}">${d}</th>`).join("");
+  const guide = EQ_ITEMS.map((item) => {
+    const src = pics.items[item.id];
+    return `<td>
+      <b>${item.no} ${h(item.name)}</b>
+      <label class="eq-shot">
+        ${src ? `<img src="${src}" alt="">` : `<span>사진 넣기</span>`}
+        <input data-eq-item-pic="${item.id}" type="file" accept="image/*" hidden>
+      </label>
+      <p>${h(item.criteria)}</p>
+    </td>`;
+  }).join("");
+  const body = EQ_ITEMS.map((item) => {
+    const cells = days.map((d) => {
+      if (d > n) return `<td class="off"></td>`;
+      const val = eqCell(pack, item.id, d);
+      if (item.kind === "text") {
+        return `<td><input data-eq-cell data-item="${item.id}" data-day="${d}" value="${h(val)}"></td>`;
+      }
+      return `<td class="eq-mark${val ? " on" : ""}" data-eq-mark data-item="${item.id}" data-day="${d}" type="button">${h(val)}</td>`;
+    }).join("");
+    return `<tr>
+      <th>${item.no}</th>
+      <td class="item">${h(item.item)}</td>
+      <td class="cyc">${h(item.cycle)}</td>
+      ${cells}
+    </tr>`;
+  }).join("");
+  const issues = pack.issues.map((row, i) => `<tr>
+    <td><input data-eq-issue="${i}" data-k="at" value="${h(row.at || "")}"></td>
+    <td><input data-eq-issue="${i}" data-k="who" value="${h(row.who || "")}"></td>
+    <td><input data-eq-issue="${i}" data-k="problem" value="${h(row.problem || "")}"></td>
+    <td><input data-eq-issue="${i}" data-k="action" value="${h(row.action || "")}"></td>
+    <td><input data-eq-issue="${i}" data-k="down" value="${h(row.down || "")}"></td>
+  </tr>`).join("");
+  const machinePic = pics.machine;
   return `
     <div class="print-page">
       <div class="a4-tools no-print">
-        <a class="btn ghost" href="#/${mod.id}/${date}">목록</a>
-        <label class="btn">기계 사진<input id="eq-photo" type="file" accept="image/*" hidden></label>
-        <button class="btn red" id="qa-print" type="button">인쇄</button>
+        <a class="btn ghost" href="#/${mod.id}">설비 목록</a>
+        <button class="btn ghost" id="eq-prev" type="button">이전달</button>
+        <button class="btn ghost" id="eq-next" type="button">다음달</button>
+        <button class="btn red" id="qa-print" type="button">${ht("인쇄")}</button>
       </div>
-      <div class="a4-wrap page">${eqA4(date, machine)}</div>
+      <div class="a4-wrap page">
+        <article class="a4-sheet month-sheet eq-sheet">
+          <header class="eq-head">
+            <div class="eq-ym no-print">
+              <select id="eq-y">${years.map((y) => `<option value="${y}" ${y === year ? "selected" : ""}>${y}</option>`).join("")}</select>
+              <span>년</span>
+              <select id="eq-m">${Array.from({ length: 12 }, (_, i) => i + 1).map((m) => `<option value="${m}" ${m === mon ? "selected" : ""}>${m}</option>`).join("")}</select>
+              <span>월</span>
+            </div>
+            <p class="eq-ym-print">${year}년 ${mon}월</p>
+            <h1>설비 일 상 점 검 표</h1>
+            <table class="eq-stamp">
+              <tr><th>작성</th><th>승인</th></tr>
+              <tr><td><input data-eq-k="writer" value="${h(pack.writer || "")}"></td><td><input data-eq-k="approver" value="${h(pack.approver || "")}"></td></tr>
+            </table>
+          </header>
+          <table class="eq-info">
+            <tr>
+              <th>관리번호</th><td><input data-eq-k="no" value="${h(pack.no || "")}"></td>
+              <th>설비명</th><td><input data-eq-k="name" value="${h(pack.name || "")}"></td>
+              <th>모델명</th><td><input data-eq-k="model" value="${h(pack.model || "")}"></td>
+              <th>공정명</th><td><input data-eq-k="process" value="${h(pack.process || "")}"></td>
+            </tr>
+          </table>
+          <table class="eq-guide">
+            <thead><tr><th colspan="6">점검항목 · 점검위치 (사진 칸을 누르면 넣습니다)</th></tr></thead>
+            <tbody><tr>${guide}</tr></tbody>
+          </table>
+          <table class="eq-grid">
+            <thead>
+              <tr>
+                <th rowspan="2">NO</th>
+                <th rowspan="2">관리항목</th>
+                <th rowspan="2">점검주기</th>
+                <th colspan="31">일</th>
+              </tr>
+              <tr>${dayHeads}</tr>
+            </thead>
+            <tbody>${body}</tbody>
+          </table>
+          <div class="eq-bottom">
+            <div class="eq-hist">
+              <div class="eq-hist-h">문제 발생 조치 이력 <span>(설비 이상 발생 시 즉시 생산담당자에게 보고하고 바로 조치한다)</span></div>
+              <table>
+                <thead><tr><th>일시</th><th>발견자</th><th>문제점</th><th>조치사항</th><th>비가동시간</th></tr></thead>
+                <tbody>${issues}</tbody>
+              </table>
+              <p class="eq-legend">범례 : O 양호 &nbsp; X 이상 &nbsp; △ 교환 &nbsp; V 보충</p>
+              <div class="eq-foot-fields">
+                <label>담당자 <input data-eq-k="owner" value="${h(pack.owner || "")}"></label>
+                <label>비고 <input data-eq-k="remark" value="${h(pack.remark || "")}"></label>
+              </div>
+            </div>
+            <label class="eq-machine">
+              <b>설비사진</b>
+              ${machinePic ? `<img src="${machinePic}" alt="">` : `<span>사진을 넣으세요</span>`}
+              <input id="eq-photo" type="file" accept="image/*" hidden>
+            </label>
+          </div>
+        </article>
+      </div>
     </div>`;
-}
-
-function eqA4(date, machine) {
-  if (!state.eqPhotos) state.eqPhotos = {};
-  if (!state.equipment[date]) state.equipment[date] = {};
-  const row = state.equipment[date][machine.id] || { checks: {}, inspector: "" };
-  const photo = state.eqPhotos[machine.id];
-  const body = CNC_CHECKS.map((c, i) => `<tr>
-      <td>${i + 1}</td>
-      <td>${h(t(c))}</td>
-      <td class="chk"><input type="checkbox" data-eq="${machine.id}" data-c="${i}" ${row.checks[i] ? "checked" : ""}><span class="print-mark">${row.checks[i] ? "✓" : ""}</span></td>
-    </tr>`).join("");
-  const done = CNC_CHECKS.filter((_, i) => row.checks[i]).length;
-  return `
-      <article class="a4-sheet">
-        ${photo ? `<img class="a4-machine" src="${photo}" alt="${h(machine.name)}">` : `<div class="a4-machine empty">기계 사진을 위에 ‘기계 사진’으로 넣으세요</div>`}
-        <header class="a4-head">
-          <div><b>DOM</b><span>디오엠 정밀 가공</span></div>
-          <h1>설비 일일 점검표</h1>
-          <p>A4 · ${h(date)}</p>
-        </header>
-        <table class="a4-meta">
-          <tr><th>설비</th><td>${h(machine.name)}</td><th>구분</th><td>${h(machine.group)}</td></tr>
-          <tr><th>점검일</th><td>${h(date)}</td><th>점검 현황</th><td>${done} / ${CNC_CHECKS.length}</td></tr>
-          <tr><th>점검자</th><td colspan="3"><input type="text" data-ins="${machine.id}" value="${h(row.inspector)}" placeholder="이름"></td></tr>
-        </table>
-        <h2>점검 항목</h2>
-        <div class="a4-grow">
-        <table class="a4-meas">
-          <thead><tr><th style="width:12mm">번호</th><th>점검 항목</th><th style="width:18mm">확인</th></tr></thead>
-          <tbody>${body}</tbody>
-        </table>
-        </div>
-        <div class="a4-sign">
-          <span>점검자</span><span>확인</span><span>승인</span>
-        </div>
-      </article>`;
 }
 
 function camFileStem(name) {
@@ -1399,6 +1517,7 @@ function bindModule(mod, date, extra) {
       persist();
       return bindShopFiveS(mod);
     }
+    if (mod.type === "equipment") return bindEq(thisMonth(), "");
     return;
   }
   remember(mod.id, date); persist();
@@ -1650,36 +1769,71 @@ function bindShopFiveS(mod) {
 }
 
 function bindEq(date, machineId) {
-  if (!state.equipment[date]) state.equipment[date] = {};
-  document.getElementById("qa-print")?.addEventListener("click", () => {
-    const ins = document.querySelector("[data-ins]");
-    if (ins && machineId) {
-      if (!state.equipment[date][machineId]) state.equipment[date][machineId] = { checks: {}, inspector: "" };
-      state.equipment[date][machineId].inspector = ins.value;
-      persist();
-    }
-    window.print();
+  const eq = eqRoute(date, machineId);
+  const ym = eq.ym;
+  const id = eq.machineId;
+  if (!id) return;
+  const pack = eqPack(ym, id);
+  const go = (nextYm) => {
+    remember("equipment", nextYm);
+    persist();
+    location.hash = `#/equipment/${nextYm}/${id}`;
+  };
+  const monthOf = () => {
+    const y = document.getElementById("eq-y")?.value;
+    const m = document.getElementById("eq-m")?.value;
+    if (!y || !m) return ym;
+    return `${y}-${String(Number(m)).padStart(2, "0")}`;
+  };
+  document.getElementById("qa-print")?.addEventListener("click", () => window.print());
+  document.getElementById("eq-prev")?.addEventListener("click", () => go(shiftMonth(monthOf(), -1)));
+  document.getElementById("eq-next")?.addEventListener("click", () => go(shiftMonth(monthOf(), 1)));
+  document.getElementById("eq-y")?.addEventListener("change", () => go(monthOf()));
+  document.getElementById("eq-m")?.addEventListener("change", () => go(monthOf()));
+  const save = () => persist();
+  root.querySelectorAll("[data-eq-k]").forEach((el) => {
+    el.onchange = () => { pack[el.dataset.eqK] = el.value; save(); };
   });
-  document.getElementById("eq-photo")?.addEventListener("change", async (e) => {
-    const file = e.target.files?.[0];
-    if (!file || !machineId) return;
-    if (!state.eqPhotos) state.eqPhotos = {};
-    state.eqPhotos[machineId] = await readAsDataUrl(file);
+  root.querySelectorAll("[data-eq-cell]").forEach((el) => {
+    el.onchange = () => {
+      const item = el.dataset.item;
+      if (!pack.cells[item]) pack.cells[item] = {};
+      pack.cells[item][el.dataset.day] = el.value;
+      save();
+    };
+  });
+  root.querySelectorAll("[data-eq-mark]").forEach((el) => {
+    el.onclick = () => {
+      const item = el.dataset.item;
+      if (!pack.cells[item]) pack.cells[item] = {};
+      const cur = pack.cells[item][el.dataset.day] || "";
+      const next = EQ_MARKS[(EQ_MARKS.indexOf(cur) + 1) % EQ_MARKS.length];
+      pack.cells[item][el.dataset.day] = next;
+      el.textContent = next;
+      el.classList.toggle("on", Boolean(next));
+      save();
+    };
+  });
+  root.querySelectorAll("[data-eq-issue]").forEach((el) => {
+    el.onchange = () => {
+      const i = Number(el.dataset.eqIssue);
+      if (!pack.issues[i]) pack.issues[i] = {};
+      pack.issues[i][el.dataset.k] = el.value;
+      save();
+    };
+  });
+  const setPic = async (key, file) => {
+    if (!file) return;
+    const bag = eqPhotoBag(id);
+    const url = await readAsDataUrl(file);
+    if (key === "machine") bag.machine = url;
+    else bag.items[key] = url;
     persist();
     render();
-  });
-  root.querySelectorAll("[data-eq]").forEach((el) => el.onchange = () => {
-    const id = el.dataset.eq;
-    if (!state.equipment[date][id]) state.equipment[date][id] = { checks: {}, inspector: "" };
-    state.equipment[date][id].checks[el.dataset.c] = el.checked;
-    const mark = el.parentElement?.querySelector(".print-mark");
-    if (mark) mark.textContent = el.checked ? "✓" : "";
-    persist();
-  });
-  root.querySelectorAll("[data-ins]").forEach((el) => el.onchange = () => {
-    const id = el.dataset.ins;
-    if (!state.equipment[date][id]) state.equipment[date][id] = { checks: {}, inspector: "" };
-    state.equipment[date][id].inspector = el.value; persist();
+  };
+  document.getElementById("eq-photo")?.addEventListener("change", (e) => setPic("machine", e.target.files?.[0]));
+  root.querySelectorAll("[data-eq-item-pic]").forEach((el) => {
+    el.onchange = (e) => setPic(el.dataset.eqItemPic, e.target.files?.[0]);
   });
 }
 

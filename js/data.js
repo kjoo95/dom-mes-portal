@@ -30,16 +30,27 @@ export const CNC_CHECKS = [
   "주변 통로·누유·전선 정리",
 ];
 
+export const EQ_MARKS = ["", "O", "X", "△", "V"];
+
+export const EQ_ITEMS = [
+  { id: "oil", no: 1, name: "절삭유", item: "절삭유농도 (%)", cycle: "1회/주(월)", kind: "text", criteria: "농도 하절기 8~12% / 동절기 7~10%" },
+  { id: "estop", no: 2, name: "스위치", item: "비상정지버튼 작동유무", cycle: "1회/일", kind: "mark", criteria: "비상정지버튼 작동 유무" },
+  { id: "air", no: 3, name: "공압계", item: "공압계 압력", cycle: "1회/일", kind: "text", criteria: "사용압력 0.4 ~ 0.6kg/㎠" },
+  { id: "way", no: 4, name: "습동유계", item: "습동유계 게이지 현황", cycle: "1회/일", kind: "mark", criteria: "게이지 유면 L~H 사이" },
+  { id: "cooler", no: 5, name: "오일쿨러", item: "오일쿨러 게이지 현황", cycle: "1회/일", kind: "mark", criteria: "게이지 유면 L~H 사이" },
+  { id: "pswitch", no: 6, name: "압력 스위치", item: "압력스위치", cycle: "1회/일", kind: "text", criteria: "최대 0.35MPA" },
+];
+
 export const MACHINES = [
-  { id: "long-1", group: "장축 기계", name: "장축 1호기" },
-  { id: "long-2", group: "장축 기계", name: "장축 2호기" },
-  { id: "m5-1", group: "5호기", name: "5호기-1" },
-  { id: "m5-2", group: "5호기", name: "5호기-2" },
-  { id: "m5-3", group: "5호기", name: "5호기-3" },
-  { id: "m5-4", group: "5호기", name: "5호기-4" },
-  { id: "m5-5", group: "5호기", name: "5호기-5" },
-  { id: "m6-1", group: "6호기", name: "6호기-1" },
-  { id: "m4-1", group: "4호기", name: "4호기-1" },
+  { id: "long-1", group: "장축 기계", name: "장축 1호기", no: "DOMG-PR-001", model: "PCV400", process: "MCT 가공" },
+  { id: "long-2", group: "장축 기계", name: "장축 2호기", no: "DOMG-PR-002", model: "PCV400", process: "MCT 가공" },
+  { id: "m5-1", group: "5호기", name: "5호기-1", no: "DOMG-PR-003", model: "PCV400", process: "MCT 가공" },
+  { id: "m5-2", group: "5호기", name: "5호기-2", no: "DOMG-PR-004", model: "PCV400", process: "MCT 가공" },
+  { id: "m5-3", group: "5호기", name: "5호기-3", no: "DOMG-PR-005", model: "PCV400", process: "MCT 가공" },
+  { id: "m5-4", group: "5호기", name: "5호기-4", no: "DOMG-PR-006", model: "PCV400", process: "MCT 가공" },
+  { id: "m5-5", group: "5호기", name: "5호기-5", no: "DOMG-PR-007", model: "PCV400", process: "MCT 가공" },
+  { id: "m6-1", group: "6호기", name: "6호기-1", no: "DOMG-PR-008", model: "PCV400", process: "MCT 가공" },
+  { id: "m4-1", group: "4호기", name: "4호기-1", no: "DOMG-PR-009", model: "PCV400", process: "MCT 가공" },
 ];
 
 export const FIVE_S_SHOP = [
@@ -236,7 +247,7 @@ export function defaultState() {
       { id: "lab-5s", title: "검사실 3정5S 관리", desc: "한 달 표에서 검사실 3정5S를 일자별로 체크합니다.", type: "lab-5s" },
       { id: "defect", title: "불량품 관리 현황", desc: "외관 사진과 재발 방지 대책을 남깁니다.", type: "defect" },
       { id: "inventory", title: "재고 현황", desc: "재고 개수와 LOT 번호를 기입합니다.", type: "inventory" },
-      { id: "equipment", title: "설비 점검", desc: "CNC 머시닝 일일 점검표를 체크합니다.", type: "equipment" },
+      { id: "equipment", title: "설비 점검", desc: "설비일상점검표를 연·월을 바꿔 가며 작성하고 인쇄합니다.", type: "equipment" },
       { id: "mastercam", title: "Mastercam 9.1 프로그램", desc: "Mastercam 저장 폴더를 연결하면 가공 후 저장한 프로그램이 자동으로 들어옵니다.", type: "mastercam" },
     ],
     dateFolders: {},

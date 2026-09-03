@@ -4,7 +4,7 @@ import { collectStats, parseProgram, toNc, toJson, accTime, toolOps, toolSpec, d
 import { boot } from "./safety.js";
 import { createMill } from "./mill3d.js?v=29";
 import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=42";
-import { todayISO } from "./data.js?v=44";
+import { todayISO } from "./data.js?v=45";
 
 const root = document.getElementById("app");
 const h = (v) => String(v ?? "")

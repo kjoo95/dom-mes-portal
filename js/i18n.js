@@ -147,6 +147,7 @@ const en = {
   "재고 개수와 LOT 번호를 기입합니다.": "Enter stock qty and LOT.",
   "설비 점검": "Equipment checks",
   "CNC 머시닝 일일 점검표를 체크합니다.": "Daily CNC check sheet.",
+  "설비일상점검표를 연·월을 바꿔 가며 작성하고 인쇄합니다.": "Fill and print the daily equipment check sheet by year and month.",
   "Mastercam 9.1 프로그램": "Mastercam 9.1 programs",
   "Mastercam 저장 폴더를 연결하면 가공 후 저장한 프로그램이 자동으로 들어옵니다.": "Connect the Mastercam folder to auto-import saved programs.",
   "카카오톡처럼 현장·검사실·개인 대화를 나눕니다.": "Chat like KakaoTalk for shop, lab, and DMs.",
