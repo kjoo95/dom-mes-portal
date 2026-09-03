@@ -1,7 +1,26 @@
-import { STORAGE_KEY, defaultState, todayISO } from "./data.js?v=42";
-import { seedJobs } from "./gcode.js?v=44";
+import { STORAGE_KEY, defaultState, todayISO } from "./data.js?v=43";
+import { seedJobs, parseProgram, toNc } from "./gcode.js?v=45";
 
 const BAK = `${STORAGE_KEY}-bak`;
+
+function refreshJob(job) {
+  if (!job) return job;
+  const src = job.source || (job.points?.length ? toNc(job) : "");
+  if (!src) return job;
+  try {
+    const parsed = parseProgram(job.name || "job.nc", src);
+    return {
+      ...parsed,
+      id: job.id,
+      date: job.date,
+      folderId: job.folderId,
+      optimized: job.optimized,
+      source: job.source || src,
+    };
+  } catch {
+    return job;
+  }
+}
 
 function withJobMeta(jobs) {
   const date = todayISO();
@@ -56,7 +75,7 @@ function hydrate(parsed) {
   const base = defaultState();
   const cam = { ...base.cam, ...(parsed.cam || {}) };
   cam.jobs = Array.isArray(parsed.cam?.jobs) && parsed.cam.jobs.length
-    ? parsed.cam.jobs
+    ? parsed.cam.jobs.map(refreshJob)
     : withJobMeta(seedJobs());
   cam.seen = parsed.cam?.seen || {};
   cam.watchName = parsed.cam?.watchName || "";

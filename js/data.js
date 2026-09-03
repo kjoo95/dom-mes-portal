@@ -1,7 +1,7 @@
 export const STORAGE_KEY = "dom-mes-fresh-v1";
 export const CUSTOMERS = ["참테크", "인텔릭스", "준테크놀러지", "토탈솔루션", "KEK"];
 export const STAFF = [
-  { id: "harry", name: "Harry", email: "harry@domeng.co.kr" },
+  { id: "thswlsvy1021", name: "관리자", email: "thswlsvy1021@domeng.co.kr" },
   { id: "choi", name: "최우선", email: "choi@domeng.co.kr" },
   { id: "kim", name: "김동근", email: "kim@domeng.co.kr" },
   { id: "jo", name: "조세원", email: "jo@domeng.co.kr" },

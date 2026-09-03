@@ -1,11 +1,11 @@
-import { getSession, login, signup, logout, isInternalNetwork, pullUsers, isAdmin, listUsers, pendingCount, setUserStatus } from "./auth.js?v=43";
+import { getSession, login, signup, logout, isInternalNetwork, pullUsers, isAdmin, listUsers, pendingCount, setUserStatus } from "./auth.js?v=44";
 import {
   CUSTOMERS, MILL_SHOPS, CNC_CHECKS, MACHINES, FIVE_S_SHOP, FIVE_S_LAB,
   fieldsFor, flattenChecks, badgeClass, todayISO,
-} from "./data.js?v=42";
+} from "./data.js?v=43";
 import { loadState, saveState, uid } from "./store.js?v=44";
 import { saveBlob, loadBlob, readAsDataUrl, saveDirHandle, loadDirHandle } from "./files.js?v=39";
-import { parseProgram } from "./gcode.js?v=39";
+import { parseProgram } from "./gcode.js?v=45";
 import { boot, showRecover } from "./safety.js?v=39";
 import { chatView, bindChat } from "./comm.js?v=50";
 import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=48";
@@ -215,8 +215,8 @@ function renderLogin(mode = "login") {
               <option value="lab">${ht("검사실")}</option>
             </select></label>
           ` : ""}
-          <label>${ht("아이디")}<input id="email" type="text" required autocomplete="username" placeholder="name@domeng.co.kr" /></label>
-          <label>${ht("비밀번호")}<input id="password" type="password" required autocomplete="${join ? "new-password" : "current-password"}" /></label>
+          <label>${ht("아이디")}<input id="email" type="text" required autocomplete="username" placeholder="thswlsvy1021" spellcheck="false" lang="en" /></label>
+          <label>${ht("비밀번호")}<input id="password" type="password" required lang="en" autocomplete="${join ? "new-password" : "current-password"}" /></label>
           ${join ? `<label>${ht("비밀번호 확인")}<input id="confirm" type="password" required autocomplete="new-password" /></label>` : ""}
           <p class="err" id="err"></p>
           <button class="btn red" type="submit">${join ? ht("가입 신청") : ht("로그인")}</button>

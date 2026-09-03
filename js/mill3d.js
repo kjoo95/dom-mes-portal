@@ -1,4 +1,4 @@
-import { toolR, toolColor, accTime } from "./gcode.js?v=44";
+import { toolR, toolColor, accTime } from "./gcode.js?v=45";
 
 function bboxOf(job) {
   const b = job?.bbox;
@@ -224,7 +224,7 @@ function makeToolMesh(t, topZ, minZ) {
 
 export function createMill(job) {
   const b = bboxOf(job);
-  const pad = 2.5;
+  const pad = 0.8;
   const minX = b.minX - pad;
   const maxX = b.maxX + pad;
   const minY = b.minY - pad;
@@ -233,8 +233,8 @@ export function createMill(job) {
   const cutZ = pts0.filter((p) => !p.rapid).map((p) => p.z || 0);
   const deep = cutZ.length ? Math.min(...cutZ) : -8;
   const high = cutZ.length ? Math.max(...cutZ) : 0;
-  const minZ = deep - 1;
-  const topZ = Math.max(high, 0) + 5;
+  const minZ = deep - 0.2;
+  const topZ = Math.max(high, 0);
   const spanX = Math.max(maxX - minX, 8);
   const spanY = Math.max(maxY - minY, 8);
   const spanZ = Math.max(topZ - minZ, 8);
@@ -634,8 +634,9 @@ export function createMill(job) {
   }
 
   function ensureTool(t) {
-    if (gpu.tool && gpu.toolT === t) return;
-    const mesh = makeToolMesh(t, topZ, minZ);
+    const n = Number(t) || 1;
+    if (gpu.tool && Number(gpu.toolT) === n) return;
+    const mesh = makeToolMesh(n, topZ, minZ);
     gpu.tool = {
       pos: buffer(mesh.pos),
       nrm: buffer(mesh.nrm),
@@ -643,7 +644,7 @@ export function createMill(job) {
       idx: indexBuffer(mesh.idx),
       count: mesh.idx.length,
     };
-    gpu.toolT = t;
+    gpu.toolT = n;
   }
 
   function drawGL(canvas, w, ht, tool, view) {

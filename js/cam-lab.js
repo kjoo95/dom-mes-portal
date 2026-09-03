@@ -1,8 +1,8 @@
-import { getSession, logout, isInternalNetwork } from "./auth.js?v=43";
+import { getSession, logout, isInternalNetwork } from "./auth.js?v=44";
 import { loadState, saveState, uid } from "./store.js";
-import { collectStats, optimizeJob, toNc, toJson, accTime, toolOps, toolSpec } from "./gcode.js?v=44";
+import { collectStats, optimizeJob, toNc, toJson, accTime, toolOps, toolSpec } from "./gcode.js?v=45";
 import { boot } from "./safety.js";
-import { createMill } from "./mill3d.js?v=24";
+import { createMill } from "./mill3d.js?v=25";
 import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=42";
 
 const root = document.getElementById("app");
@@ -69,7 +69,7 @@ function render() {
   const cycle = job?.timeMin || 0;
   const elapsed = cycle * sim.t;
   const remain = Math.max(0, cycle - elapsed);
-  const stock = mill?.stock;
+  const stock = job?.stock || mill?.stock;
   const nextOp = seq[opIndex + 1];
   const nextLabel = nextOp ? `다음 공구 T${nextOp.tool}` : "마지막 공구";
   const spec = curOp ? toolSpec(curOp.tool) : null;
@@ -93,11 +93,15 @@ function render() {
           <button class="btn sm" id="del-all" type="button">축적 데이터 모두 지우기</button>
         </div>
         <p class="side-label">프로그램 가공 순서</p>
-        ${seq.map((o, i) => `<p class="mute pad ${i === opIndex ? "op-on" : ""}" data-seq="${i}">T${o.tool} 자리 · ${h(o.spec?.name || "")}${i === opIndex ? " · 진행 중" : ""}</p>`).join("") || `<p class="mute pad">없음</p>`}
+        <div class="seq-list">
+        ${seq.map((o, i) => `<p class="seq-row ${i === opIndex ? "op-on" : ""}" data-seq="${i}">T${o.tool} · ${h(o.spec?.name || "")}${i === opIndex ? " · 진행" : ""}</p>`).join("") || `<p class="seq-row mute">없음</p>`}
+        </div>
         <p class="side-label">공구 통계</p>
-        ${stats.map((s) => `<p class="mute pad mag-row ${s.tool === curOp?.tool ? "op-on" : ""}" data-mag="${s.tool}">
-          <b>T${s.tool} 자리</b> ${h(s.name)}<br>F${h(s.feedLabel)} · S${h(s.spindleLabel)} · ${Math.round(s.length)}mm
-        </p>`).join("") || `<p class="mute pad">없음</p>`}
+        <div class="seq-list">
+        ${stats.map((s) => `<p class="seq-row mag-row ${s.tool === curOp?.tool ? "op-on" : ""}" data-mag="${s.tool}">
+          <b>T${s.tool}</b> ${h(s.name)} · ${h(s.feedLabel)} · ${h(s.spindleLabel)}
+        </p>`).join("") || `<p class="seq-row mute">없음</p>`}
+        </div>
       </aside>
       <div class="lab-main">
         <div>
@@ -337,7 +341,7 @@ function at(points, t) {
         x: a.x + (b.x - a.x) * u,
         y: a.y + (b.y - a.y) * u,
         z: (a.z || 0) + ((b.z || 0) - (a.z || 0)) * u,
-        t: b.t ?? a.t,
+        t: Number(b.t ?? a.t ?? 1),
         f: b.f ?? a.f ?? 0,
         s: b.s ?? a.s ?? 0,
         rapid: b.rapid,
@@ -346,7 +350,7 @@ function at(points, t) {
     }
   }
   const last = points[points.length - 1];
-  return { x: last.x, y: last.y, z: last.z || 0, t: last.t, f: last.f || 0, s: last.s || 0, rapid: last.rapid, change: last.change };
+  return { x: last.x, y: last.y, z: last.z || 0, t: Number(last.t || 1), f: last.f || 0, s: last.s || 0, rapid: last.rapid, change: last.change };
 }
 
 function syncTime(pos) {

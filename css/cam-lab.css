@@ -51,8 +51,17 @@
   border-radius: 10px;
   padding: 12px;
 }
+.seq-list { display: flex; flex-direction: column; gap: 1px; margin: 0 0 10px; }
+.seq-row {
+  margin: 0;
+  padding: 3px 8px;
+  font-size: 12px;
+  line-height: 1.3;
+  color: var(--mute);
+}
+.seq-row.mute { padding: 3px 8px; }
 .op-on { color: var(--red); font-weight: 700; }
-.mag-row { line-height: 1.45; }
+.mag-row { line-height: 1.35; }
 .times { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; margin: 12px 0 4px; }
 .time-box { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
 .time-box span { display: block; color: var(--mute); font-size: 12px; margin-bottom: 4px; }

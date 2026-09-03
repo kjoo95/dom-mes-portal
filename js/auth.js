@@ -7,18 +7,30 @@ const FAIL_LIMIT = 5;
 const LOCK_MS = 10 * 60 * 1000;
 
 const HARRY = {
-  id: "harry",
-  name: "Harry",
-  email: "harry@domeng.co.kr",
+  id: "thswlsvy1021",
+  name: "관리자",
+  email: "thswlsvy1021@domeng.co.kr",
   team: "office",
   role: "admin",
   status: "approved",
-  salt: "dom-harry-seed",
-  hash: "ff33bfa8474a38b2b2a951461c1633bb0cb9533d9291d328255ec2e20621c339",
+  salt: "dom-admin-seed",
+  hash: "37b18bffe0e945e5863e138c98667192635d8bb14025b8139b18bea9f11e1445",
 };
 
-function isHarry(email) {
-  return String(email || "").toLowerCase() === HARRY.email;
+const OLD_ADMIN = ["harry@domeng.co.kr", "harry"];
+
+function foldText(raw) {
+  return String(raw || "")
+    .normalize("NFKC")
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .trim();
+}
+
+function isSeedAdmin(userOrEmail) {
+  const email = foldText(userOrEmail?.email || userOrEmail).toLowerCase();
+  const id = foldText(userOrEmail?.id || "").toLowerCase();
+  return email === HARRY.email || email === OLD_ADMIN[0] || id === HARRY.id || id === OLD_ADMIN[1]
+    || email.split("@")[0] === HARRY.id;
 }
 
 function userStatus(u) {
@@ -27,7 +39,7 @@ function userStatus(u) {
 }
 
 function userRole(u) {
-  if (isHarry(u?.email) || u?.role === "admin") return "admin";
+  if (isSeedAdmin(u) || u?.role === "admin") return "admin";
   return "user";
 }
 
@@ -37,7 +49,7 @@ function stamp(u) {
 
 function normalizeUser(u) {
   if (!u?.email) return u;
-  return { ...u, status: isHarry(u.email) ? "approved" : userStatus(u), role: userRole(u) };
+  return { ...u, status: isSeedAdmin(u) ? "approved" : userStatus(u), role: userRole(u) };
 }
 
 export function isInternalNetwork() {
@@ -116,14 +128,18 @@ function mergeUsers(base, incoming) {
 
 function ensureSeed() {
   const list = readUsers().map(normalizeUser);
-  const hasHarry = list.some((u) => isHarry(u.email));
-  const next = hasHarry ? list.map((u) => (isHarry(u.email) ? { ...u, role: "admin", status: "approved" } : u)) : mergeUsers(list, [{ ...HARRY, created: 0, updated: 0 }]);
-  if (JSON.stringify(list) !== JSON.stringify(next)) writeUsers(next);
+  const rest = list.filter((u) => !isSeedAdmin(u));
+  const prev = list.find((u) => isSeedAdmin(u));
+  const next = [{ ...HARRY, created: prev?.created || 0, updated: Date.now() }, ...rest].map(normalizeUser);
+  if (JSON.stringify(list) !== JSON.stringify(next)) {
+    writeUsers(next);
+    localStorage.removeItem(LOCK_KEY);
+  }
   return next;
 }
 
 export function normalizeEmail(raw) {
-  const v = String(raw || "").trim().toLowerCase();
+  const v = foldText(raw).toLowerCase();
   if (!v) return "";
   if (v.includes("@")) return v;
   return `${v}@${DOMAIN}`;
@@ -143,8 +159,14 @@ function makeId(email, existing) {
 }
 
 function findUser(email) {
-  const key = normalizeEmail(email);
-  return ensureSeed().find((u) => String(u.email).toLowerCase() === key) || null;
+  const raw = foldText(email).toLowerCase();
+  const key = normalizeEmail(raw);
+  const local = raw.includes("@") ? raw.split("@")[0] : raw;
+  return ensureSeed().find((u) => {
+    const mail = String(u.email || "").toLowerCase();
+    const id = String(u.id || "").toLowerCase();
+    return mail === key || id === local || mail.split("@")[0] === local;
+  }) || null;
 }
 
 export function listStaff() {
@@ -161,7 +183,7 @@ export function pendingCount() {
 
 export function isAdmin(session = getSession()) {
   if (!session?.email) return false;
-  if (session.role === "admin" || isHarry(session.email)) return true;
+  if (session.role === "admin" || isSeedAdmin(session)) return true;
   const user = findUser(session.email);
   return userRole(user) === "admin";
 }
@@ -232,7 +254,7 @@ export async function login(email, password) {
   }
   await pullUsers();
   const user = findUser(email);
-  const ok = user && (await hashPass(password, user.salt)) === user.hash;
+  const ok = user && (await hashPass(foldText(password), user.salt)) === user.hash;
   if (ok) {
     setLock({ fails: 0, until: 0 });
     const status = userStatus(user);
@@ -258,12 +280,12 @@ export async function signup({ name, email, password, confirm, team }) {
   }
   const display = String(name || "").trim();
   const mail = normalizeEmail(email);
-  const pass = String(password || "");
+  const pass = foldText(password);
   const teamId = ["shop", "lab", "office"].includes(team) ? team : "office";
   if (display.length < 2) return { ok: false, message: "이름을 두 글자 이상 입력하세요." };
   if (!emailOk(mail)) return { ok: false, message: `회사 메일(@${DOMAIN})만 가입할 수 있습니다.` };
   if (pass.length < 8) return { ok: false, message: "비밀번호는 8자 이상이어야 합니다." };
-  if (pass !== String(confirm || "")) return { ok: false, message: "비밀번호 확인이 같지 않습니다." };
+  if (pass !== foldText(confirm)) return { ok: false, message: "비밀번호 확인이 같지 않습니다." };
   await pullUsers();
   const list = ensureSeed();
   const existing = list.find((u) => String(u.email).toLowerCase() === mail);
@@ -299,7 +321,7 @@ export async function setUserStatus(email, status) {
   const list = ensureSeed();
   const user = list.find((u) => String(u.email).toLowerCase() === normalizeEmail(email));
   if (!user) return { ok: false, message: "해당 직원을 찾을 수 없습니다." };
-  if (isHarry(user.email) && status !== "approved") return { ok: false, message: "관리자 계정은 거절할 수 없습니다." };
+  if (isSeedAdmin(user) && status !== "approved") return { ok: false, message: "관리자 계정은 거절할 수 없습니다." };
   user.status = status;
   user.updated = Date.now();
   writeUsers(list);
