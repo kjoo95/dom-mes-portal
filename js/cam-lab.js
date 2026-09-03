@@ -2,7 +2,7 @@ import { getSession, logout, isInternalNetwork } from "./auth.js?v=43";
 import { loadState, saveState, uid } from "./store.js";
 import { collectStats, optimizeJob, toNc, toJson, accTime, toolOps, toolSpec } from "./gcode.js?v=44";
 import { boot } from "./safety.js";
-import { createMill } from "./mill3d.js?v=23";
+import { createMill } from "./mill3d.js?v=24";
 import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=42";
 
 const root = document.getElementById("app");
@@ -16,7 +16,7 @@ let opJob = null;
 let opIndex = 0;
 let sim = { playing: false, t: 0, last: 0, raf: 0, speed: 64 };
 const SPEEDS = [1, 4, 16, 32, 64, 120, 300];
-const CAM0 = { yaw: 0.86, pitch: 0.72, scale: 1.45, panX: 0, panY: 12 };
+const CAM0 = { yaw: 0.92, pitch: 0.98, scale: 1.22, panX: 0, panY: 8 };
 let cam = { ...CAM0 };
 let drag = null;
 
@@ -126,6 +126,7 @@ function render() {
         </div>
         <div class="stage">
           <canvas id="sim" width="1400" height="780"></canvas>
+          <div class="sim-hud" id="sim-hud"></div>
           <p class="view-hint">왼쪽 드래그 회전 · 휠 확대/축소 · 오른쪽 드래그 이동 · 더블클릭 시점 초기화</p>
         </div>
         <textarea class="nc" id="outnc" readonly>${job ? h(toNc(job)) : ""}</textarea>
@@ -254,7 +255,7 @@ function render() {
 function fitCanvas(canvas) {
   const box = canvas.parentElement;
   if (!box) return;
-  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  const dpr = Math.min(2.5, window.devicePixelRatio || 1);
   const w = Math.max(720, box.clientWidth);
   const h = Math.max(520, box.clientHeight);
   const tw = Math.round(w * dpr);
@@ -385,15 +386,10 @@ function draw() {
   const canvas = document.getElementById("sim");
   if (!canvas) return;
   fitCanvas(canvas);
-  const ctx = canvas.getContext("2d");
+  const hud = document.getElementById("sim-hud");
   const job = current();
-  const w = canvas.width, ht = canvas.height;
-  ctx.fillStyle = "#101012";
-  ctx.fillRect(0, 0, w, ht);
   if (!job?.points?.length) {
-    ctx.fillStyle = "#9a9a96";
-    ctx.font = `${Math.round(14 * Math.min(2, window.devicePixelRatio || 1))}px sans-serif`;
-    ctx.fillText("가공할 프로그램이 없습니다.", 24, 36);
+    if (hud) hud.textContent = "가공할 프로그램이 없습니다.";
     syncTime();
     return;
   }
@@ -404,25 +400,22 @@ function draw() {
   seqNow.forEach((o, i) => { if (sim.t >= o.t0 - 1e-6) hit = i; });
   opIndex = hit;
   const specNow = toolSpec(pos.t);
+  const cycle = job.timeMin || 0;
+  const mode = pos.rapid ? "급속이송" : pos.change ? "공구교환" : "절삭";
+  const fs = pos.change ? "" : pos.rapid ? `  S${Math.round(pos.s || 0)}` : `  F${Math.round(pos.f || 0)}  S${Math.round(pos.s || 0)}`;
   try {
     if (!mill) {
       mill = createMill(pathJob);
       opJob = pathJob;
     }
     mill.setProgress(sim.t);
-    mill.draw(ctx, w, ht, pos, cam);
+    mill.draw(canvas, canvas.width, canvas.height, pos, cam);
+    if (hud) {
+      hud.textContent = `${job.partName}  T${pos.t} ${specNow.name}${fs}  ${mode}  ${sim.speed}x  X${pos.x.toFixed(1)}  Y${pos.y.toFixed(1)}  Z${pos.z.toFixed(1)}  ${formatMin(cycle * sim.t)} / ${formatMin(cycle)}`;
+    }
   } catch {
-    ctx.fillStyle = "#c41e3a";
-    ctx.font = "16px sans-serif";
-    ctx.fillText("3D 화면을 준비하지 못했습니다. 다시 열기를 눌러 주세요.", 24, 48);
+    if (hud) hud.textContent = "3D 화면을 준비하지 못했습니다. 다시 열기를 눌러 주세요.";
   }
-  const dpr = Math.min(2, window.devicePixelRatio || 1);
-  ctx.fillStyle = "#d8d8d4";
-  ctx.font = `${Math.round(14 * dpr)}px sans-serif`;
-  const cycle = job.timeMin || 0;
-  const mode = pos.rapid ? "급속이송" : pos.change ? "공구교환" : "절삭";
-  const fs = pos.change ? "" : pos.rapid ? `  S${Math.round(pos.s || 0)}` : `  F${Math.round(pos.f || 0)}  S${Math.round(pos.s || 0)}`;
-  ctx.fillText(`${job.partName}  T${pos.t} ${specNow.name}${fs}  ${mode}  ${sim.speed}x  X${pos.x.toFixed(1)}  Y${pos.y.toFixed(1)}  Z${pos.z.toFixed(1)}  ${formatMin(cycle * sim.t)} / ${formatMin(cycle)}`, 18 * dpr, 28 * dpr);
   syncTime(pos);
 }
 

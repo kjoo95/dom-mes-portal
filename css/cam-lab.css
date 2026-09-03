@@ -3,7 +3,7 @@
 .speeds { display: inline-flex; flex-wrap: wrap; gap: 4px; align-items: center; }
 .speeds .btn.on { background: var(--red); color: #fff; }
 .stage {
-  background: #101012;
+  background: radial-gradient(ellipse at 48% 40%, #8b949e 0%, #5d666f 58%, #3f464d 100%);
   border-radius: 12px;
   min-height: 560px;
   height: min(72vh, 820px);
@@ -14,6 +14,21 @@
 }
 .stage:active { cursor: grabbing; }
 .stage canvas { width: 100%; height: 100%; display: block; }
+.sim-hud {
+  position: absolute;
+  left: 14px;
+  top: 12px;
+  right: 14px;
+  margin: 0;
+  color: #f4f6f8;
+  font: 13px/1.45 ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.01em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .view-hint {
   position: absolute;
   left: 12px;
