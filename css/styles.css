@@ -680,6 +680,13 @@ table.checks .chk { width: 72px; text-align: center; }
   padding: 16px 16px 32px;
   place-items: unset;
 }
+.print-page.view-only .a4-sheet input,
+.print-page.view-only .a4-sheet textarea,
+.print-page.view-only .a4-sheet select,
+.print-page.view-only .a4-sheet button,
+.print-page.view-only .a4-sheet label {
+  pointer-events: none;
+}
 .a4-tools {
   position: sticky;
   top: 0;

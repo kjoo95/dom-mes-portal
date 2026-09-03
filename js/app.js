@@ -3,13 +3,13 @@ import {
   CUSTOMERS, MILL_SHOPS, MACHINES, FIVE_S_SHOP, FIVE_S_LAB, QA_MEASURE_ITEMS,
   EQ_ITEMS, EQ_MARKS,
   fieldsFor, flattenChecks, badgeClass, todayISO,
-} from "./data.js?v=49";
-import { loadState, saveState, uid } from "./store.js?v=56";
+} from "./data.js?v=50";
+import { loadState, saveState, uid } from "./store.js?v=57";
 import { saveBlob, loadBlob, readAsDataUrl, saveDirHandle, loadDirHandle, removeBlob } from "./files.js?v=39";
 import { parseProgram, decodeCamFile, mayBeCamFile } from "./gcode.js?v=52";
 import { boot, showRecover } from "./safety.js?v=39";
 import { chatView, bindChat } from "./comm.js?v=51";
-import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=58";
+import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=59";
 
 const WHOIS_MAIL = "https://email.whois.co.kr/v2/";
 
@@ -188,6 +188,7 @@ function isSheetMod(mod) {
 }
 
 function isPrintPage(mod, extra, date) {
+  if (mod?.type === "records" && extra) return true;
   if (mod?.type === "equipment") return Boolean(extra) || MACHINES.some((m) => m.id === date);
   if (["climate", "lab-climate", "five-s", "lab-5s"].includes(mod?.type) && extra !== "map") return true;
   if (isMonthMod(mod) && date && extra !== "map") return true;
@@ -337,9 +338,9 @@ function recCount(mod) {
   if (mod.type === "five-s") return Object.values(state.fiveS.dates || {}).filter((p) => p?.shop && Object.keys(p.shop).length).length;
   if (mod.type === "lab-5s") return Object.values(state.fiveS.dates || {}).filter((p) => p?.lab && Object.keys(p.lab).some((k) => k.startsWith("l"))).length;
   if (mod.type === "mastercam") return (state.cam.files || []).length;
-  if (mod.type === "inbound") return (state.records[mod.id] || []).filter(inboundUsed).length;
   if (mod.type === "chat") return (state.chat?.messages || []).length;
   if (mod.type === "mail") return (state.mail?.drafts || []).length;
+  if (isSheetMod(mod)) return recRowsOf(mod).length;
   return (state.records[mod.id] || []).length;
 }
 
@@ -575,8 +576,33 @@ function isRecordListMod(mod) {
 
 function recRowsOf(mod) {
   const list = state.records[mod.id] || [];
-  if (mod.type === "inbound") return list.filter(inboundUsed);
-  return list.filter(Boolean);
+  return list.filter((row) => sheetUsed(mod, row));
+}
+
+function sheetUsed(mod, r) {
+  if (!r) return false;
+  if (mod.type === "inbound") return inboundUsed(r);
+  if (mod.type === "process") {
+    return Boolean(
+      String(r.partNo || r.partName || r.lot || r.line || r.wo || r.detail || r.owner || "").trim()
+      || r.planQty || r.doneQty
+      || r.status
+      || (r.photos || []).some(Boolean)
+    );
+  }
+  if (mod.type === "quality") {
+    return Boolean(String(r.partNo || r.partName || r.lot || r.inspector || "").trim() || r.qtyIn || r.qtyOut || r.status);
+  }
+  if (mod.type === "delivery") {
+    return Boolean(String(r.partNo || r.partName || r.customer || r.note || "").trim() || r.qty || r.status);
+  }
+  if (mod.type === "defect") {
+    return Boolean(String(r.partNo || r.partName || r.type || r.action || "").trim() || r.qty);
+  }
+  if (mod.type === "inventory") {
+    return Boolean(String(r.item || r.kind || r.lot || r.location || "").trim() || r.qty);
+  }
+  return Boolean(recTitle(r, mod.type));
 }
 
 function recTitle(row, type) {
@@ -590,14 +616,7 @@ function recTitle(row, type) {
 }
 
 function recOpenHash(mod, row) {
-  const d = recDate(row, mod.type);
-  if (mod.type === "inbound") {
-    const ym = monthKey(d) || row.month || "";
-    return ym ? `#/${mod.id}/${ym}` : `#/${mod.id}`;
-  }
-  if (d && row.id) return `#/${mod.id}/${d}/${row.id}`;
-  if (d) return `#/${mod.id}/${d}`;
-  return `#/${mod.id}`;
+  return `#/records/${mod.id}/${row.id}`;
 }
 
 function recHay(mod, row) {
@@ -637,14 +656,14 @@ function recCell(mod, row, field) {
 
 function recAct(mod, row) {
   return `<td class="act">
-    <a class="btn sm" href="${h(recOpenHash(mod, row))}">${ht("수정")}</a>
-    <button class="btn sm" data-del="${h(row.id)}" data-mod="${h(mod.id)}" type="button">${ht("삭제")}</button>
+    <a class="btn sm" href="${h(recOpenHash(mod, row))}">${ht("보기")}</a>
   </td>`;
 }
 
-function recordsView(folderId = "") {
+function recordsView(folderId = "", rowId = "") {
   const mods = recordMods().filter(isRecordListMod);
   const picked = mods.find((m) => m.id === folderId);
+  if (picked && rowId) return recordsPeekView(picked, rowId);
   if (picked) return recordsFolderView(picked);
   const groups = recFolderGroups();
   const entries = recAllEntries().sort((a, b) => {
@@ -663,11 +682,9 @@ function recordsView(folderId = "") {
     <div class="page-head">
       <div>
         <h1>${ht("기록 관리")}</h1>
-        <p>${ht("모든 폴더의 기록을 한곳에서 찾아 고칩니다.")}</p>
+        <p>${ht("각 폴더에서 저장한 기록을 한곳에서 찾아 봅니다.")}</p>
       </div>
       <div class="head-actions">
-        ${saveNote()}
-        <button class="btn" id="folder-save" type="button">${ht("저장")}</button>
         <input id="q" type="search" placeholder="${ht("검색")}" autocomplete="off" />
       </div>
     </div>
@@ -703,11 +720,9 @@ function recordsFolderView(mod) {
     <div class="page-head">
       <div>
         <h1>${h(t(mod.title))}</h1>
-        <p>${ht("이 폴더에 모인 기록입니다. 수정을 누르면 원래 표로 갑니다.")}</p>
+        <p>${ht("이 폴더에서 저장한 기록입니다. 보기를 누르면 표를 볼 수 있습니다.")}</p>
       </div>
       <div class="head-actions">
-        ${saveNote()}
-        <button class="btn" id="folder-save" type="button">${ht("저장")}</button>
         <input id="q" type="search" placeholder="${ht("검색")}" autocomplete="off" />
       </div>
     </div>
@@ -724,8 +739,19 @@ function recordsFolderView(mod) {
     </section>`;
 }
 
-function bindRecords(folderId) {
+function recordsPeekView(mod, rowId) {
+  const row = recRowsOf(mod).find((r) => r.id === rowId) || (state.records[mod.id] || []).find((r) => r.id === rowId);
+  if (!row) return recordsFolderView(mod);
+  const date = recDate(row, mod.type) || todayISO();
+  return printDocView(mod, date, row.id, true);
+}
+
+function bindRecords(folderId, rowId) {
   if (folderId) manageId = folderId;
+  if (rowId) {
+    document.getElementById("qa-print")?.addEventListener("click", printSheet);
+    return;
+  }
   const q = document.getElementById("q");
   const filter = () => {
     const needle = (q?.value || "").trim().toLowerCase();
@@ -741,23 +767,10 @@ function bindRecords(folderId) {
   q?.addEventListener("input", filter);
   q?.addEventListener("keyup", filter);
   q?.addEventListener("compositionend", filter);
-  root.querySelectorAll("[data-del]").forEach((b) => {
-    b.onclick = () => {
-      const id = b.dataset.mod;
-      const rowId = b.dataset.del;
-      const row = (state.records[id] || []).find((x) => x.id === rowId);
-      const label = row ? (recTitle(row, state.modules.find((m) => m.id === id)?.type) || rowId) : rowId;
-      if (!confirm(`‘${label}’을 지울까요?`)) return;
-      state.records[id] = (state.records[id] || []).filter((x) => x.id !== rowId);
-      persist();
-      render();
-    };
-  });
-  bindSaveButton();
 }
 
 function moduleView(mod, date, extra) {
-  if (mod.type === "records") return recordsView(date);
+  if (mod.type === "records") return recordsView(date, extra);
   if (mod.type === "chat") return chatView(state, h, date);
   if (mod.type === "mastercam") {
     applyCamRoute(date);
@@ -1099,25 +1112,26 @@ function fc(f, row) {
   return fi(f.key, row[f.key], type);
 }
 
-function a4Tools(backHref, extras = "") {
+function a4Tools(backHref, extras = "", viewOnly = false) {
   const extra = String(extras).trim();
   return `<div class="a4-tools no-print">
     ${backHref ? `<a class="btn ghost" href="${h(backHref)}">${ht("뒤로가기")}</a>` : ""}
-    ${extra}
-    <button class="btn" id="sheet-save" type="button">${ht("저장")}</button>
+    ${viewOnly ? "" : extra}
+    ${viewOnly ? "" : `<button class="btn" id="sheet-save" type="button">${ht("저장")}</button>`}
     <button class="btn red" id="qa-print" type="button">${ht("인쇄")}</button>
-    ${saveNote()}
+    ${viewOnly ? "" : saveNote()}
   </div>`;
 }
 
-function printDocView(mod, date, id) {
+function printDocView(mod, date, id, viewOnly = false) {
   const row = (state.records[mod.id] || []).find((x) => x.id === id);
   if (!row) return mod.type === "inbound" ? inboundMonthView(mod, monthKey(date) || date) : dayView(mod, date);
   const photos = mod.type === "quality" || mod.type === "defect" || mod.type === "process";
-  const back = mod.type === "inbound" ? (monthKey(row.date) || monthKey(date) || date) : date;
+  const backDate = mod.type === "inbound" ? (monthKey(row.date) || monthKey(date) || date) : date;
+  const back = viewOnly ? `#/records/${mod.id}` : `#/${mod.id}/${backDate}`;
   return `
-    <div class="print-page">
-      ${a4Tools(`#/${mod.id}/${back}`, photos ? `<label class="btn">${ht("사진 추가")}<input id="sheet-photos" type="file" accept="image/*" multiple hidden></label>` : "")}
+    <div class="print-page${viewOnly ? " view-only" : ""}">
+      ${a4Tools(back, photos ? `<label class="btn">${ht("사진 추가")}<input id="sheet-photos" type="file" accept="image/*" multiple hidden></label>` : "", viewOnly)}
       <div class="a4-wrap page"><form id="sheet-form">${a4For(mod, row)}</form></div>
     </div>`;
 }
@@ -2133,7 +2147,7 @@ function camView(mod) {
 
 function bindModule(mod, date, extra) {
   if (mod.type === "records") {
-    bindRecords(date);
+    bindRecords(date, extra);
     return;
   }
   if (mod.type === "chat") {
