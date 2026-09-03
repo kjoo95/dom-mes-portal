@@ -429,9 +429,147 @@ table.checks .chk { width: 72px; text-align: center; }
 }
 .a4-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 10px; border-bottom: 2px solid #c41e3a; padding-bottom: 5px; margin-bottom: 8px; flex: 0 0 auto; }
 .a4-head b { color: #c41e3a; font-size: 22px; letter-spacing: -0.06em; }
-.a4-head span { color: #666; font-size: 11px; margin-left: 8px; }
+.a4-head > div span { color: #666; font-size: 11px; margin-left: 8px; }
 .a4-head h1 { margin: 0; font-size: 16px; }
 .a4-head p { margin: 0; color: #666; font-size: 11px; }
+.a4-head-corp {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+  gap: 8px;
+  border-bottom: 2px solid #111;
+  padding-bottom: 6px;
+  margin-bottom: 6px;
+}
+.a4-head-corp b { color: #111; letter-spacing: 0.08em; }
+.a4-head-corp h1 { margin: 6px 0 2px; font-size: 18px; }
+.a4-stamp {
+  border-collapse: collapse;
+  width: 84mm;
+  font-size: 10px;
+  outline: 1px solid #111;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 1px #111;
+}
+.a4-stamp th,
+.a4-stamp td {
+  border: 1px solid #111;
+  text-align: center;
+  vertical-align: middle;
+  padding: 0;
+}
+.a4-stamp thead th {
+  background: #173a63;
+  color: #fff;
+  font-weight: 700;
+  height: 7mm;
+  letter-spacing: 0.22em;
+  font-size: 11px;
+}
+.a4-stamp .stamp-side {
+  width: 8mm;
+  background: #e8eef5;
+  color: #173a63;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+}
+.a4-stamp .stamp-ink {
+  width: 23mm;
+  height: 16mm;
+  background:
+    repeating-linear-gradient(-45deg, #fff 0 6px, #f4f6f8 6px 7px);
+}
+.a4-stamp .stamp-ink span {
+  display: inline-grid;
+  place-items: center;
+  width: 11mm;
+  height: 11mm;
+  border: 1.6px solid #c41e3a;
+  border-radius: 50%;
+  color: #c41e3a;
+  font-size: 9px;
+  font-weight: 800;
+  opacity: 0.38;
+}
+.a4-stamp input {
+  height: 7mm;
+  text-align: center;
+  font-size: 11px;
+  background: #fffef8;
+}
+.process-a4 .a4-meta th,
+.process-a4 .a4-meta td {
+  padding: 2px 5px;
+  height: 7.2mm;
+}
+.process-a4 .a4-meta th { width: 18%; background: #eef2f6; }
+.a4-process-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #111;
+}
+.a4-process-main {
+  display: block;
+  flex: 0 0 auto;
+}
+.a4-process-main .a4-meta { border: 0; }
+.process-a4 .detail-row th,
+.process-a4 .detail-row td {
+  height: 28mm;
+  vertical-align: top;
+}
+.process-a4 .detail-row textarea {
+  min-height: 24mm;
+  height: 24mm;
+}
+.a4-process-detail h2,
+.a4-process-photo h2 {
+  margin: 0;
+  padding: 4px 8px;
+  background: #173a63;
+  color: #fff;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  flex: 0 0 auto;
+}
+.a4-process-photo {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  border-left: 0;
+  border-top: 1px solid #111;
+  background: #fff;
+}
+.a4-process-photo .a4-photos,
+.a4-process-photo .a4-empty {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+}
+.a4-process-photo .a4-empty {
+  display: grid;
+  place-items: center;
+  text-align: center;
+  line-height: 1.5;
+  background:
+    repeating-linear-gradient(45deg, #fafafa 0 8px, #f3f3f3 8px 16px);
+}
+.a4-stamp thead th,
+.a4-process-detail h2,
+.a4-process-photo h2,
+.a4-stamp .stamp-side {
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
 .a4-sheet h2 { margin: 8px 0 4px; font-size: 12px; flex: 0 0 auto; }
 .a4-meta, .a4-meas { width: 100%; border-collapse: collapse; font-size: 12px; }
 .a4-meta th, .a4-meta td, .a4-meas th, .a4-meas td { border: 1px solid #222; padding: 5px 6px; }
@@ -443,6 +581,26 @@ table.checks .chk { width: 72px; text-align: center; }
 .a4-grow > table { flex: 1; height: 100%; }
 .a4-photos { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; min-height: 42mm; align-content: start; }
 .a4-photos img { width: 52mm; height: 40mm; object-fit: cover; border: 1px solid #ccc; }
+.a4-process-photo .a4-photos {
+  display: grid;
+  gap: 0;
+  padding: 0;
+  align-content: stretch;
+  flex-wrap: nowrap;
+  min-height: 0;
+}
+.a4-process-photo .a4-photos.one { grid-template-columns: 1fr; }
+.a4-process-photo .a4-photos.two { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
+.a4-process-photo .a4-photos.many { grid-template-columns: 1fr 1fr; }
+.a4-process-photo .a4-photos img {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-fit: cover;
+  border: 0;
+  border-right: 1px solid #111;
+  border-bottom: 1px solid #111;
+}
 .a4-empty { color: #888; font-size: 12px; flex: 1; display: grid; place-items: center; border: 1px dashed #bbb; background: #fafafa; min-height: 36mm; }
 .a4-sign { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 8px; flex: 0 0 auto; }
 .a4-sign span { border: 1px solid #222; padding: 4px 0 0; text-align: center; font-size: 11px; height: 14mm; }
@@ -596,6 +754,7 @@ table.checks .chk { width: 72px; text-align: center; }
     height: 273mm;
     padding: 0;
   }
+  .process-a4 .a4-process-body { height: 100%; }
   .month-sheet {
     min-height: 194mm;
     height: 194mm;

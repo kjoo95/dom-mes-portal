@@ -689,13 +689,13 @@ function tableOf(mod, rows, date) {
   if (mod.type === "quality") return qualitySheet(rows, date, mod.id);
   if (mod.type === "delivery") return deliverySheet(rows, date, mod.id);
   const fields = fieldsFor(mod.type, true);
-  const extra = (mod.type === "quality" || mod.type === "defect") ? "<th>사진</th>" : "";
+  const extra = (mod.type === "quality" || mod.type === "defect" || mod.type === "process") ? "<th>사진</th>" : "";
   const body = rows.map((r) => {
     const cells = fields.map((f) => {
       if (f.key === "progress") return `<td>${h(processProgress(r.planQty, r.doneQty))}%</td>`;
       return `<td>${h(r[f.key])}</td>`;
     }).join("");
-    const pics = (mod.type === "quality" || mod.type === "defect")
+    const pics = (mod.type === "quality" || mod.type === "defect" || mod.type === "process")
       ? `<td>${(r.photos || []).length ? (r.photos || []).map((s) => `<img class="thumb" src="${s}" alt="">`).join("") : "-"}</td>`
       : "";
     return `<tr><td class="act"><a class="btn sm" href="#/${mod.id}/${date}/${r.id}">${ht("수정")}</a>
@@ -769,7 +769,7 @@ function fc(f, row) {
 function printDocView(mod, date, id) {
   const row = (state.records[mod.id] || []).find((x) => x.id === id);
   if (!row) return mod.type === "inbound" ? inboundMonthView(mod, monthKey(date) || date) : dayView(mod, date);
-  const photos = mod.type === "quality" || mod.type === "defect";
+  const photos = mod.type === "quality" || mod.type === "defect" || mod.type === "process";
   const back = mod.type === "inbound" ? (monthKey(row.date) || monthKey(date) || date) : date;
   return `
     <div class="print-page">
@@ -870,23 +870,79 @@ function deliveryA4(r) {
       </article>`;
 }
 
+function processStamp(r) {
+  const name = (key, fallback) => fi(key, r[key] || fallback || "");
+  const day = (key) => fi(key, r[key] || "", "date");
+  return `<table class="a4-stamp">
+          <thead>
+            <tr>
+              <th class="stamp-side">결재</th>
+              <th>작업자</th>
+              <th>확인</th>
+              <th>승인</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th class="stamp-side">날인</th>
+              <td class="stamp-ink"><span>인</span></td>
+              <td class="stamp-ink"><span>인</span></td>
+              <td class="stamp-ink"><span>인</span></td>
+            </tr>
+            <tr>
+              <th class="stamp-side">성명</th>
+              <td>${name("signWorker", r.owner)}</td>
+              <td>${name("signCheck")}</td>
+              <td>${name("signApprove")}</td>
+            </tr>
+            <tr>
+              <th class="stamp-side">일자</th>
+              <td>${day("signWorkerDate")}</td>
+              <td>${day("signCheckDate")}</td>
+              <td>${day("signApproveDate")}</td>
+            </tr>
+          </tbody>
+        </table>`;
+}
+
+function processPhotos(r) {
+  const pics = r.photos || [];
+  if (!pics.length) {
+    return `<p class="a4-empty">작업·제품 사진<br>위 ‘사진’으로 첨부</p>`;
+  }
+  const shown = pics.slice(0, 4);
+  const cls = shown.length === 1 ? "one" : shown.length === 2 ? "two" : "many";
+  return `<div class="a4-photos ${cls}">${shown.map((s) => `<img src="${s}" alt="">`).join("")}</div>`;
+}
+
 function processA4(r) {
   return `
-      <article class="a4-sheet">
-        ${a4Head("가공 작업 현황", r.workDate || r.startDate)}
-        <table class="a4-meta">
-          <tr><th>품번</th><td>${fi("partNo", r.partNo)}</td><th>품명</th><td>${fi("partName", r.partName)}</td></tr>
-          <tr><th>LOT 번호</th><td>${fi("lot", r.lot)}</td><th>라인</th><td>${fi("line", r.line)}</td></tr>
-          <tr><th>작업지시</th><td>${fi("wo", r.wo)}</td><th>담당</th><td>${fi("owner", r.owner)}</td></tr>
-          <tr><th>가공 시작일</th><td>${fi("startDate", r.startDate, "date")}</td><th>최근 작업일</th><td>${fi("workDate", r.workDate, "date")}</td></tr>
-          <tr><th>완료일</th><td>${fi("endDate", r.endDate, "date")}</td><th>상태</th><td>${fi("status", r.status)}</td></tr>
-          <tr><th>계획 수량</th><td>${fi("planQty", r.planQty, "number")}</td><th>완료 수량</th><td>${fi("doneQty", r.doneQty, "number")}</td></tr>
-          <tr><th>진행률</th><td colspan="3">${fc({ key: "progress" }, r)}</td></tr>
-        </table>
-        <h2>완료 상세</h2>
-        <div class="a4-grow">${ft("detail", r.detail)}</div>
-        <div class="a4-sign">
-          <span>작업자</span><span>확인</span><span>승인</span>
+      <article class="a4-sheet process-a4">
+        <header class="a4-head a4-head-corp">
+          <div>
+            <b>DOM</b><span>${ht("디오엠")}</span>
+            <h1>가공 작업 현황</h1>
+            <p>FORM-PR-01 · A4 · ${h(r.workDate || r.startDate || "")}</p>
+          </div>
+          ${processStamp(r)}
+        </header>
+        <div class="a4-process-body">
+          <div class="a4-process-main">
+            <table class="a4-meta">
+              <tr><th>품번</th><td>${fi("partNo", r.partNo)}</td><th>품명</th><td>${fi("partName", r.partName)}</td></tr>
+              <tr><th>LOT 번호</th><td>${fi("lot", r.lot)}</td><th>라인</th><td>${fi("line", r.line)}</td></tr>
+              <tr><th>작업지시</th><td>${fi("wo", r.wo)}</td><th>담당</th><td>${fi("owner", r.owner)}</td></tr>
+              <tr><th>가공 시작일</th><td>${fi("startDate", r.startDate, "date")}</td><th>최근 작업일</th><td>${fi("workDate", r.workDate, "date")}</td></tr>
+              <tr><th>완료일</th><td>${fi("endDate", r.endDate, "date")}</td><th>상태</th><td>${fi("status", r.status)}</td></tr>
+              <tr><th>계획 수량</th><td>${fi("planQty", r.planQty, "number")}</td><th>완료 수량</th><td>${fi("doneQty", r.doneQty, "number")}</td></tr>
+              <tr><th>진행률</th><td colspan="3">${fc({ key: "progress" }, r)}</td></tr>
+              <tr class="detail-row"><th>완료 상세</th><td colspan="3">${ft("detail", r.detail)}</td></tr>
+            </table>
+          </div>
+          <aside class="a4-process-photo">
+            <h2>작업 · 제품 사진</h2>
+            ${processPhotos(r)}
+          </aside>
         </div>
       </article>`;
 }
@@ -1320,6 +1376,9 @@ function bindSheet(mod, id) {
       else if (!row.status || row.status === "완료") row.status = row.progress > 0 ? "가동" : "예정";
       const el = document.querySelector("[data-progress]");
       if (el) el.textContent = `${row.progress}%`;
+      ["signWorker", "signCheck", "signApprove", "signWorkerDate", "signCheckDate", "signApproveDate"].forEach((k) => {
+        if (k in data) row[k] = data[k];
+      });
     }
     remember(mod.id, recDate(row, mod.type));
     persist();
@@ -1354,7 +1413,9 @@ function edit(mod, row, fields, date) {
     extra = `<label>사진<input id="photos" type="file" accept="image/*" multiple></label><div class="pics" id="prev">${(val.photos || []).map((s) => `<img src="${s}" alt="">`).join("")}</div>`;
   }
   if (mod.type === "process") {
-    extra = `<p class="mute" id="prog-hint">진행률은 계획 수량과 완료 수량으로 자동 계산됩니다.</p>`;
+    extra = `<p class="mute" id="prog-hint">진행률은 계획 수량과 완료 수량으로 자동 계산됩니다.</p>
+      <label>작업 사진<input id="photos" type="file" accept="image/*" multiple></label>
+      <div class="pics" id="prev">${(val.photos || []).map((s) => `<img src="${s}" alt="">`).join("")}</div>`;
   }
   form(row ? "수정" : "추가", formFields, val, async (data) => {
     const next = { ...(row || { id: uid("r"), photos: [] }), ...cast(formFields, data) };
