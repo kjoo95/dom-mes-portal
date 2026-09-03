@@ -153,7 +153,10 @@ function bestDecode(u8) {
 }
 
 function looksGcode(text) {
-  return /[GMTXYZFS]\s*-?(?:\d|\.)/i.test(String(text || ""));
+  const code = stripComments(text);
+  const xyz = (code.match(/\b[XYZ]\s*-?(?:\d|\.)/gi) || []).length;
+  const g = (code.match(/\bG\s*0*(0|1|2|3)\b/gi) || []).length;
+  return xyz >= 4 && g >= 1;
 }
 
 function salvageCamText(text) {
@@ -205,15 +208,15 @@ export function decodeCamFile(buffer, name = "") {
   if (u8.length >= 2 && u8[0] === 0xFF && u8[1] === 0xFE) return decodeNc(new TextDecoder("utf-16le").decode(u8));
   if (u8.length >= 2 && u8[0] === 0xFE && u8[1] === 0xFF) return decodeNc(new TextDecoder("utf-16be").decode(u8));
   if (u8.length >= 3 && u8[0] === 0xEF && u8[1] === 0xBB && u8[2] === 0xBF) return decodeNc(new TextDecoder("utf-8").decode(u8));
+  const binary = isBinaryBytes(u8) || /\.mc9$/i.test(name);
+  if (binary) {
+    const extracted = extractCamText(u8);
+    return extracted || "";
+  }
   let zeros = 0;
   const n = Math.min(u8.length, 400);
   for (let i = 1; i < n; i += 2) if (u8[i] === 0) zeros += 1;
   if (zeros > n / 4) return decodeNc(new TextDecoder("utf-16le").decode(u8));
-  const binary = isBinaryBytes(u8) || /\.mc9$/i.test(name);
-  if (binary) {
-    const extracted = extractCamText(u8);
-    if (extracted) return extracted;
-  }
   return decodeNc(bestDecode(u8));
 }
 
@@ -308,22 +311,23 @@ function parseToolLib(text) {
 }
 
 function looksNci(text) {
-  const lines = String(text).split(/\r?\n/).map((l) => l.trim()).filter(Boolean).slice(0, 160);
+  const lines = String(text).split(/\r?\n/).map((l) => l.trim()).filter(Boolean).slice(0, 400);
   if (lines.length < 8) return false;
   let pairs = 0;
-  let hits = 0;
+  let moves = 0;
+  let tools = 0;
   for (let i = 0; i < lines.length - 1; i += 1) {
     if (!/^\d{1,5}$/.test(lines[i])) continue;
     const next = lines[i + 1];
     const numeric = /^[-0-9eE.\s]+$/.test(next);
     const quoted = /"/.test(next);
-    if (!numeric && !quoted && /[GMTXYZFS]/i.test(next)) continue;
-    if (!numeric && !quoted && !/^\d/.test(next) && !/"/.test(next)) continue;
+    if (!numeric && !quoted && /[GMTXYZFS]/i.test(next) && !/^\d/.test(next)) continue;
     pairs += 1;
     const g = Number(lines[i]);
-    if (g === 0 || g === 1 || g === 2 || g === 3 || g === 4 || g === 1001 || g === 1002 || g === 1013 || g === 1016 || g === 1020 || g === 1050) hits += 1;
+    if (g === 0 || g === 1 || g === 2 || g === 3) moves += 1;
+    if (g === 1001 || g === 1002 || g === 1050) tools += 1;
   }
-  return pairs >= 4 && hits >= 2;
+  return pairs >= 6 && moves >= 2 && (tools >= 1 || moves >= 8);
 }
 
 function nciNums(line) {
@@ -346,10 +350,9 @@ function nciName(line) {
 }
 
 function inchFileHint(dias, span) {
-  const real = dias.filter((d) => d > 0);
-  if (!real.length) return span > 0 && span < 40;
-  const inchish = real.filter((d) => d > 0.04 && d < 2.6).length;
-  return inchish >= Math.ceil(real.length / 2) && (span < 80 || !span);
+  const inchTools = (dias || []).filter((d) => d > 0.04 && d < 2.6);
+  if (!inchTools.length) return false;
+  return span > 0 && span < 28;
 }
 
 function parseNci(name, text) {
@@ -528,13 +531,6 @@ function parseNci(name, text) {
   const job = finishJob(name, points, ops, [...tools], cut, rapid, true, looksBinaryText(rawText) ? "" : rawText, toolLib);
   if (partHint) job.partName = partHint.replace(/[_-]+/g, " ");
   if (material) job.material = material;
-  if (stockW > 0 && stockD > 0) {
-    const w = Number((stockW * toMm).toFixed(1));
-    const d = Number((stockD * toMm).toFixed(1));
-    const h = Number(((stockH || job.stock.h || 10) * toMm).toFixed(1));
-    job.stock = { w, d, h, x: stockX * toMm, y: stockY * toMm, fromNci: true, material };
-    job.bbox = { minX: stockX * toMm, minY: stockY * toMm, maxX: stockX * toMm + w, maxY: stockY * toMm + d };
-  }
   return job;
 }
 
@@ -684,20 +680,39 @@ export function toolOps(points, lib) {
   return ops;
 }
 
+function cutScore(job) {
+  return (job?.points || []).filter((p) => !p.rapid && !p.change).length;
+}
+
+function safeParse(fn, name, text) {
+  try {
+    return fn(name, text);
+  } catch {
+    return null;
+  }
+}
+
 export function parseProgram(name, text) {
   let rawText = decodeNc(text);
+  if (!rawText.trim()) return finishJob(name, [], [], [], 0, 0, true, "", {});
   if (looksBinaryText(rawText) || /\.mc9$/i.test(name || "")) {
     const salvaged = salvageCamText(rawText);
     if (looksNci(salvaged) || looksGcode(salvaged)) rawText = salvaged;
+    else return finishJob(name, [], [], [], 0, 0, true, "", {});
   }
-  if (looksNci(rawText) || /\.nci$/i.test(name || "")) return parseNci(name, rawText);
-  const looksNc = looksGcode(rawText);
-  if (!looksNc) {
-    if (isCamFileName(name)) {
-      return finishJob(name, [], [], [], 0, 0, true, looksBinaryText(rawText) ? "" : rawText, {});
-    }
-    return syntheticJob(name);
-  }
+  const nciJob = safeParse(parseNci, name, rawText);
+  const ncJob = safeParse(parseFanuc, name, rawText);
+  const nciCuts = cutScore(nciJob);
+  const ncCuts = cutScore(ncJob);
+  if (nciCuts >= 2 && nciCuts >= ncCuts) return nciJob;
+  if (ncCuts >= 2) return ncJob;
+  if ((nciJob?.points || []).length >= 2) return nciJob;
+  if ((ncJob?.points || []).length >= 2) return ncJob;
+  return finishJob(name, [], [], [], 0, 0, true, "", {});
+}
+
+function parseFanuc(name, text) {
+  const rawText = decodeNc(text);
   const expanded = expandSubs(rawText);
   let toMm = fileToMm(expanded);
   const toolLib = parseToolLib(expanded);
@@ -874,18 +889,32 @@ function syntheticJob(name) {
   return finishJob(name, points, ops, [t], cut, rapid, false, "", { [t]: { d: 6, name: `T${t}` } });
 }
 
+function cutPts(points) {
+  const cuts = (points || []).filter((p) => !p.rapid && !p.change);
+  return cuts.length ? cuts : (points || []).filter((p) => !p.change);
+}
+
+function stockZ(points) {
+  const zs = cutPts(points).map((p) => p.z || 0);
+  if (!zs.length) return { deep: -8, top: 0 };
+  const deep = Math.min(...zs);
+  const work = zs.filter((z) => z <= 1.5);
+  if (work.length) return { deep, top: Math.max(0, ...work) };
+  const sorted = [...zs].sort((a, b) => a - b);
+  const p90 = sorted[Math.max(0, Math.round((sorted.length - 1) * 0.9))];
+  return { deep, top: Math.max(0, p90) };
+}
+
 function stockSize(points) {
-  const cuts = (points || []).filter((p) => !p.rapid);
-  const src = cuts.length ? cuts : (points || []);
+  const src = cutPts(points);
   if (!src.length) return { w: 0, d: 0, h: 0 };
   const b = bbox(src);
-  const zs = src.map((p) => p.z || 0);
-  const minz = Math.min(...zs);
-  const maxz = Math.max(...zs, 0);
+  const { deep, top } = stockZ(points);
+  const pad = 1.6;
   return {
-    w: Number((b.maxX - b.minX).toFixed(1)),
-    d: Number((b.maxY - b.minY).toFixed(1)),
-    h: Number((maxz - minz).toFixed(1)),
+    w: Number((b.maxX - b.minX + pad * 2).toFixed(1)),
+    d: Number((b.maxY - b.minY + pad * 2).toFixed(1)),
+    h: Number((top - (deep - 0.2)).toFixed(1)),
   };
 }
 
@@ -908,7 +937,7 @@ function finishJob(name, points, ops, tools, cut, rapid, fromNc, source, toolLib
     cutMm: Number(cut.toFixed(1)),
     rapidMm: Number(rapid.toFixed(1)),
     timeMin: Number(timeMin.toFixed(2)),
-    bbox: bbox(points.filter((p) => !p.rapid).length ? points.filter((p) => !p.rapid) : points),
+    bbox: bbox(cutPts(points).length ? cutPts(points) : points),
     stock: stockSize(points),
     material: "",
   };

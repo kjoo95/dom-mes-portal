@@ -67,13 +67,23 @@
   cursor: pointer;
 }
 .seq-row:hover { background: #f4f4f2; color: var(--ink); }
-.job-q {
-  width: calc(100% - 20px);
-  margin: 0 10px 8px;
-  padding: 8px 10px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
+.drop-zone {
+  margin: 0 10px 10px;
+  padding: 12px 10px;
+  border: 1px dashed var(--line);
+  border-radius: 10px;
   background: #fff;
+  text-align: center;
+}
+.drop-zone p {
+  margin: 0 0 8px;
+  color: var(--mute);
+  font-size: 12px;
+  line-height: 1.4;
+}
+.drop-zone.on {
+  border-color: var(--red);
+  background: #fff5f5;
 }
 .seq-row.mute { padding: 3px 8px; }
 .op-on { color: var(--red); font-weight: 700; }

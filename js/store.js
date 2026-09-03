@@ -1,22 +1,27 @@
 import { STORAGE_KEY, defaultState, todayISO } from "./data.js?v=43";
-import { seedJobs, parseProgram, toNc, looksBinaryText } from "./gcode.js?v=48";
+import { seedJobs, parseProgram, toNc, looksBinaryText } from "./gcode.js?v=49";
 
 const BAK = `${STORAGE_KEY}-bak`;
 
 function refreshJob(job) {
   if (!job) return job;
-  const src = job.source || (job.points?.length ? toNc(job) : "");
-  if (!src) return job;
+  if (looksBinaryText(job.source || "") && !(job.points || []).length) {
+    return { ...job, points: [], source: "" };
+  }
+  const src = looksBinaryText(job.source || "") ? "" : (job.source || (job.points?.length ? toNc(job) : ""));
+  if (!src) return (job.points || []).length >= 2 ? { ...job, source: "" } : { ...job, points: [], source: "" };
   try {
     const parsed = parseProgram(job.name || "job.nc", src);
-    if (!parsed?.points?.length && job.points?.length) return job;
+    if ((parsed?.points || []).filter((p) => !p.rapid && !p.change).length < 2) {
+      return (job.points || []).filter((p) => !p.rapid && !p.change).length >= 2 ? job : { ...job, points: [], source: "" };
+    }
     return {
       ...parsed,
       id: job.id,
       date: job.date,
       folderId: job.folderId,
       optimized: job.optimized,
-      source: looksBinaryText(job.source || "") ? (parsed.source || "") : (job.source || src),
+      source: parsed.source || src,
     };
   } catch {
     return job;
@@ -76,7 +81,7 @@ function hydrate(parsed) {
   const base = defaultState();
   const cam = { ...base.cam, ...(parsed.cam || {}) };
   cam.jobs = Array.isArray(parsed.cam?.jobs) && parsed.cam.jobs.length
-    ? parsed.cam.jobs.map(refreshJob)
+    ? parsed.cam.jobs.map(refreshJob).filter((j) => (j?.points || []).filter((p) => !p.rapid && !p.change).length >= 2 && !j.optimized)
     : withJobMeta(seedJobs());
   cam.seen = parsed.cam?.seen || {};
   cam.watchName = parsed.cam?.watchName || "";

@@ -1,20 +1,13 @@
-import { toolSpec, accTime } from "./gcode.js?v=48";
+import { toolSpec, accTime } from "./gcode.js?v=49";
 
 function bboxOf(job) {
-  const st = job?.stock;
-  if (st?.fromNci && st.w > 1 && st.d > 1) {
-    const ox = Number(st.x) || 0;
-    const oy = Number(st.y) || 0;
-    return { minX: ox, minY: oy, maxX: ox + st.w, maxY: oy + st.d };
-  }
-  const b = job?.bbox;
-  if (b) return b;
-  const pts = job?.points || [];
-  if (!pts.length) return { minX: 0, minY: 0, maxX: 80, maxY: 50 };
-  return pts.reduce((o, p) => ({
+  const pts = (job?.points || []).filter((p) => !p.rapid && !p.change);
+  const src = pts.length ? pts : (job?.points || []);
+  if (!src.length) return { minX: 0, minY: 0, maxX: 80, maxY: 50 };
+  return src.reduce((o, p) => ({
     minX: Math.min(o.minX, p.x), minY: Math.min(o.minY, p.y),
     maxX: Math.max(o.maxX, p.x), maxY: Math.max(o.maxY, p.y),
-  }), { minX: pts[0].x, minY: pts[0].y, maxX: pts[0].x, maxY: pts[0].y });
+  }), { minX: src[0].x, minY: src[0].y, maxX: src[0].x, maxY: src[0].y });
 }
 
 function hexRgb(hex) {
@@ -231,17 +224,23 @@ function makeToolMesh(t, topZ, minZ, lib) {
 
 export function createMill(job) {
   const b = bboxOf(job);
-  const pad = 0.8;
+  const pad = 1.6;
   const minX = b.minX - pad;
   const maxX = b.maxX + pad;
   const minY = b.minY - pad;
   const maxY = b.maxY + pad;
   const pts0 = job.points || [];
-  const cutZ = pts0.filter((p) => !p.rapid).map((p) => p.z || 0);
-  const deep = cutZ.length ? Math.min(...cutZ) : (job.stock?.h ? -Math.abs(job.stock.h) : -8);
-  const high = cutZ.length ? Math.max(...cutZ) : 0;
-  const minZ = job.stock?.fromNci && job.stock.h ? Math.min(deep, -(Number(job.stock.h) || 8)) - 0.2 : deep - 0.2;
-  const topZ = job.stock?.fromNci ? Math.max(high, 0) : Math.max(high, 0);
+  const cutZ = pts0.filter((p) => !p.rapid && !p.change).map((p) => p.z || 0);
+  const deep = cutZ.length ? Math.min(...cutZ) : -8;
+  const workZ = cutZ.filter((z) => z <= 1.5);
+  let high = 0;
+  if (workZ.length) high = Math.max(0, ...workZ);
+  else if (cutZ.length) {
+    const sorted = [...cutZ].sort((a, b) => a - b);
+    high = Math.max(0, sorted[Math.max(0, Math.round((sorted.length - 1) * 0.9))]);
+  }
+  const minZ = deep - 0.2;
+  const topZ = high;
   const spanX = Math.max(maxX - minX, 8);
   const spanY = Math.max(maxY - minY, 8);
   const spanZ = Math.max(topZ - minZ, 8);

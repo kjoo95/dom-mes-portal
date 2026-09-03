@@ -3,9 +3,9 @@ import {
   CUSTOMERS, MILL_SHOPS, CNC_CHECKS, MACHINES, FIVE_S_SHOP, FIVE_S_LAB,
   fieldsFor, flattenChecks, badgeClass, todayISO,
 } from "./data.js?v=43";
-import { loadState, saveState, uid } from "./store.js?v=46";
+import { loadState, saveState, uid } from "./store.js?v=47";
 import { saveBlob, loadBlob, readAsDataUrl, saveDirHandle, loadDirHandle } from "./files.js?v=39";
-import { parseProgram, decodeCamFile, isCamFileName } from "./gcode.js?v=48";
+import { parseProgram, decodeCamFile, isCamFileName } from "./gcode.js?v=49";
 import { boot, showRecover } from "./safety.js?v=39";
 import { chatView, bindChat } from "./comm.js?v=50";
 import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=48";
@@ -328,7 +328,7 @@ function shell(session, active, inner, printMode = false) {
           ${link("home", "운영 폴더")}
           ${link("manage", "수정·삭제")}
           ${isAdmin(session) ? `<a class="${"members" === active ? "on" : ""}" href="#/members">${ht("가입 승인")}${wait ? ` (${wait})` : ""}</a>` : ""}
-          <a href="./cam-lab.html?v=30">${ht("가공 프로그램")}</a>
+          <a href="./cam-lab.html?v=31">${ht("가공 프로그램")}</a>
         </div>
         <div class="side-block comm">
           <p class="side-label">${ht("소통")}</p>
@@ -1215,7 +1215,7 @@ function camView(mod, date) {
     <td>${j.fromNc ? "NC 해석" : "추정 경로"}</td>
   </tr>`).join("");
   return `<div class="head"><div><h1>${h(mod.title)}</h1><p>${h(date)}</p></div>
-    <a class="btn red sm" href="./cam-lab.html?v=30">가공 프로그램</a></div>
+    <a class="btn red sm" href="./cam-lab.html?v=31">가공 프로그램</a></div>
     <section class="panel">
       <div class="bar">${folder.parent ? `<button class="btn sm" id="up" type="button">상위</button>` : ""}
         <button class="btn sm" id="nf" type="button">폴더</button>
@@ -1546,9 +1546,20 @@ async function ingestCamFile(file, date = todayISO()) {
   state.cam.files.push({ id, folderId, name: file.name, size: file.size, date, auto: true });
   const text = await readNcText(file);
   const parsed = parseProgram(file.name, text);
-  if (!parsed?.points?.length) {
+  const cuts = (parsed?.points || []).filter((p) => !p.rapid && !p.change).length;
+  if (cuts < 2) {
     remember("mastercam", date);
     return;
+  }
+  const stem = file.name.replace(/\.[^.]+$/, "").toLowerCase();
+  const idx = state.cam.jobs.findIndex((j) => (j.name || "").replace(/\.[^.]+$/, "").toLowerCase() === stem);
+  if (idx >= 0) {
+    const oldCuts = (state.cam.jobs[idx].points || []).filter((p) => !p.rapid && !p.change).length;
+    if (cuts <= oldCuts) {
+      remember("mastercam", date);
+      return;
+    }
+    state.cam.jobs.splice(idx, 1);
   }
   const job = { ...parsed, id: uid("job"), fileId: id, folderId, date };
   state.cam.jobs.push(job);

@@ -1,8 +1,8 @@
 import { getSession, logout, isInternalNetwork } from "./auth.js?v=45";
-import { loadState, saveState, uid } from "./store.js";
-import { collectStats, parseProgram, toNc, toJson, accTime, toolOps, toolSpec, decodeCamFile, isCamFileName } from "./gcode.js?v=48";
+import { loadState, saveState, uid } from "./store.js?v=47";
+import { collectStats, parseProgram, toNc, toJson, accTime, toolOps, toolSpec, decodeCamFile, isCamFileName } from "./gcode.js?v=49";
 import { boot } from "./safety.js";
-import { createMill } from "./mill3d.js?v=28";
+import { createMill } from "./mill3d.js?v=29";
 import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=42";
 import { todayISO } from "./data.js?v=43";
 
@@ -16,7 +16,6 @@ let mill = null;
 let opJob = null;
 let opIndex = 0;
 let focusOp = -1;
-let jobQuery = "";
 let sim = { playing: false, t: 0, last: 0, raf: 0, speed: 64 };
 const SPEEDS = [1, 4, 16, 32, 64, 120, 300];
 const CAM0 = { yaw: 0.92, pitch: 0.98, scale: 1.22, panX: 0, panY: 8 };
@@ -24,19 +23,12 @@ let cam = { ...CAM0 };
 let drag = null;
 
 function allJobs() {
-  return (state.cam.jobs || []).filter((j) => !j.optimized);
-}
-
-function jobs() {
-  const q = jobQuery.trim().toLowerCase();
-  const list = allJobs();
-  if (!q) return list;
-  return list.filter((j) => `${j.partName || ""} ${j.name || ""}`.toLowerCase().includes(q));
+  return (state.cam.jobs || []).filter((j) => !j.optimized && (j.points || []).filter((p) => !p.rapid && !p.change).length >= 2);
 }
 
 function current() {
   const list = allJobs();
-  return list.find((j) => j.id === selectedId) || jobs()[0] || list[0];
+  return list.find((j) => j.id === selectedId) || list[0];
 }
 
 function isCamNc(name) {
@@ -49,32 +41,76 @@ async function readNcText(file) {
   return decodeCamFile(buf, file.name);
 }
 
-function preferCamFiles(files) {
-  const list = [...files];
-  const by = new Map();
-  list.forEach((f) => {
-    const stem = String(f.name || "").replace(/\.[^.]+$/, "").toLowerCase();
-    if (!by.has(stem)) by.set(stem, []);
-    by.get(stem).push(f);
-  });
-  const rank = (n) => (/\.nci$/i.test(n) ? 0 : /\.(nc|cnc|tap|min)$/i.test(n) ? 1 : /\.mc9$/i.test(n) ? 2 : 3);
-  const out = [];
-  by.forEach((group) => {
-    group.sort((a, b) => rank(a.name) - rank(b.name));
-    out.push(group[0]);
-  });
-  return out.length ? out : list;
+function fileStem(name) {
+  return String(name || "").replace(/\.[^.]+$/, "").toLowerCase();
 }
 
-async function ingestLabFile(file) {
-  if (!isCamNc(file.name)) return null;
-  const text = await readNcText(file);
-  const parsed = parseProgram(file.name, text);
-  if (!parsed?.points?.length) return null;
+function cutCount(job) {
+  return (job?.points || []).filter((p) => !p.rapid && !p.change).length;
+}
+
+async function takeFiles(fileList) {
+  const incoming = [...(fileList || [])].filter((f) => isCamNc(f.name));
+  if (!incoming.length) return 0;
+  const byStem = new Map();
+  for (const file of incoming) {
+    const text = await readNcText(file);
+    const parsed = parseProgram(file.name, text);
+    if (cutCount(parsed) < 2) continue;
+    const stem = fileStem(file.name);
+    const prev = byStem.get(stem);
+    if (!prev || cutCount(parsed) > cutCount(prev.parsed)) byStem.set(stem, { file, parsed });
+  }
+  if (!byStem.size) return 0;
   if (!state.cam.jobs) state.cam.jobs = [];
-  const job = { ...parsed, id: uid("job"), date: todayISO(), folderId: "cam-root" };
-  state.cam.jobs.unshift(job);
-  return job;
+  let last = null;
+  byStem.forEach(({ file, parsed }) => {
+    state.cam.jobs = state.cam.jobs.filter((j) => fileStem(j.name) !== fileStem(file.name));
+    const job = { ...parsed, id: uid("job"), date: todayISO(), folderId: "cam-root", name: file.name };
+    state.cam.jobs.unshift(job);
+    last = job;
+  });
+  selectedId = last.id;
+  focusOp = -1;
+  opIndex = 0;
+  persist();
+  sim.playing = false;
+  sim.t = 0;
+  loadView();
+  render();
+  return byStem.size;
+}
+
+async function walkEntry(entry, out) {
+  if (!entry) return;
+  if (entry.isFile) {
+    const file = await new Promise((resolve) => entry.file(resolve));
+    if (file) out.push(file);
+    return;
+  }
+  if (entry.isDirectory) {
+    const reader = entry.createReader();
+    const kids = [];
+    const read = () => new Promise((resolve) => reader.readEntries(resolve));
+    let batch = await read();
+    while (batch?.length) {
+      kids.push(...batch);
+      batch = await read();
+    }
+    for (const child of kids) await walkEntry(child, out);
+  }
+}
+
+async function loadCam(fileList) {
+  const all = [...(fileList || [])];
+  const incoming = all.filter((f) => isCamNc(f.name));
+  if (!incoming.length) {
+    if (all.length) alert("NC, NCI 또는 Mastercam 파일을 넣어 주세요. MC9만 있으면 같은 폴더의 NCI나 포스트한 NC를 함께 넣으면 됩니다.");
+    return 0;
+  }
+  const n = await takeFiles(incoming);
+  if (!n) alert("공구경로를 읽지 못했습니다. 마스터캠에서 NCI를 저장하거나 NC로 포스트한 파일을 넣어 주세요.");
+  return n;
 }
 
 function viewJob() {
@@ -153,8 +189,13 @@ function render() {
     location.href = "./portal.html?v=42";
     return;
   }
+  const kept = (state.cam.jobs || []).filter((j) => !j.optimized && (j.points || []).filter((p) => !p.rapid && !p.change).length >= 2);
+  if (kept.length !== (state.cam.jobs || []).length) {
+    state.cam.jobs = kept;
+    persist();
+  }
   const session = getSession();
-  const list = jobs();
+  const list = allJobs();
   const job = current();
   if (job) selectedId = allJobs().some((j) => j.id === selectedId) ? selectedId : job.id;
   const view = viewJob();
@@ -171,7 +212,7 @@ function render() {
   const spec = curOp ? toolSpec(curOp.tool, job?.toolLib) : null;
   const statLine = job
     ? `${h(job.partName || job.name)}${focusOp >= 0 ? ` · T${curOp?.tool}만 보기` : ` · ${seq.map((o) => `T${o.tool}`).join(" → ")}`} · 소재 ${stock ? `${stock.w}×${stock.d}×${stock.h} mm` : "—"}${job.material ? ` · ${h(job.material)}` : ""}`
-    : "프로그램 찾기로 NC 또는 NCI를 넣으면 여기 보입니다.";
+    : "프로그램을 넣으면 공구·이송·주축을 읽어 바로 돌립니다.";
   root.innerHTML = `
     <div class="app lab">
       <header>
@@ -180,17 +221,16 @@ function render() {
       </header>
       <aside class="side">
         <p class="side-label">프로그램</p>
-        <div class="side-actions">
-          <button class="btn red sm" id="open-prog" type="button">프로그램 찾기</button>
-          <button class="btn sm" id="open-folder" type="button">폴더에서 넣기</button>
+        <div class="drop-zone" id="drop-zone">
+          <p>파일을 여기 놓거나<br>아래 버튼으로 넣으면 됩니다.</p>
+          <button class="btn red sm" id="open-prog" type="button">프로그램 넣기</button>
           <input id="open-nc" type="file" multiple hidden accept=".nc,.nci,.cnc,.tap,.txt,.iso,.eia,.min,.ncc,.mc9,.mc8">
           <input id="open-dir" type="file" hidden webkitdirectory>
         </div>
-        <input class="job-q" id="job-q" type="search" placeholder="이름 찾기" value="${h(jobQuery)}" autocomplete="off">
         ${list.map((j) => `<div class="job-item">
           <button class="job-row ${j.id === job?.id ? "on" : ""}" data-id="${h(j.id)}" type="button">${h(j.partName || j.name)}<small>가공 ${formatMin(j.timeMin)}</small></button>
           <button class="btn sm" data-del="${h(j.id)}" type="button">삭제</button>
-        </div>`).join("") || `<p class="mute pad">${jobQuery ? "찾는 프로그램이 없습니다." : "없음"}</p>`}
+        </div>`).join("") || `<p class="mute pad">없음</p>`}
         <div class="side-actions">
           <button class="btn sm" id="del-all" type="button">목록 모두 지우기</button>
         </div>
@@ -239,63 +279,35 @@ function render() {
   applyHtmlLang();
   bindLang(render);
   document.getElementById("out").onclick = () => { logout(); location.href = "./portal.html?v=42"; };
-  document.getElementById("job-q")?.addEventListener("change", (e) => {
-    jobQuery = e.target.value || "";
-    render();
-  });
-  document.getElementById("job-q")?.addEventListener("keydown", (e) => {
-    if (e.key !== "Enter") return;
-    e.preventDefault();
-    jobQuery = e.target.value || "";
-    render();
-  });
-  const takeFiles = async (files) => {
-    const list = preferCamFiles([...files].filter((f) => isCamNc(f.name)));
-    if (!list.length) return alert("NC, NCI 또는 Mastercam 9(MC9) 파일이 없습니다.");
-    let last = null;
-    let miss = 0;
-    for (const file of list) {
-      const job = await ingestLabFile(file);
-      if (job) last = job;
-      else miss += 1;
-    }
-    if (!last) return alert("공구경로를 읽지 못했습니다. 마스터캠에서 NCI를 저장하거나 NC로 포스트한 파일을 넣어 주세요. MC9만 있으면 같은 폴더의 NCI/NC를 함께 넣어 주세요.");
-    selectedId = last.id;
-    focusOp = -1;
-    opIndex = 0;
-    persist();
-    sim.playing = false;
-    sim.t = 0;
-    loadView();
-    render();
-    if (miss) alert(`${list.length - miss}개를 넣었습니다. ${miss}개는 경로가 없어 건너뛰었습니다.`);
-  };
   document.getElementById("open-prog")?.addEventListener("click", () => {
     document.getElementById("open-nc")?.click();
   });
-  document.getElementById("open-folder")?.addEventListener("click", async () => {
-    if (window.showDirectoryPicker) {
-      try {
-        const dir = await window.showDirectoryPicker({ id: "dom-sim-nc" });
-        const files = [];
-        for await (const [, entry] of dir.entries()) {
-          if (entry.kind === "file" && isCamNc(entry.name)) files.push(await entry.getFile());
-        }
-        await takeFiles(files);
-        return;
-      } catch (err) {
-        if (err?.name === "AbortError") return;
-      }
-    }
-    document.getElementById("open-dir")?.click();
-  });
   document.getElementById("open-nc")?.addEventListener("change", async (e) => {
-    await takeFiles(e.target.files || []);
+    await loadCam(e.target.files || []);
     e.target.value = "";
   });
-  document.getElementById("open-dir")?.addEventListener("change", async (e) => {
-    await takeFiles(e.target.files || []);
-    e.target.value = "";
+  const zone = document.getElementById("drop-zone");
+  const lab = root.querySelector(".app.lab");
+  const stop = (e) => { e.preventDefault(); e.stopPropagation(); };
+  const collectDropped = async (e) => {
+    const files = [];
+    const items = [...(e.dataTransfer?.items || [])];
+    if (items.some((it) => it.webkitGetAsEntry)) {
+      for (const item of items) {
+        const entry = item.webkitGetAsEntry?.();
+        if (entry) await walkEntry(entry, files);
+      }
+    } else {
+      files.push(...(e.dataTransfer?.files || []));
+    }
+    return files;
+  };
+  lab?.addEventListener("dragover", (e) => { stop(e); zone?.classList.add("on"); });
+  lab?.addEventListener("dragleave", (e) => { if (!lab.contains(e.relatedTarget)) zone?.classList.remove("on"); });
+  lab?.addEventListener("drop", async (e) => {
+    stop(e);
+    zone?.classList.remove("on");
+    await loadCam(await collectDropped(e));
   });
   root.querySelectorAll("[data-id]").forEach((b) => b.onclick = () => {
     selectedId = b.dataset.id;
@@ -526,7 +538,7 @@ function draw() {
   const job = current();
   const pathJob = opJob || viewJob();
   if (!pathJob?.points?.length) {
-    if (hud) hud.textContent = "프로그램 찾기로 NC 또는 NCI를 넣으세요.";
+    if (hud) hud.textContent = "프로그램을 넣으면 바로 보입니다.";
     syncTime();
     return;
   }
