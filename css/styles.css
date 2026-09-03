@@ -627,6 +627,118 @@ table.checks .chk { width: 72px; text-align: center; }
 .month-grid td.item { text-align: left; padding-left: 4px; min-width: 32mm; width: 32mm; }
 .month-grid th:first-child { width: 14mm; }
 .month-grid input[type="checkbox"] { width: 13px; height: 13px; }
+.sheet-5s-head {
+  position: relative;
+  text-align: center;
+  margin: 0 0 6px;
+  min-height: 10mm;
+}
+.sheet-5s-head h1 {
+  margin: 0;
+  font-size: 18px;
+  letter-spacing: 0.02em;
+}
+.sheet-5s-ym {
+  position: absolute;
+  right: 0;
+  top: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+}
+.sheet-5s-ym select {
+  min-width: 64px;
+  padding: 2px 6px;
+  border: 1px solid #222;
+  background: #fff;
+}
+.sheet-5s-ym-print { display: none; margin: 0; font-size: 13px; }
+.sheet-5s th.g {
+  background: #c5e4f3;
+  font-weight: 700;
+  width: 16mm;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.sheet-5s td.item {
+  text-align: left;
+  font-size: 10px;
+  line-height: 1.35;
+  min-width: 58mm;
+  width: 58mm;
+  padding: 2px 6px;
+}
+.sheet-5s th.sun, .sheet-5s td.sun { color: #c41e3a; }
+.sheet-5s th.sat, .sheet-5s td.sat { color: #1d4ed8; }
+.sheet-5s td.chk {
+  cursor: pointer;
+  padding: 0;
+}
+.sheet-5s td.chk label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-height: 22px;
+  cursor: pointer;
+}
+.sheet-5s td.chk input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: #c41e3a;
+  cursor: pointer;
+}
+.sheet-5s td.name { padding: 0; }
+.sheet-5s td.name input {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  min-height: 22px;
+  border: 0;
+  background: transparent;
+  font-size: 9px;
+  text-align: center;
+  padding: 0 1px;
+}
+.sheet-5s-foot {
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  border: 1px solid #111;
+  margin-top: 5px;
+  flex: 0 0 auto;
+}
+.sheet-5s-note b {
+  display: block;
+  background: #c5e4f3;
+  padding: 3px 8px;
+  font-size: 11px;
+  border-bottom: 1px solid #111;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.sheet-5s-note textarea {
+  width: 100%;
+  min-height: 18mm;
+  border: 0;
+  padding: 4px 8px;
+  resize: none;
+  font-size: 11px;
+}
+.sheet-5s-rule {
+  border-left: 1px solid #111;
+  padding: 6px 10px;
+  font-size: 11px;
+  line-height: 1.55;
+}
+.sheet-5s-rule p { margin: 0 0 2px; }
+.sheet-5s-co {
+  text-align: center;
+  margin: 5px 0 0;
+  font-size: 12px;
+  font-weight: 700;
+}
 .inbound-month { table-layout: fixed; }
 .inbound-month th, .inbound-month td { text-align: left; padding: 2px 6px; height: 8.2mm; }
 .inbound-month .col-date { width: 32mm; }
@@ -774,6 +886,14 @@ table.checks .chk { width: 72px; text-align: center; }
     min-height: 194mm;
     height: 194mm;
   }
+  .sheet-5s-ym-print {
+    display: block !important;
+    position: absolute;
+    right: 0;
+    top: 2px;
+    margin: 0;
+  }
+  .sheet-5s td.chk label .print-mark { display: inline !important; }
 }
 #modal {
   position: fixed;

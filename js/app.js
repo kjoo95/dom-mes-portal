@@ -2,13 +2,13 @@ import { getSession, login, signup, logout, isInternalNetwork, pullUsers, isAdmi
 import {
   CUSTOMERS, MILL_SHOPS, CNC_CHECKS, MACHINES, FIVE_S_SHOP, FIVE_S_LAB,
   fieldsFor, flattenChecks, badgeClass, todayISO,
-} from "./data.js?v=43";
-import { loadState, saveState, uid } from "./store.js?v=47";
+} from "./data.js?v=44";
+import { loadState, saveState, uid } from "./store.js?v=48";
 import { saveBlob, loadBlob, readAsDataUrl, saveDirHandle, loadDirHandle } from "./files.js?v=39";
 import { parseProgram, decodeCamFile, isCamFileName } from "./gcode.js?v=49";
 import { boot, showRecover } from "./safety.js?v=39";
 import { chatView, bindChat } from "./comm.js?v=50";
-import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=48";
+import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=49";
 
 const WHOIS_MAIL = "https://email.whois.co.kr/v2/";
 const root = document.getElementById("app");
@@ -75,6 +75,17 @@ function monthLabel(ym) {
 function daysInMonth(ym) {
   const [y, m] = String(ym).split("-").map(Number);
   return new Date(y, m, 0).getDate();
+}
+
+function weekdayOf(ym, day) {
+  const [y, m] = String(ym).split("-").map(Number);
+  return new Date(y, m - 1, day).getDay();
+}
+
+function shiftMonth(ym, delta) {
+  const [y, m] = String(ym).split("-").map(Number);
+  const d = new Date(y, m - 1 + delta, 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
 function isoDay(ym, day) {
@@ -541,12 +552,16 @@ function bindRecords(mod) {
 function moduleView(mod, date, extra) {
   if (mod.type === "records") return recordsView();
   if (mod.type === "chat") return chatView(state, h, date);
-  if (!date) return dateIndex(mod);
+  if (!date) {
+    if (mod.type === "five-s") return shopFiveSView(mod, thisMonth());
+    return dateIndex(mod);
+  }
   if (mod.type === "climate" || mod.type === "lab-climate") {
     if (extra === "map") return climateView(mod, monthKey(date) || date);
     return monthSheetView(mod, monthKey(date) || date);
   }
-  if (mod.type === "five-s" || mod.type === "lab-5s") return monthSheetView(mod, monthKey(date) || date);
+  if (mod.type === "five-s") return shopFiveSView(mod, monthKey(date) || date);
+  if (mod.type === "lab-5s") return monthSheetView(mod, monthKey(date) || date);
   if (mod.type === "inbound") {
     const ym = monthKey(date) || date;
     padInboundRows(mod, ym);
@@ -1045,7 +1060,7 @@ function monthItems(mod) {
 }
 
 function monthChecked(mod, key, iso, id) {
-  if (key === "shop" || key === "lab") return Boolean(state.fiveS.dates[iso]?.[key]?.[id]);
+  if (key === "shop" || key === "lab") return state.fiveS.dates[iso]?.[key]?.[id] === true;
   const bag = climateBag(mod);
   if (bag.checks?.[iso]?.[id]) return true;
   return Boolean((bag.logs?.[iso] || []).some((x) => x.pointId === id));
@@ -1102,6 +1117,89 @@ function monthSheetView(mod, ym) {
           <div class="a4-sign">
             <span>${ht("점검자")}</span><span>${ht("확인")}</span><span>${ht("승인")}</span>
           </div>
+        </article>
+      </div>
+    </div>`;
+}
+
+function fiveText(iso, id) {
+  const v = state.fiveS.dates[iso]?.shop?.[id];
+  return typeof v === "string" ? v : "";
+}
+
+function shopFiveSView(mod, ym) {
+  const month = monthKey(ym) || ym || thisMonth();
+  const [year, mon] = month.split("-").map(Number);
+  const n = daysInMonth(month);
+  const days = Array.from({ length: n }, (_, i) => i + 1);
+  const wd = ["일", "월", "화", "수", "목", "금", "토"];
+  const wkClass = (d) => {
+    const w = weekdayOf(month, d);
+    return w === 0 ? "sun" : w === 6 ? "sat" : "";
+  };
+  const y0 = new Date().getFullYear();
+  const years = Array.from({ length: 8 }, (_, i) => y0 - 4 + i);
+  if (!years.includes(year)) years.push(year);
+  years.sort((a, b) => a - b);
+  const { groups, key } = monthItems(mod);
+  const note = state.fiveS.notes?.[month] || "";
+  const dayHeads = days.map((d) => `<th class="${wkClass(d)}">${String(d).padStart(2, "0")}</th>`).join("");
+  const weekHeads = days.map((d) => `<th class="${wkClass(d)}">${wd[weekdayOf(month, d)]}</th>`).join("");
+  const body = groups.map((g) => g.items.map((item, idx) => {
+    const cells = days.map((d) => {
+      const iso = isoDay(month, d);
+      if (item.kind === "text") {
+        return `<td class="name ${wkClass(d)}"><input type="text" data-five-name data-iso="${iso}" data-id="${item.id}" value="${h(fiveText(iso, item.id))}" autocomplete="off"></td>`;
+      }
+      const on = monthChecked(mod, key, iso, item.id);
+      return `<td class="chk ${on ? "on" : ""} ${wkClass(d)}"><label><input type="checkbox" data-iso="${iso}" data-k="${key}" data-id="${item.id}" ${on ? "checked" : ""}><span class="print-mark">${on ? "✓" : ""}</span></label></td>`;
+    }).join("");
+    return `<tr>
+      ${idx === 0 ? `<th class="g" rowspan="${g.items.length}">${h(t(g.group))}</th>` : ""}
+      <td class="item">${h(t(item.label))}</td>
+      ${cells}
+    </tr>`;
+  }).join("")).join("");
+  return `
+    <div class="print-page">
+      <div class="a4-tools no-print">
+        <button class="btn ghost" id="five-prev" type="button">이전달</button>
+        <button class="btn ghost" id="five-next" type="button">다음달</button>
+        <button class="btn red" id="qa-print" type="button">${ht("인쇄")}</button>
+      </div>
+      <div class="a4-wrap page">
+        <article class="a4-sheet month-sheet sheet-5s">
+          <header class="sheet-5s-head">
+            <h1>생산라인 3정 5S CHECK SHEET</h1>
+            <div class="sheet-5s-ym no-print">
+              <select id="five-y" aria-label="년도">${years.map((y) => `<option value="${y}" ${y === year ? "selected" : ""}>${y}</option>`).join("")}</select>
+              <span>년</span>
+              <select id="five-m" aria-label="월">${Array.from({ length: 12 }, (_, i) => i + 1).map((m) => `<option value="${m}" ${m === mon ? "selected" : ""}>${m}</option>`).join("")}</select>
+              <span>월</span>
+            </div>
+            <p class="sheet-5s-ym-print">${year} 년 ${mon} 월</p>
+          </header>
+          <div class="a4-grow month-scroll">
+            <table class="month-grid sheet-5s-grid">
+              <thead>
+                <tr><th rowspan="2">${ht("구분")}</th><th rowspan="2">${ht("점검사항")}</th>${dayHeads}</tr>
+                <tr>${weekHeads}</tr>
+              </thead>
+              <tbody>${body}</tbody>
+            </table>
+          </div>
+          <div class="sheet-5s-foot">
+            <div class="sheet-5s-note">
+              <b>비고 및 특이사항</b>
+              <textarea data-five-note>${h(note)}</textarea>
+            </div>
+            <div class="sheet-5s-rule">
+              <p>1) 매일 퇴근 10분전에 청소 실시</p>
+              <p>2) 매주 금요일 퇴근 20분전에는 대청소 실시</p>
+              <p>청소시간 : 17:10 ~ 17:30분 (업무 STOP 후 청소 실시)</p>
+            </div>
+          </div>
+          <p class="sheet-5s-co">(주)디오엠</p>
         </article>
       </div>
     </div>`;
@@ -1255,13 +1353,21 @@ function bindModule(mod, date, extra) {
       remember(mod.id, key); persist(); location.hash = `#/${mod.id}/${key}`; render();
     }
   ));
-  if (!date) return;
+  if (!date) {
+    if (mod.type === "five-s") {
+      remember(mod.id, thisMonth());
+      persist();
+      return bindShopFiveS(mod);
+    }
+    return;
+  }
   remember(mod.id, date); persist();
   if (mod.type === "climate" || mod.type === "lab-climate") {
     if (extra === "map") return bindClimate(mod, date);
     return bindMonthGrid(mod);
   }
-  if (mod.type === "five-s" || mod.type === "lab-5s") return bindMonthGrid(mod);
+  if (mod.type === "five-s") return bindShopFiveS(mod);
+  if (mod.type === "lab-5s") return bindMonthGrid(mod);
   if (mod.type === "inbound") return bindInboundMonth(mod, date);
   if (mod.type === "equipment") return bindEq(date, extra);
   if (mod.type === "mastercam") return bindCam(date);
@@ -1454,6 +1560,51 @@ function bindMonthGrid(mod) {
     setMonthCheck(mod, el.dataset.k, el.dataset.iso, el.dataset.id, el.checked);
     const mark = el.parentElement?.querySelector(".print-mark");
     if (mark) mark.textContent = el.checked ? "✓" : "";
+    el.closest("td")?.classList.toggle("on", el.checked);
+    persist();
+  });
+}
+
+function bindShopFiveS(mod) {
+  const monthOf = () => {
+    const y = document.getElementById("five-y")?.value;
+    const m = document.getElementById("five-m")?.value;
+    if (!y || !m) return thisMonth();
+    return `${y}-${String(Number(m)).padStart(2, "0")}`;
+  };
+  const go = (ym) => {
+    remember(mod.id, ym);
+    persist();
+    const next = `#/${mod.id}/${ym}`;
+    if (location.hash.replace(/^#\/?/, "") === `${mod.id}/${ym}`) render();
+    else location.hash = next;
+  };
+  document.getElementById("qa-print")?.addEventListener("click", () => window.print());
+  document.getElementById("five-prev")?.addEventListener("click", () => go(shiftMonth(monthOf(), -1)));
+  document.getElementById("five-next")?.addEventListener("click", () => go(shiftMonth(monthOf(), 1)));
+  document.getElementById("five-y")?.addEventListener("change", () => go(monthOf()));
+  document.getElementById("five-m")?.addEventListener("change", () => go(monthOf()));
+  root.querySelectorAll("[data-iso][data-id][type='checkbox']").forEach((el) => {
+    el.onchange = () => {
+      setMonthCheck(mod, el.dataset.k, el.dataset.iso, el.dataset.id, el.checked);
+      const mark = el.parentElement?.querySelector(".print-mark");
+      if (mark) mark.textContent = el.checked ? "✓" : "";
+      el.closest("td")?.classList.toggle("on", el.checked);
+      persist();
+    };
+  });
+  root.querySelectorAll("[data-five-name]").forEach((el) => {
+    el.onchange = () => {
+      const iso = el.dataset.iso;
+      if (!state.fiveS.dates[iso]) state.fiveS.dates[iso] = { shop: {}, lab: {} };
+      if (!state.fiveS.dates[iso].shop) state.fiveS.dates[iso].shop = {};
+      state.fiveS.dates[iso].shop[el.dataset.id] = el.value;
+      persist();
+    };
+  });
+  root.querySelector("[data-five-note]")?.addEventListener("change", (e) => {
+    if (!state.fiveS.notes) state.fiveS.notes = {};
+    state.fiveS.notes[monthOf()] = e.target.value;
     persist();
   });
 }

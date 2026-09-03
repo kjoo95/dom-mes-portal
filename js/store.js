@@ -1,4 +1,4 @@
-import { STORAGE_KEY, defaultState, todayISO } from "./data.js?v=43";
+import { STORAGE_KEY, defaultState, todayISO } from "./data.js?v=44";
 import { seedJobs, parseProgram, toNc, looksBinaryText } from "./gcode.js?v=49";
 
 const BAK = `${STORAGE_KEY}-bak`;
@@ -100,7 +100,7 @@ function hydrate(parsed) {
       checks: parsed.labClimate?.checks || {},
     },
     dateFolders: parsed.dateFolders || {},
-    fiveS: { dates: {}, ...(parsed.fiveS || {}) },
+    fiveS: { dates: {}, notes: {}, ...(parsed.fiveS || {}) },
     cam,
     equipment: parsed.equipment || {},
     eqPhotos: parsed.eqPhotos || {},

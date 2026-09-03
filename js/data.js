@@ -43,32 +43,24 @@ export const MACHINES = [
 ];
 
 export const FIVE_S_SHOP = [
-  { group: "3정", items: [
-    { id: "s1", label: "정품: 지정 자재·공구·치구만 사용한다" },
-    { id: "s2", label: "정량: 당일 필요 수량만 작업대에 둔다" },
-    { id: "s3", label: "정위치: 도면·공구·치구가 표시 위치에 있다" },
+  { group: "정리 정돈", items: [
+    { id: "s1", label: "용도 불명의 물건이나 불필요한 자재는 없는가?" },
+    { id: "s2", label: "불량품은 양품과 잘 구분되어 저장 장소에 보관하고 있는가?" },
+    { id: "s3", label: "통로나 작업공간에 돌출된 장애물은 없는가?" },
+    { id: "s4", label: "제품 및 자재는 식별되어 저장장소에 잘 보관되어 있는가?" },
+    { id: "s5", label: "미검사품과 검사품을 식별하여 구분하고 있는가?" },
+    { id: "s6", label: "적재 및 보관상태는 위험성이 없는가?" },
+    { id: "s7", label: "치공구 및 주변 정리정돈 상태는 양호한가?" },
   ]},
-  { group: "정리", items: [
-    { id: "s4", label: "불필요 원자재·반제품·포장재를 작업장에서 제거했다" },
-    { id: "s5", label: "파손 공구·불량 칩·빈 박스를 즉시 반출했다" },
+  { group: "청소 청결", items: [
+    { id: "s8", label: "바닥 청소 및 청결 유지상태는 양호한가?" },
+    { id: "s9", label: "제품보관대 및 작업대 청소상태는 양호한가?" },
+    { id: "s10", label: "쓰레기통은 언제나 청결하게 관리하고 있는가?" },
+    { id: "s11", label: "청소용 용구는 정위치에 청결하게 보관되어 있는가?" },
   ]},
-  { group: "정돈", items: [
-    { id: "s6", label: "공구대·바이스·클램프가 그림자 표시와 일치한다" },
-    { id: "s7", label: "측정기·캘리퍼스가 전용 거치대에 있다" },
-    { id: "s8", label: "작업지시서와 도면이 기계 앞 홀더에 있다" },
-  ]},
-  { group: "청소", items: [
-    { id: "s9", label: "테이블·커버·칩 받이의 칩을 제거했다" },
-    { id: "s10", label: "절삭유·윤활유 누유를 닦고 원인을 표시했다" },
-    { id: "s11", label: "바닥 통로에 오일·칩이 없다" },
-  ]},
-  { group: "청결", items: [
-    { id: "s12", label: "식별 라벨(품번, LOT, 합격/대기)이 붙어 있다" },
-    { id: "s13", label: "안전 가드·인터록을 임의로 해제하지 않았다" },
-  ]},
-  { group: "습관화", items: [
-    { id: "s14", label: "교대 시 인수인계를 했다" },
-    { id: "s15", label: "이상 발견 시 즉시 보고했다" },
+  { group: "확인 결과", items: [
+    { id: "insp", label: "점검자", kind: "text" },
+    { id: "conf", label: "확인", kind: "text" },
   ]},
 ];
 
@@ -217,7 +209,7 @@ export function fieldsFor(type, compact = false) {
 }
 
 export function flattenChecks(groups) {
-  return groups.flatMap((g) => g.items);
+  return groups.flatMap((g) => g.items.filter((item) => item.kind !== "text"));
 }
 
 export function badgeClass(value) {
@@ -239,7 +231,7 @@ export function defaultState() {
       { id: "delivery", title: "납품 일정", desc: "날짜 폴더에서 납품 목록과 표를 봅니다.", type: "delivery" },
       { id: "quality", title: "품질 관리 현황", desc: "가공 회사·납품처, 품번·품명·LOT, X·Y·Z 5회 측정과 사진을 기록합니다.", type: "quality" },
       { id: "climate", title: "현장 온습도 관리", desc: "한 달 표에서 위치별로 점검 여부를 체크합니다.", type: "climate" },
-      { id: "five-s", title: "현장 3정5S 관리", desc: "한 달 표에서 항목별로 일자 점검을 체크합니다.", type: "five-s" },
+      { id: "five-s", title: "현장 3정5S 관리", desc: "생산라인 3정 5S 체크시트를 연·월을 바꿔 가며 작성합니다.", type: "five-s" },
       { id: "lab-climate", title: "검사실 온습도 관리", desc: "한 달 표에서 검사실 위치 점검을 체크합니다.", type: "lab-climate" },
       { id: "lab-5s", title: "검사실 3정5S 관리", desc: "한 달 표에서 검사실 3정5S를 일자별로 체크합니다.", type: "lab-5s" },
       { id: "defect", title: "불량품 관리 현황", desc: "외관 사진과 재발 방지 대책을 남깁니다.", type: "defect" },
@@ -314,10 +306,11 @@ export function defaultState() {
     fiveS: {
       dates: {
         [today]: {
-          shop: { s1: true, s2: true, s3: true, s6: true, s9: true },
+          shop: { s1: true, s2: true, s3: true, s7: true, s8: true },
           lab: { l1: true, l2: true, l6: true, l8: true, l12: true },
         },
       },
+      notes: {},
     },
     labClimate: {
       rooms: [

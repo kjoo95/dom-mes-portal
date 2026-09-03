@@ -1,10 +1,10 @@
 import { getSession, logout, isInternalNetwork } from "./auth.js?v=45";
-import { loadState, saveState, uid } from "./store.js?v=47";
+import { loadState, saveState, uid } from "./store.js?v=48";
 import { collectStats, parseProgram, toNc, toJson, accTime, toolOps, toolSpec, decodeCamFile, isCamFileName } from "./gcode.js?v=49";
 import { boot } from "./safety.js";
 import { createMill } from "./mill3d.js?v=29";
 import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=42";
-import { todayISO } from "./data.js?v=43";
+import { todayISO } from "./data.js?v=44";
 
 const root = document.getElementById("app");
 const h = (v) => String(v ?? "")
