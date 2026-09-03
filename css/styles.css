@@ -34,6 +34,7 @@ html[lang="ta"] body, html[lang="ta"] button, html[lang="ta"] input, html[lang="
   height: 52px;
   width: auto;
   flex: 0 0 auto;
+  image-rendering: auto;
 }
 .logo-sub { color: var(--mute); font-size: 12px; white-space: nowrap; }
 .login .brand-logo { height: 64px; }
