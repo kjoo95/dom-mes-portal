@@ -1790,15 +1790,21 @@ function camView(mod, date) {
     : (state.cam.watchName
       ? `연결됨: ${h(state.cam.watchName)} · 지금 연 업체(${h(folder.name)})로 들어옵니다.`
       : `${h(folder.name)}에 마스터캠 9.1 파일(.mc9, .nci, .nc)이나 폴더를 넣으세요.`)}</p>
-      <div class="grid pad">
-        ${kids.map((f) => `<div class="folder small vendor-card">
-          <button class="folder-open" data-open="${f.id}" type="button"><h2>${h(f.name)}</h2><p>${camCount(f.id, date)}개 프로그램</p></button>
+      <div class="cam-list">
+        ${kids.map((f) => `<div class="cam-row">
+          <button class="folder-open cam-row-main" data-open="${f.id}" type="button">
+            <b>${h(f.name)}</b>
+            <span>${camCount(f.id, date)}개 프로그램</span>
+          </button>
           <button class="btn sm" data-del-folder="${f.id}" type="button">삭제</button>
         </div>`).join("")}
-        ${files.map((f) => `<div class="file"><b>${h(f.name)}</b><span class="file-acts">
-          <button class="btn sm" data-dl="${f.id}" type="button">받기</button>
-          <button class="btn sm" data-del-file="${f.id}" type="button">삭제</button>
-        </span></div>`).join("")}
+        ${files.map((f) => `<div class="cam-row">
+          <b class="cam-row-main">${h(f.name)}</b>
+          <span class="file-acts">
+            <button class="btn sm" data-dl="${f.id}" type="button">받기</button>
+            <button class="btn sm" data-del-file="${f.id}" type="button">삭제</button>
+          </span>
+        </div>`).join("")}
       </div>
     </section>
     ${atRoot ? "" : `<section class="panel">

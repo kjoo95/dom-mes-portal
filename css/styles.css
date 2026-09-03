@@ -294,6 +294,39 @@ main { padding: 28px 32px 48px; overflow: auto; background: #f6f6f6; }
 }
 .file-acts { display: flex; gap: 4px; flex-wrap: wrap; }
 .file b { word-break: break-all; }
+.cam-list {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 0 12px;
+}
+.cam-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--line);
+  min-width: 0;
+}
+.cam-row:hover { background: #fafafa; }
+.cam-row-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  color: inherit;
+}
+.cam-row-main b {
+  font-size: 14px;
+  font-weight: 700;
+  word-break: break-all;
+}
+.cam-row-main span { color: var(--mute); font-size: 13px; white-space: nowrap; }
 
 .date-list {
   display: flex;
