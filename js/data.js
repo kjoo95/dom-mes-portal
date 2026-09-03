@@ -226,7 +226,7 @@ export function defaultState() {
       { id: "defect", title: "불량품 관리 현황", desc: "외관 사진과 재발 방지 대책을 남깁니다.", type: "defect" },
       { id: "inventory", title: "재고 현황", desc: "재고 개수와 LOT 번호를 기입합니다.", type: "inventory" },
       { id: "equipment", title: "설비 점검", desc: "설비일상점검표를 연·월을 바꿔 가며 작성하고 인쇄합니다.", type: "equipment" },
-      { id: "mastercam", title: "Mastercam 9.1 프로그램", desc: "Mastercam 저장 폴더를 연결하면 가공 후 저장한 프로그램이 자동으로 들어옵니다.", type: "mastercam" },
+      { id: "mastercam", title: "Mastercam 9.1 프로그램", desc: "업체를 연 뒤 프로그램을 넣으면 들어온 날이 자동으로 적힙니다.", type: "mastercam" },
     ],
     dateFolders: {},
     records: {
