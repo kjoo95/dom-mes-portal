@@ -4,9 +4,9 @@ import {
   EQ_ITEMS, EQ_MARKS,
   fieldsFor, flattenChecks, badgeClass, todayISO,
 } from "./data.js?v=49";
-import { loadState, saveState, uid } from "./store.js?v=55";
+import { loadState, saveState, uid } from "./store.js?v=56";
 import { saveBlob, loadBlob, readAsDataUrl, saveDirHandle, loadDirHandle, removeBlob } from "./files.js?v=39";
-import { parseProgram, decodeCamFile, mayBeCamFile } from "./gcode.js?v=51";
+import { parseProgram, decodeCamFile, mayBeCamFile } from "./gcode.js?v=52";
 import { boot, showRecover } from "./safety.js?v=39";
 import { chatView, bindChat } from "./comm.js?v=51";
 import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=58";
@@ -388,7 +388,7 @@ function shell(session, active, inner, printMode = false) {
           ${link("home", "운영 폴더")}
           ${link("manage", "수정·삭제")}
           ${isAdmin(session) ? `<a class="${"members" === active ? "on" : ""}" href="#/members">${ht("가입 승인")}${wait ? ` (${wait})` : ""}</a>` : ""}
-          <a href="./cam-lab.html?v=36">${ht("가공 프로그램")}</a>
+          <a href="./cam-lab.html?v=37">${ht("가공 프로그램")}</a>
         </div>
         <div class="side-block comm">
           <p class="side-label">${ht("소통")}</p>
@@ -2093,7 +2093,7 @@ function camView(mod) {
     <div class="head-actions">
       ${saveNote()}
       <button class="btn sm" id="folder-save" type="button">${ht("저장")}</button>
-      <a class="btn red sm" href="./cam-lab.html?v=36">가공 프로그램</a>
+      <a class="btn red sm" href="./cam-lab.html?v=37">가공 프로그램</a>
     </div></div>
     <section class="panel">
       <div class="bar">${folder.parent ? `<button class="btn sm" id="up" type="button">업체 목록</button>` : ""}

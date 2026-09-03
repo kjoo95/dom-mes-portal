@@ -1,6 +1,6 @@
 import { getSession, logout, isInternalNetwork } from "./auth.js?v=45";
-import { loadState, saveState, uid } from "./store.js?v=55";
-import { collectStats, parseProgram, toNc, toJson, accTime, toolOps, toolSpec, decodeCamFile, mayBeCamFile } from "./gcode.js?v=51";
+import { loadState, saveState, uid } from "./store.js?v=56";
+import { collectStats, parseProgram, toNc, toJson, accTime, toolOps, toolSpec, decodeCamFile, mayBeCamFile } from "./gcode.js?v=52";
 import { boot } from "./safety.js";
 import { createMill } from "./mill3d.js?v=29";
 import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=42";
@@ -23,7 +23,7 @@ let cam = { ...CAM0 };
 let drag = null;
 
 function allJobs() {
-  return (state.cam.jobs || []).filter((j) => !j.optimized && (j.points || []).filter((p) => !p.rapid && !p.change).length >= 2);
+  return (state.cam.jobs || []).filter((j) => !j.optimized && (j.points || []).filter((p) => !p.change).length >= 2);
 }
 
 function current() {
@@ -63,21 +63,54 @@ async function takeFiles(fileList, quiet = false) {
     if (!quiet) alert("마스터캠 9.1 프로그램 파일(.mc9, .nci, .nc)을 넣으세요.");
     return 0;
   }
-  const byStem = new Map();
+  const rows = [];
   for (const file of incoming) {
     const text = await readNcText(file);
     const parsed = parseProgram(file.name, text);
     const cuts = cutCount(parsed);
-    const stem = fileStem(file.name);
+    const pts = (parsed?.points || []).filter((p) => !p.change).length;
+    rows.push({ file, parsed, cuts, pts });
+  }
+  const byStem = new Map();
+  for (const row of rows) {
+    const stem = fileStem(row.file.name);
     const prev = byStem.get(stem);
     const better = !prev
-      || cuts > cutCount(prev.parsed)
-      || (cuts === cutCount(prev.parsed) && camRank(file.name) > camRank(prev.file.name));
-    if (better) byStem.set(stem, { file, parsed, cuts });
+      || row.cuts > prev.cuts
+      || (row.cuts === prev.cuts && row.pts > prev.pts)
+      || (row.cuts === prev.cuts && row.pts === prev.pts && camRank(row.file.name) > camRank(prev.file.name));
+    if (better) byStem.set(stem, row);
   }
-  const usable = [...byStem.values()].filter((row) => row.cuts >= 2);
+  const pool = rows.filter((row) => row.cuts >= 2 || row.pts >= 2).sort((a, b) => (
+    b.cuts - a.cuts || b.pts - a.pts || camRank(b.file.name) - camRank(a.file.name)
+  ));
+  const usable = [];
+  const used = new Set();
+  byStem.forEach((row) => {
+    if (row.cuts >= 2 || row.pts >= 2) {
+      usable.push(row);
+      used.add(row.file);
+      return;
+    }
+    const alt = pool.find((p) => !used.has(p.file) && camRank(p.file.name) >= 2);
+    if (alt) {
+      usable.push(alt);
+      used.add(alt.file);
+    }
+  });
+  pool.forEach((row) => {
+    if (used.has(row.file)) return;
+    const stem = fileStem(row.file.name);
+    if (![...usable].some((u) => fileStem(u.file.name) === stem)) {
+      usable.push(row);
+      used.add(row.file);
+    }
+  });
   if (!usable.length) {
-    if (!quiet) alert("이 파일에서 가공 경로를 읽지 못했습니다. 마스터캠에서 포스트한 NCI 또는 NC를 같이 넣으세요.");
+    if (!quiet) {
+      const names = incoming.slice(0, 4).map((f) => f.name).join(", ");
+      alert(`이 파일에서 가공 경로를 읽지 못했습니다. (${names}${incoming.length > 4 ? " 외" : ""})\n같은 폴더의 .nci 또는 포스트한 .nc를 함께 넣어 주세요.`);
+    }
     return 0;
   }
   if (!state.cam.jobs) state.cam.jobs = [];

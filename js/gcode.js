@@ -154,8 +154,8 @@ function bestDecode(u8) {
 
 function looksGcode(text) {
   const code = stripComments(text);
-  const xyz = (code.match(/\b[XYZ]\s*-?(?:\d|\.)/gi) || []).length;
-  const g = (code.match(/\bG\s*0*(0|1|2|3)\b/gi) || []).length;
+  const xyz = (code.match(/[XYZ]\s*-?(?:\d|\.)/gi) || []).length;
+  const g = (code.match(/G\s*0*(0|1|2|3)(?!\d)/gi) || []).length;
   return xyz >= 4 && g >= 1;
 }
 
@@ -203,6 +203,11 @@ function utf16Runs(u8) {
   return out;
 }
 
+function nciScore(text) {
+  const s = String(text || "");
+  return (s.match(/^(0|1|2|3|11|1001|1002|1050)$/gm) || []).length;
+}
+
 function pickToolpathText(raw) {
   const clean = salvageCamText(raw);
   const nci = isolateNci(clean);
@@ -213,12 +218,70 @@ function pickToolpathText(raw) {
   if (looksGcode(clean)) return gc || clean;
   const moves = (nci.match(/^(0|1|2|3)$/gm) || []).length;
   if (moves >= 2) return nci;
+  if (nciScore(nci) >= 4) return nci;
+  if (nciScore(clean) >= 4) return clean;
   return "";
 }
 
+function latin1Of(u8) {
+  const parts = [];
+  const step = 0x8000;
+  for (let i = 0; i < u8.length; i += step) {
+    parts.push(decodeWith(u8.subarray(i, i + step), "latin1"));
+  }
+  return parts.join("");
+}
+
+function nulStripText(u8) {
+  return latin1Of(u8).replace(/\0/g, "");
+}
+
+function mostlyPrintable(u8) {
+  if (!u8.length) return false;
+  let ok = 0;
+  for (let i = 0; i < u8.length; i += 1) {
+    const b = u8[i];
+    if (b === 9 || b === 10 || b === 13 || (b >= 32 && b < 127)) ok += 1;
+  }
+  return ok / u8.length > 0.88;
+}
+
+function extractPrefixedStrings(u8) {
+  const out = [];
+  for (let i = 0; i + 3 < u8.length; i += 1) {
+    const n = u8[i] | (u8[i + 1] << 8);
+    if (n < 4 || n > 480 || i + 2 + n > u8.length) continue;
+    const slice = u8.subarray(i + 2, i + 2 + n);
+    if (!mostlyPrintable(slice)) continue;
+    const s = decodeWith(slice, "latin1").replace(/\0/g, "").trim();
+    if (s) out.push(s);
+    i += 1 + n;
+  }
+  return out.join("\n");
+}
+
+function bestToolpath(cands) {
+  let best = "";
+  let score = -1;
+  cands.forEach((raw) => {
+    if (!raw) return;
+    const picked = pickToolpathText(raw) || (looksNci(raw) || looksGcode(raw) ? raw : "");
+    const n = nciScore(picked) + ((picked.match(/[XYZ]\s*-?(?:\d|\.)/gi) || []).length > 4 ? 8 : 0);
+    if (picked && n > score) {
+      best = picked;
+      score = n;
+    }
+  });
+  return best;
+}
+
 function extractCamText(u8) {
-  const mixed = [...asciiRuns(u8), ...utf16Runs(u8)].join("\n");
-  return pickToolpathText(mixed);
+  return bestToolpath([
+    [...asciiRuns(u8), ...utf16Runs(u8)].join("\n"),
+    nulStripText(u8),
+    extractPrefixedStrings(u8),
+    latin1Of(u8),
+  ]);
 }
 
 export function decodeCamFile(buffer, name = "") {
@@ -231,17 +294,20 @@ export function decodeCamFile(buffer, name = "") {
   if (binary) {
     const extracted = extractCamText(u8);
     if (extracted) return extracted;
-    return pickToolpathText(decodeWith(u8, "latin1"));
+    return pickToolpathText(latin1Of(u8)) || nulStripText(u8);
   }
   let zeros = 0;
   const n = Math.min(u8.length, 400);
   for (let i = 1; i < n; i += 2) if (u8[i] === 0) zeros += 1;
   if (zeros > n / 4) return decodeNc(new TextDecoder("utf-16le").decode(u8));
-  return decodeNc(bestDecode(u8));
+  const text = decodeNc(bestDecode(u8));
+  if (looksNci(text) || looksGcode(text)) return text;
+  const extracted = extractCamText(u8);
+  return extracted || text;
 }
 
 export function isCamFileName(name) {
-  return /\.(nc|nci|cnc|tap|txt|iso|eia|min|ncc|mc9|mc8|mpf|spf|dnc|prg|hnc|nc1)$/i.test(name || "");
+  return /\.(nc|nci|cnc|tap|txt|iso|eia|min|ncc|mc9|mc8|mpf|spf|dnc|prg|hnc|nc1|nc6|ssb|pit)$/i.test(name || "");
 }
 
 export function mayBeCamFile(name, type = "") {
@@ -376,31 +442,63 @@ function isNciDataLine(s) {
 }
 
 function isolateNci(text) {
-  const lines = String(text || "").split(/\r?\n/).map((l) => l.replace(/\u0000/g, "").trim()).filter(Boolean);
-  const out = [];
-  for (let i = 0; i < lines.length - 1; i += 1) {
-    if (!/^\d{1,5}$/.test(lines[i])) continue;
-    const g = Number(lines[i]);
-    if (!isNciOpcode(g)) continue;
-    const next = lines[i + 1];
-    if (!isNciDataLine(next)) continue;
-    out.push(lines[i], next);
-    i += 1;
-  }
-  return out.join("\n");
+  return readNciRecords(text)
+    .filter((r) => isNciOpcode(r.g))
+    .map((r) => (r.data ? `${r.g}\n${r.data}` : String(r.g)))
+    .join("\n");
 }
 
 function isolateGcode(text) {
   return String(text || "")
-    .split(/\r?\n/)
+    .split(/\r\n|\n|\r/)
     .map((l) => l.replace(/\u0000/g, "").trim())
     .filter((l) => l && (
       /^[%O]/i.test(l)
-      || /\bG\s*0*\d+/i.test(l)
-      || /\b[XYZ]\s*-?(?:\d|\.)/i.test(l)
-      || /\b[MTSF]\s*\d+/i.test(l)
+      || /G\s*0*\d+/i.test(l)
+      || /[XYZ]\s*-?(?:\d|\.)/i.test(l)
+      || /[MTSF]\s*\d+/i.test(l)
     ))
     .join("\n");
+}
+
+function isOpcodeOnly(s) {
+  return /^\d{1,5}$/.test(s) && isNciOpcode(Number(s));
+}
+
+function readNciRecords(text) {
+  const lines = decodeNc(text).split(/\r\n|\n|\r/).map((l) => l.replace(/\u0000/g, "").trim());
+  const recs = [];
+  for (let i = 0; i < lines.length; i += 1) {
+    const line = lines[i];
+    if (!line) continue;
+    const same = line.match(/^(\d{1,5})\s+(.+)$/);
+    if (same && isNciOpcode(Number(same[1])) && isNciDataLine(same[2])) {
+      recs.push({ g: Number(same[1]), data: same[2].trim() });
+      continue;
+    }
+    if (!/^\d{1,5}$/.test(line)) continue;
+    const g = Number(line);
+    let j = i + 1;
+    while (j < lines.length && !lines[j]) j += 1;
+    const next = lines[j] || "";
+    if (j < lines.length && !isOpcodeOnly(next)) {
+      recs.push({ g, data: next });
+      i = j;
+    } else {
+      recs.push({ g, data: "" });
+    }
+  }
+  return recs;
+}
+
+function nciLinear(n) {
+  const cc = n[0];
+  const ccLike = cc === 0 || cc === 1 || cc === 2 || cc === 40 || cc === 41 || cc === 42 || cc === 140 || cc === -1;
+  if (n.length >= 4 && (ccLike || n.length >= 5)) {
+    return { x: n[1], y: n[2], z: n[3], f: n[4] };
+  }
+  if (n.length >= 3) return { x: n[0], y: n[1], z: n[2], f: n[3] };
+  return null;
 }
 
 function nciNums(line) {
@@ -430,7 +528,7 @@ function inchFileHint(dias, span) {
 
 function parseNci(name, text) {
   const rawText = decodeNc(text);
-  const lines = rawText.split(/\r?\n/);
+  const recs = readNciRecords(rawText);
   const toolLib = {};
   const points = [];
   const ops = [];
@@ -477,12 +575,9 @@ function parseNci(name, text) {
     if (!next.rapid && dist > 0.01) ops.push({ tool: next.t, feed: next.f, spindle: next.s, length: Number(dist.toFixed(2)), kind: "cut" });
     return next;
   };
-  for (let i = 0; i < lines.length; i += 1) {
-    const head = lines[i].trim();
-    if (!/^\d{1,5}$/.test(head)) continue;
-    const g = Number(head);
-    const data = (lines[i + 1] || "").trim();
-    if (g >= 0 && g <= 30000) i += 1;
+  for (let i = 0; i < recs.length; i += 1) {
+    const g = recs[i].g;
+    const data = recs[i].data;
     const n = nciNums(data);
     const nm = nciName(data);
     if (g === 1050) {
@@ -534,16 +629,13 @@ function parseNci(name, text) {
       pendingDia = 0;
       pendingName = "";
     } else if (g === 0 || g === 1) {
-      const nx = n[1];
-      const ny = n[2];
-      const nz = n[3];
-      const fr = n[4];
-      if (fr > 0) f = fr;
-      if (nx === undefined || ny === undefined || nz === undefined) continue;
-      x = nx;
-      y = ny;
-      z = nz;
-      pushPt({ x, y, z, rapid: g === 0 || fr === -2, f, s, t });
+      const lin = nciLinear(n);
+      if (!lin || lin.x === undefined || lin.y === undefined || lin.z === undefined) continue;
+      if (lin.f > 0) f = lin.f;
+      x = lin.x;
+      y = lin.y;
+      z = lin.z;
+      pushPt({ x, y, z, rapid: g === 0 || lin.f === -2, f, s, t });
     } else if (g === 2 || g === 3) {
       const nx = n[2];
       const ny = n[3];
@@ -776,23 +868,31 @@ function safeParse(fn, name, text) {
   }
 }
 
+function jobScore(job) {
+  const pts = job?.points || [];
+  return cutScore(job) * 10 + pts.filter((p) => !p.change).length;
+}
+
+function pickParsedJob(name, texts) {
+  let best = finishJob(name, [], [], [], 0, 0, true, "", {});
+  texts.forEach((raw) => {
+    if (!String(raw || "").trim()) return;
+    const nciJob = safeParse(parseNci, name, raw);
+    const ncJob = safeParse(parseFanuc, name, raw);
+    [nciJob, ncJob].forEach((job) => {
+      if (job && jobScore(job) > jobScore(best)) best = job;
+    });
+  });
+  return best;
+}
+
 export function parseProgram(name, text) {
-  let rawText = decodeNc(text);
-  if (!rawText.trim()) return finishJob(name, [], [], [], 0, 0, true, "", {});
-  if (looksBinaryText(rawText) || /\.mc[89]$/i.test(name || "")) {
-    const salvaged = pickToolpathText(rawText) || salvageCamText(rawText);
-    if (looksNci(salvaged) || looksGcode(salvaged) || (salvaged.match(/^(0|1|2|3)$/gm) || []).length >= 2) rawText = salvaged;
-    else return finishJob(name, [], [], [], 0, 0, true, "", {});
-  }
-  const nciJob = safeParse(parseNci, name, rawText);
-  const ncJob = safeParse(parseFanuc, name, rawText);
-  const nciCuts = cutScore(nciJob);
-  const ncCuts = cutScore(ncJob);
-  if (nciCuts >= 2 && nciCuts >= ncCuts) return nciJob;
-  if (ncCuts >= 2) return ncJob;
-  if ((nciJob?.points || []).length >= 2) return nciJob;
-  if ((ncJob?.points || []).length >= 2) return ncJob;
-  return finishJob(name, [], [], [], 0, 0, true, "", {});
+  const original = decodeNc(text);
+  if (!original.trim()) return finishJob(name, [], [], [], 0, 0, true, "", {});
+  const salvaged = pickToolpathText(original) || salvageCamText(original);
+  const nciOnly = isolateNci(original);
+  const gcOnly = isolateGcode(original);
+  return pickParsedJob(name, [salvaged, nciOnly, gcOnly, original]);
 }
 
 function parseFanuc(name, text) {
