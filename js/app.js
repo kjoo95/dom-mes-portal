@@ -6,7 +6,7 @@ import {
 } from "./data.js?v=46";
 import { loadState, saveState, uid } from "./store.js?v=50";
 import { saveBlob, loadBlob, readAsDataUrl, saveDirHandle, loadDirHandle, removeBlob } from "./files.js?v=39";
-import { parseProgram, decodeCamFile, isCamFileName } from "./gcode.js?v=50";
+import { parseProgram, decodeCamFile, mayBeCamFile } from "./gcode.js?v=51";
 import { boot, showRecover } from "./safety.js?v=39";
 import { chatView, bindChat } from "./comm.js?v=50";
 import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=52";
@@ -1758,17 +1758,18 @@ function camView(mod, date) {
   </tr>`).join("");
   const path = atRoot ? "업체를 고른 뒤 프로그램을 넣습니다." : `${h(folder.name)} · ${date}`;
   return `<div class="head"><div><h1>${h(mod.title)}</h1><p>${path}</p></div>
-    <a class="btn red sm" href="./cam-lab.html?v=32">가공 프로그램</a></div>
+    <a class="btn red sm" href="./cam-lab.html?v=33">가공 프로그램</a></div>
     <section class="panel">
       <div class="bar">${folder.parent ? `<button class="btn sm" id="up" type="button">업체 목록</button>` : ""}
         ${atRoot ? `<button class="btn sm" id="nf" type="button">업체 추가</button>` : `<button class="btn sm" id="del-vendor" type="button">이 업체 삭제</button>`}
         <button class="btn sm" id="cam-link" type="button">${state.cam.watchName ? "폴더 다시 연결" : "Mastercam 저장 폴더 연결"}</button>
-        ${atRoot ? "" : `<label class="btn sm red">프로그램 넣기<input id="upl" type="file" multiple hidden accept=".nc,.nci,.cnc,.tap,.txt,.iso,.eia,.min,.ncc,.mc9,.mc8"></label>`}</div>
+        ${atRoot ? "" : `<label class="btn sm red">프로그램 넣기<input id="upl" type="file" multiple hidden></label>
+        <label class="btn sm">폴더 넣기<input id="upl-dir" type="file" hidden webkitdirectory></label>`}</div>
       <p class="mute pad">${atRoot
     ? "참테크, 인텔릭스처럼 업체 폴더를 연 다음 프로그램을 넣으세요. 잘못 넣은 프로그램은 삭제할 수 있습니다."
     : (state.cam.watchName
       ? `연결됨: ${h(state.cam.watchName)} · 지금 연 업체(${h(folder.name)})로 들어옵니다.`
-      : `${h(folder.name)}에 프로그램을 넣으세요. 같은 파일이 두 번 들어가면 삭제하면 됩니다.`)}</p>
+      : `${h(folder.name)}에 마스터캠 9.1 파일(.mc9, .nci, .nc)이나 폴더를 넣으세요.`)}</p>
       <div class="grid pad">
         ${kids.map((f) => `<div class="folder small vendor-card">
           <button class="folder-open" data-open="${f.id}" type="button"><h2>${h(f.name)}</h2><p>${camCount(f.id, date)}개 프로그램</p></button>
@@ -2290,16 +2291,22 @@ function bindCam(date) {
     });
   });
   document.getElementById("upl")?.addEventListener("change", async (e) => {
-    const cur = state.cam.folders.find((f) => f.id === camFolder);
-    if (!cur?.parent) {
-      alert("업체를 먼저 고른 뒤 프로그램을 넣으세요.");
-      e.target.value = "";
-      return;
-    }
-    await ingestCamBatch(e.target.files, date);
-    persist(); render();
+    await putCamFiles(e.target.files, date);
     e.target.value = "";
   });
+  document.getElementById("upl-dir")?.addEventListener("change", async (e) => {
+    await putCamFiles(e.target.files, date);
+    e.target.value = "";
+  });
+  const camPanel = root.querySelector("section.panel");
+  if (camPanel && state.cam.folders.find((f) => f.id === camFolder)?.parent) {
+    const stop = (ev) => { ev.preventDefault(); ev.stopPropagation(); };
+    camPanel.addEventListener("dragover", stop);
+    camPanel.addEventListener("drop", async (ev) => {
+      stop(ev);
+      await putCamFiles(ev.dataTransfer?.files, date);
+    });
+  }
   root.querySelectorAll("[data-dl]").forEach((b) => b.onclick = async () => {
     const meta = state.cam.files.find((f) => f.id === b.dataset.dl);
     const blob = await loadBlob(meta.id); if (!blob) return alert("없음");
@@ -2335,18 +2342,38 @@ function bindCam(date) {
   });
 }
 
-function isCamNc(name) {
-  return isCamFileName(name);
+function isCamNc(name, type) {
+  return mayBeCamFile(name, type);
 }
 
 async function readNcText(file) {
-  const buf = await file.slice(0, 12_000_000).arrayBuffer().catch(() => null);
+  const size = Math.min(file.size || 0, 40_000_000);
+  const buf = await file.slice(0, size || 1).arrayBuffer().catch(() => null);
   if (!buf) return "";
   return decodeCamFile(buf, file.name);
 }
 
+async function putCamFiles(fileList, date) {
+  const cur = state.cam.folders.find((f) => f.id === camFolder);
+  if (!cur?.parent) {
+    alert("업체를 먼저 고른 뒤 프로그램을 넣으세요.");
+    return;
+  }
+  try {
+    const result = await ingestCamBatch(fileList, date);
+    persist();
+    render();
+    if (!result.tried) alert("마스터캠 9.1 프로그램 파일(.mc9, .nci, .nc)을 넣으세요.");
+    else if (!result.jobs && result.files) alert("파일은 들어갔습니다. 가공 경로를 보려면 같은 이름의 NCI 또는 NC를 같이 넣으세요.");
+    else if (!result.jobs && !result.files) alert("이 파일에서 가공 경로를 읽지 못했습니다. 마스터캠에서 포스트한 NCI 또는 NC를 넣으세요.");
+  } catch (err) {
+    alert(err.message || "프로그램을 넣을 수 없습니다.");
+  }
+}
+
 async function ingestCamBatch(fileList, date = todayISO()) {
-  const files = [...(fileList || [])].filter((f) => isCamNc(f.name));
+  const files = [...(fileList || [])].filter((f) => f && f.size && isCamNc(f.name, f.type));
+  if (!files.length) return { tried: 0, files: 0, jobs: 0 };
   const byStem = new Map();
   for (const file of files) {
     const stem = camFileStem(file.name);
@@ -2354,6 +2381,8 @@ async function ingestCamBatch(fileList, date = todayISO()) {
     list.push(file);
     byStem.set(stem, list);
   }
+  let kept = 0;
+  let jobs = 0;
   for (const group of byStem.values()) {
     group.sort((a, b) => camRank(b.name) - camRank(a.name));
     let best = null;
@@ -2365,8 +2394,13 @@ async function ingestCamBatch(fileList, date = todayISO()) {
         best = { file, parsed, cuts };
       }
     }
-    if (best) await ingestCamFile(best.file, date, best.parsed);
+    if (best) {
+      await ingestCamFile(best.file, date, best.parsed);
+      kept += 1;
+      if (best.cuts >= 2) jobs += 1;
+    }
   }
+  return { tried: files.length, files: kept, jobs };
 }
 
 async function ingestCamFile(file, date = todayISO(), parsedIn) {
@@ -2383,7 +2417,9 @@ async function ingestCamFile(file, date = todayISO(), parsedIn) {
   const dupFile = (state.cam.files || []).find((f) => f.folderId === folderId && f.date === date && camFileStem(f.name) === stem);
   if (dupFile) await removeCamFile(dupFile.id);
   const id = uid("file");
-  await saveBlob(id, file);
+  await saveBlob(id, file).catch(() => {
+    throw new Error("파일이 너무 크거나 저장할 수 없습니다.");
+  });
   state.cam.files.push({ id, folderId, name: file.name, size: file.size, date, auto: true });
   const text = parsedIn ? "" : await readNcText(file);
   const parsed = parsedIn || parseProgram(file.name, text);

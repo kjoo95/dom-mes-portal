@@ -1,6 +1,6 @@
 import { getSession, logout, isInternalNetwork } from "./auth.js?v=45";
 import { loadState, saveState, uid } from "./store.js?v=49";
-import { collectStats, parseProgram, toNc, toJson, accTime, toolOps, toolSpec, decodeCamFile, isCamFileName } from "./gcode.js?v=50";
+import { collectStats, parseProgram, toNc, toJson, accTime, toolOps, toolSpec, decodeCamFile, mayBeCamFile } from "./gcode.js?v=51";
 import { boot } from "./safety.js";
 import { createMill } from "./mill3d.js?v=29";
 import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=42";
@@ -31,12 +31,13 @@ function current() {
   return list.find((j) => j.id === selectedId) || list[0];
 }
 
-function isCamNc(name) {
-  return isCamFileName(name);
+function isCamNc(name, type) {
+  return mayBeCamFile(name, type);
 }
 
 async function readNcText(file) {
-  const buf = await file.slice(0, 12_000_000).arrayBuffer().catch(() => null);
+  const size = Math.min(file.size || 0, 40_000_000);
+  const buf = await file.slice(0, size || 1).arrayBuffer().catch(() => null);
   if (!buf) return "";
   return decodeCamFile(buf, file.name);
 }
@@ -56,9 +57,12 @@ function camRank(name) {
   return 0;
 }
 
-async function takeFiles(fileList) {
-  const incoming = [...(fileList || [])].filter((f) => isCamNc(f.name));
-  if (!incoming.length) return 0;
+async function takeFiles(fileList, quiet = false) {
+  const incoming = [...(fileList || [])].filter((f) => f && f.size && isCamNc(f.name, f.type));
+  if (!incoming.length) {
+    if (!quiet) alert("마스터캠 9.1 프로그램 파일(.mc9, .nci, .nc)을 넣으세요.");
+    return 0;
+  }
   const byStem = new Map();
   for (const file of incoming) {
     const text = await readNcText(file);
@@ -69,12 +73,16 @@ async function takeFiles(fileList) {
     const better = !prev
       || cuts > cutCount(prev.parsed)
       || (cuts === cutCount(prev.parsed) && camRank(file.name) > camRank(prev.file.name));
-    if (cuts >= 2 && better) byStem.set(stem, { file, parsed });
+    if (better) byStem.set(stem, { file, parsed, cuts });
   }
-  if (!byStem.size) return 0;
+  const usable = [...byStem.values()].filter((row) => row.cuts >= 2);
+  if (!usable.length) {
+    if (!quiet) alert("이 파일에서 가공 경로를 읽지 못했습니다. 마스터캠에서 포스트한 NCI 또는 NC를 같이 넣으세요.");
+    return 0;
+  }
   if (!state.cam.jobs) state.cam.jobs = [];
   let last = null;
-  byStem.forEach(({ file, parsed }) => {
+  usable.forEach(({ file, parsed }) => {
     state.cam.jobs = state.cam.jobs.filter((j) => fileStem(j.name) !== fileStem(file.name));
     const job = { ...parsed, id: uid("job"), date: todayISO(), folderId: "cam-root", name: file.name };
     state.cam.jobs.unshift(job);
@@ -88,7 +96,7 @@ async function takeFiles(fileList) {
   sim.t = 0;
   loadView();
   render();
-  return byStem.size;
+  return usable.length;
 }
 
 async function walkEntry(entry, out) {
@@ -113,8 +121,11 @@ async function walkEntry(entry, out) {
 
 async function loadCam(fileList) {
   const all = [...(fileList || [])];
-  const incoming = all.filter((f) => isCamNc(f.name));
-  if (!incoming.length) return 0;
+  const incoming = all.filter((f) => isCamNc(f.name, f.type));
+  if (!incoming.length) {
+    alert("마스터캠 9.1 프로그램 파일(.mc9, .nci, .nc)을 넣으세요.");
+    return 0;
+  }
   return takeFiles(incoming);
 }
 
@@ -227,9 +238,10 @@ function render() {
       <aside class="side">
         <p class="side-label">프로그램</p>
         <div class="drop-zone" id="drop-zone">
-          <p>마스터캠 프로그램을 넣으면<br>NCI·NC를 찾아 바로 돌립니다.</p>
+          <p>마스터캠 9.1 파일이나 폴더를 넣으면<br>NCI·NC를 찾아 바로 돌립니다.</p>
           <button class="btn red sm" id="open-prog" type="button">프로그램 넣기</button>
-          <input id="open-nc" type="file" multiple hidden accept=".nc,.nci,.cnc,.tap,.txt,.iso,.eia,.min,.ncc,.mc9,.mc8">
+          <button class="btn sm" id="open-folder" type="button">폴더 넣기</button>
+          <input id="open-nc" type="file" multiple hidden>
           <input id="open-dir" type="file" hidden webkitdirectory>
         </div>
         ${list.map((j) => `<div class="job-item">
@@ -285,6 +297,9 @@ function render() {
   bindLang(render);
   document.getElementById("out").onclick = () => { logout(); location.href = "./portal.html?v=42"; };
   document.getElementById("open-prog")?.addEventListener("click", () => {
+    document.getElementById("open-nc")?.click();
+  });
+  document.getElementById("open-folder")?.addEventListener("click", () => {
     document.getElementById("open-dir")?.click();
   });
   document.getElementById("open-nc")?.addEventListener("change", async (e) => {

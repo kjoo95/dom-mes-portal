@@ -175,7 +175,8 @@ function asciiRuns(u8) {
     if (cur.length) chunks.push(bestDecode(Uint8Array.from(cur)));
     cur = [];
   };
-  for (let i = 0; i < u8.length; i += 1) {
+  const n = Math.min(u8.length, 12_000_000);
+  for (let i = 0; i < n; i += 1) {
     const b = u8[i];
     if (b === 9 || b === 10 || b === 13 || (b >= 32 && b !== 127)) cur.push(b);
     else flush();
@@ -240,7 +241,15 @@ export function decodeCamFile(buffer, name = "") {
 }
 
 export function isCamFileName(name) {
-  return /\.(nc|nci|cnc|tap|txt|iso|eia|min|ncc|mc9|mc8)$/i.test(name || "");
+  return /\.(nc|nci|cnc|tap|txt|iso|eia|min|ncc|mc9|mc8|mpf|spf|dnc|prg|hnc|nc1)$/i.test(name || "");
+}
+
+export function mayBeCamFile(name, type = "") {
+  if (/^(image|video|audio)\//i.test(type || "")) return false;
+  if (/\.(png|jpe?g|gif|webp|bmp|pdf|zip|exe|dll|xlsx?|docx?|pptx?)$/i.test(name || "")) return false;
+  if (isCamFileName(name)) return true;
+  if (!/\.[A-Za-z0-9]{1,8}$/.test(name || "")) return true;
+  return false;
 }
 
 function stripComments(text) {
@@ -331,7 +340,7 @@ function parseToolLib(text) {
 
 function looksNci(text) {
   const lines = String(text).split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-  if (lines.length < 6) return false;
+  if (lines.length < 4) return false;
   let pairs = 0;
   let moves = 0;
   let tools = 0;
@@ -344,14 +353,14 @@ function looksNci(text) {
     if (!numeric && !quoted && /[GMTXYZFS]/i.test(next) && !/^\d/.test(next)) continue;
     pairs += 1;
     const g = Number(lines[i]);
-    if (g === 0 || g === 1 || g === 2 || g === 3) moves += 1;
-    if (g === 1001 || g === 1002 || g === 1050) tools += 1;
+    if (g === 0 || g === 1 || g === 2 || g === 3 || g === 11 || g === 81 || g === 100) moves += 1;
+    if (g === 1000 || g === 1001 || g === 1002 || g === 1050) tools += 1;
   }
-  return pairs >= 6 && moves >= 2 && (tools >= 1 || moves >= 8);
+  return pairs >= 4 && (moves >= 2 || (tools >= 1 && pairs >= 6));
 }
 
 function isNciOpcode(g) {
-  if (g === 0 || g === 1 || g === 2 || g === 3 || g === 4 || g === 11) return true;
+  if (g === 0 || g === 1 || g === 2 || g === 3 || g === 4 || g === 11 || g === 80 || g === 81 || g === 100) return true;
   if (g >= 1000 && g <= 1100) return true;
   if (g >= 20000 && g <= 20150) return true;
   return false;
@@ -562,6 +571,17 @@ function parseNci(name, text) {
       y = ny;
       z = nz;
       pushPt({ x, y, z, rapid: fr === -2, f, s, t });
+    } else if (g === 81 || g === 100) {
+      const nx = n[1];
+      const ny = n[2];
+      const nz = n[3];
+      const fr = n[5];
+      if (fr > 0) f = fr;
+      if (nx === undefined || ny === undefined) continue;
+      x = nx;
+      y = ny;
+      if (nz !== undefined) z = nz;
+      pushPt({ x, y, z, rapid: g === 100, f, s, t });
     }
   }
   const span = points.length
