@@ -650,13 +650,50 @@ table.checks .chk { width: 72px; text-align: center; }
   top: 0;
   z-index: 2;
   display: flex;
-  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
   justify-content: center;
-  padding: 10px;
+  gap: 8px;
+  padding: 10px 12px;
   background: #fff;
+  border: 1px solid var(--line);
   border-radius: 10px;
   margin: 0 auto 12px;
   width: min(210mm, 100%);
+  box-sizing: border-box;
+}
+.a4-tools > .btn,
+.a4-tools > a.btn,
+.a4-tools > label.btn,
+.a4-tools > button.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  margin: 0;
+  width: auto;
+  height: 40px;
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+.a4-tools > label.btn { cursor: pointer; }
+.a4-tools .btn.ghost {
+  border: 1px solid var(--line);
+  background: #fff;
+}
+.a4-tools input[type="file"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
 }
 .a4-wrap { display: flex; justify-content: center; width: 100%; }
 .a4-sheet {

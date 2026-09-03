@@ -9,7 +9,7 @@ import { saveBlob, loadBlob, readAsDataUrl, saveDirHandle, loadDirHandle, remove
 import { parseProgram, decodeCamFile, mayBeCamFile } from "./gcode.js?v=51";
 import { boot, showRecover } from "./safety.js?v=39";
 import { chatView, bindChat } from "./comm.js?v=51";
-import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=55";
+import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=56";
 
 const WHOIS_MAIL = "https://email.whois.co.kr/v2/";
 
@@ -890,11 +890,7 @@ function inboundMonthView(mod, ym) {
     </tr>`).join("");
   return `
     <div class="print-page">
-      <div class="a4-tools no-print">
-        <a class="btn ghost" href="#/${mod.id}">${ht("월 목록")}</a>
-        <button class="btn" id="add-row" type="button">${ht("가로줄 추가")}</button>
-        <button class="btn red" id="qa-print" type="button">${ht("인쇄")}</button>
-      </div>
+      ${a4Tools(`#/${mod.id}`, `<button class="btn" id="add-row" type="button">${ht("가로줄 추가")}</button>`)}
       <div class="a4-wrap page">
         <article class="a4-sheet inbound-sheet">
           ${a4Head(inboundMonthTitle(month), year, true)}
@@ -1012,6 +1008,14 @@ function fc(f, row) {
   return fi(f.key, row[f.key], type);
 }
 
+function a4Tools(backHref, extras = "") {
+  return `<div class="a4-tools no-print">
+    ${backHref ? `<a class="btn ghost" href="${h(backHref)}">${ht("뒤로가기")}</a>` : ""}
+    ${extras}
+    <button class="btn red" id="qa-print" type="button">${ht("인쇄")}</button>
+  </div>`;
+}
+
 function printDocView(mod, date, id) {
   const row = (state.records[mod.id] || []).find((x) => x.id === id);
   if (!row) return mod.type === "inbound" ? inboundMonthView(mod, monthKey(date) || date) : dayView(mod, date);
@@ -1019,11 +1023,7 @@ function printDocView(mod, date, id) {
   const back = mod.type === "inbound" ? (monthKey(row.date) || monthKey(date) || date) : date;
   return `
     <div class="print-page">
-      <div class="a4-tools no-print">
-        <a class="btn ghost" href="#/${mod.id}/${back}">목록</a>
-        ${photos ? `<label class="btn">사진 추가<input id="sheet-photos" type="file" accept="image/*" multiple hidden></label>` : ""}
-        <button class="btn red" id="qa-print" type="button">인쇄</button>
-      </div>
+      ${a4Tools(`#/${mod.id}/${back}`, photos ? `<label class="btn">${ht("사진 추가")}<input id="sheet-photos" type="file" accept="image/*" multiple hidden></label>` : "")}
       <div class="a4-wrap page"><form id="sheet-form">${a4For(mod, row)}</form></div>
     </div>`;
 }
@@ -1373,11 +1373,7 @@ function monthSheetView(mod, ym) {
   }).join("")).join("");
   return `
     <div class="print-page">
-      <div class="a4-tools no-print">
-        <a class="btn ghost" href="#/${mod.id}">${ht("월 목록")}</a>
-        ${climate ? `<a class="btn" href="#/${mod.id}/${month}/map">${ht("평면도")}</a>` : ""}
-        <button class="btn red" id="qa-print" type="button">${ht("인쇄")}</button>
-      </div>
+      ${a4Tools(`#/${mod.id}`, climate ? `<a class="btn" href="#/${mod.id}/${month}/map">${ht("평면도")}</a>` : "")}
       <div class="a4-wrap page">
         <article class="a4-sheet month-sheet">
           ${a4Head(mod.title, monthLabel(month))}
@@ -1450,12 +1446,11 @@ function shopClimateView(mod, ym) {
   }).join("");
   return `
     <div class="print-page">
-      <div class="a4-tools no-print">
-        <button class="btn ghost" id="clim-prev" type="button">이전달</button>
-        <button class="btn ghost" id="clim-next" type="button">다음달</button>
+      ${a4Tools("", `
+        <button class="btn ghost" id="clim-prev" type="button">${ht("이전달")}</button>
+        <button class="btn ghost" id="clim-next" type="button">${ht("다음달")}</button>
         <a class="btn" href="#/${mod.id}/${month}/map">${ht("평면도")}</a>
-        <button class="btn red" id="qa-print" type="button">${ht("인쇄")}</button>
-      </div>
+      `)}
       <div class="a4-wrap page">
         <article class="a4-sheet month-sheet clim-sheet">
           <header class="clim-head">
@@ -1585,11 +1580,10 @@ function shopFiveSView(mod, ym) {
   }).join("")).join("");
   return `
     <div class="print-page">
-      <div class="a4-tools no-print">
-        <button class="btn ghost" id="five-prev" type="button">이전달</button>
-        <button class="btn ghost" id="five-next" type="button">다음달</button>
-        <button class="btn red" id="qa-print" type="button">${ht("인쇄")}</button>
-      </div>
+      ${a4Tools("", `
+        <button class="btn ghost" id="five-prev" type="button">${ht("이전달")}</button>
+        <button class="btn ghost" id="five-next" type="button">${ht("다음달")}</button>
+      `)}
       <div class="a4-wrap page">
         <article class="a4-sheet month-sheet sheet-5s">
           <header class="sheet-5s-head">
@@ -1675,8 +1669,7 @@ function climateView(mod, date) {
   const ym = monthKey(date) || date;
   return `
     <div class="head"><div><h1>${h(mod.title)}</h1><p>${h(monthLabel(ym))} 평면도 · 구역을 끌어서 옮기고, 모서리로 크기·위쪽 점으로 회전합니다.</p></div>
-      <div class="no-print"><a class="btn ghost" href="#/${mod.id}/${ym}">월간 표</a>
-        <a class="btn ghost" href="#/${mod.id}">월 목록</a></div></div>
+      <div class="no-print"><a class="btn ghost" href="#/${mod.id}/${ym}">${ht("뒤로가기")}</a></div></div>
     <section class="panel">
       <div class="bar"><b>${lab ? "검사실 평면도" : "현장 평면도"}</b>
         <button class="btn sm" id="add-room" type="button">구역 추가</button>
@@ -1808,12 +1801,10 @@ function eqSheetView(mod, ym, machineId) {
   const machinePic = pics.machine;
   return `
     <div class="print-page">
-      <div class="a4-tools no-print">
-        <a class="btn ghost" href="#/${mod.id}">설비 목록</a>
-        <button class="btn ghost" id="eq-prev" type="button">이전달</button>
-        <button class="btn ghost" id="eq-next" type="button">다음달</button>
-        <button class="btn red" id="qa-print" type="button">${ht("인쇄")}</button>
-      </div>
+      ${a4Tools(`#/${mod.id}`, `
+        <button class="btn ghost" id="eq-prev" type="button">${ht("이전달")}</button>
+        <button class="btn ghost" id="eq-next" type="button">${ht("다음달")}</button>
+      `)}
       <div class="a4-wrap page">
         <article class="a4-sheet month-sheet eq-sheet">
           <header class="eq-head">
