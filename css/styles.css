@@ -1670,15 +1670,131 @@ table.checks .chk { width: 72px; text-align: center; }
 }
 .inbound-month input[type="date"] { font-size: 12px; min-height: 22px; }
 .inbound-month input[type="number"] { text-align: center; }
-.delivery-day th, .delivery-day td { font-size: 11px; }
-.delivery-day .col-cust { width: 28mm; }
+.delivery-day th, .delivery-day td { font-size: 11px; text-align: center; }
+.delivery-day input {
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  margin: 0;
+  padding: 1px 4px;
+  border: 0;
+  background: transparent;
+  font: inherit;
+}
+.delivery-day input[type="number"] { text-align: center; }
+.delivery-day .col-price input { text-align: right; }
+.delivery-day .col-n { width: 9mm; }
 .delivery-day .col-no { width: 28mm; }
-.delivery-day .col-name { width: 28mm; }
-.delivery-day .col-lot { width: 24mm; }
-.delivery-day .col-qty { width: 16mm; text-align: center; }
-.delivery-day .col-st { width: 22mm; }
-.delivery-day .col-note { width: auto; }
+.delivery-day .col-name { width: auto; text-align: left; }
+.delivery-day .col-unit { width: 12mm; }
+.delivery-day .col-qty { width: 14mm; }
+.delivery-day .col-price, .delivery-day .col-amt { width: 20mm; text-align: right; }
+.delivery-day .col-note { width: 18mm; text-align: left; }
 .delivery-day select { text-align: left; }
+.tx-sheet { padding-top: 7mm; }
+.tx-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2px;
+}
+.tx-id {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+  min-width: 42mm;
+  font-size: 13px;
+  font-weight: 700;
+}
+.tx-id input {
+  width: 42mm;
+  text-align: right;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-weight: 700;
+}
+.tx-sheet .tx-title {
+  position: static;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  margin: 2px 0 8px;
+  text-align: center;
+  font-size: 26px;
+  letter-spacing: 0.45em;
+  pointer-events: auto;
+  border-bottom: 2px solid #111;
+  padding-bottom: 4px;
+}
+.tx-parties {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 1px solid #222;
+  min-height: 38mm;
+  margin-bottom: 4px;
+  flex: 0 0 auto;
+}
+.tx-user, .tx-sup {
+  padding: 4px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.tx-user { border-right: 1px solid #222; }
+.tx-parties b {
+  font-size: 13px;
+  margin-bottom: 2px;
+}
+.tx-sup p { margin: 0; font-size: 12px; line-height: 1.4; }
+.tx-user textarea, .tx-user input, .tx-user select, .tx-job, .tx-remark input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  padding: 0;
+}
+.tx-user textarea { resize: none; min-height: 10mm; }
+.tx-user label {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  font-size: 12px;
+}
+.tx-user label span { flex: 0 0 auto; white-space: nowrap; }
+.tx-job {
+  border: 1px solid #222;
+  border-bottom: 0;
+  height: 7mm;
+  padding: 0 6px !important;
+  font-weight: 700;
+}
+.tx-end {
+  margin: 4px 0 2px;
+  text-align: center;
+  letter-spacing: 0.35em;
+  font-size: 12px;
+  font-weight: 700;
+}
+.tx-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid #222;
+  padding: 3px 8px;
+  font-weight: 700;
+  font-size: 13px;
+}
+.tx-remark {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 3px;
+  font-size: 12px;
+}
+.tx-remark label { display: flex; align-items: center; gap: 4px; flex: 1; }
 .date-print-wrap {
   display: block;
   width: 100%;

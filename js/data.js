@@ -7,6 +7,13 @@ export const STAFF = [
   { id: "jo", name: "조세원", email: "jo@domeng.co.kr" },
 ];
 export const MILL_SHOPS = ["디오엠", ...CUSTOMERS];
+export const DOM_SUPPLIER = {
+  name: "디오엠",
+  bizNo: "124-86-65657",
+  addr: "경기도평택시서탄면수월암길61-9",
+  tel: "Tel;031)666-4356,Fax;031)666-4357",
+  ceo: "손홍육(인)",
+};
 
 export function todayISO() {
   const d = new Date();
@@ -124,14 +131,14 @@ export const FIELDS = {
     { key: "status", label: "상태", type: "text" },
   ],
   delivery: [
-    { key: "date", label: "납품일", type: "date" },
-    { key: "customer", label: "납품 회사", type: "text" },
+    { key: "date", label: "일자", type: "date" },
+    { key: "customer", label: "공급받는자", type: "text" },
     { key: "partNo", label: "품번", type: "text" },
     { key: "partName", label: "품명", type: "text" },
-    { key: "lot", label: "LOT 번호", type: "text" },
-    { key: "qty", label: "납품 수량", type: "number" },
-    { key: "status", label: "상태", type: "select", options: ["예정", "출하준비", "출하완료"] },
-    { key: "note", label: "비고", type: "textarea" },
+    { key: "unit", label: "단위", type: "text" },
+    { key: "qty", label: "수량", type: "number" },
+    { key: "price", label: "단가", type: "number" },
+    { key: "note", label: "비고", type: "text" },
   ],
   quality: [
     { key: "date", label: "검사일", type: "date" },
@@ -187,7 +194,7 @@ export function fieldsFor(type, compact = false) {
   const keys = {
     inbound: ["date", "supplier", "item", "qty", "size"],
     process: ["partNo", "partName", "planQty", "doneQty", "progress", "status"],
-    delivery: ["customer", "partName", "qty", "status"],
+    delivery: ["customer", "partNo", "partName", "qty"],
     quality: ["partNo", "partName", "inspector", "status"],
     defect: ["partName", "type", "qty", "status"],
     inventory: ["item", "lot", "qty", "status"],
@@ -217,7 +224,7 @@ export function defaultState() {
       { id: "mail", title: "후이즈 메일", desc: "새 창에서 후이즈 웹메일을 엽니다.", type: "mail" },
       { id: "inbound", title: "원자재 입고 관리", desc: "월 폴더에 A4 한 장으로 적습니다. 날짜, 업체, 자재 품명, 개수, 자재 사이즈 순입니다.", type: "inbound" },
       { id: "process", title: "가공 현황", desc: "품번·품명·날짜별 완료 수량을 관리합니다.", type: "process" },
-      { id: "delivery", title: "납품 일정", desc: "납품일 한 장에 그날 나가는 품목을 모두 적습니다. 가로줄을 늘려 한 번에 인쇄합니다.", type: "delivery" },
+      { id: "delivery", title: "거래명세표", desc: "날짜별 거래명세표에 그날 나가는 품목을 적고 한 장으로 인쇄합니다.", type: "delivery" },
       { id: "quality", title: "품질 관리 현황", desc: "사진과 치수·비고를 성적서 한 장에 기록하고 인쇄합니다.", type: "quality" },
       { id: "climate", title: "현장 온습도 관리", desc: "생산라인 온·습도 점검 체크시트를 연·월을 바꿔 가며 작성합니다.", type: "climate" },
       { id: "five-s", title: "현장 3정5S 관리", desc: "생산라인 3정 5S 체크시트를 연·월을 바꿔 가며 작성합니다.", type: "five-s" },
@@ -241,10 +248,10 @@ export function defaultState() {
         { id: "pr-3", partNo: "DOM-FLN-A01", partName: "플랜지", lot: "LOT-P-8850", line: "6호기-1", wo: "WO-8850", startDate: "2026-08-25", workDate: "2026-09-01", endDate: "2026-09-01", progress: 100, planQty: 240, doneQty: 240, detail: "전량 밀링 완료.", owner: "조세원", status: "완료" },
       ],
       delivery: [
-        { id: "dl-1", date: today, customer: "참테크", partNo: "DOM-HSG-032", partName: "하우징", lot: "LOT-P-8841", qty: 80, status: "출하준비", note: "" },
-        { id: "dl-1b", date: today, customer: "인텔릭스", partNo: "DOM-SFT-018", partName: "샤프트", lot: "LOT-P-8847", qty: 40, status: "출하준비", note: "" },
-        { id: "dl-2", date: "2026-09-04", customer: "인텔릭스", partNo: "DOM-SFT-018", partName: "샤프트", lot: "LOT-P-8847", qty: 200, status: "예정", note: "" },
-        { id: "dl-3", date: "2026-09-05", customer: "준테크놀러지", partNo: "DOM-FLN-A01", partName: "플랜지", lot: "LOT-P-8850", qty: 120, status: "예정", note: "" },
+        { id: "dl-1", date: today, customer: "참테크", partNo: "DOM-HSG-032", partName: "하우징", unit: "EA", qty: 80, price: "", note: "" },
+        { id: "dl-1b", date: today, customer: "인텔릭스", partNo: "DOM-SFT-018", partName: "샤프트", unit: "EA", qty: 40, price: "", note: "" },
+        { id: "dl-2", date: "2026-09-04", customer: "인텔릭스", partNo: "DOM-SFT-018", partName: "샤프트", unit: "EA", qty: 200, price: "", note: "" },
+        { id: "dl-3", date: "2026-09-05", customer: "준테크놀러지", partNo: "DOM-FLN-A01", partName: "플랜지", unit: "EA", qty: 120, price: "", note: "" },
       ],
       quality: [
         { id: "qa-1", date: today, millCompany: "디오엠", customer: "참테크", partNo: "DOM-HSG-032", partName: "모터 하우징", lot: "LOT-P-8841", qtyIn: 80, qtyOut: 76, inspector: "조세원", status: "합격", photos: [], measures: [
@@ -261,6 +268,7 @@ export function defaultState() {
         { id: "iv-2", date: today, kind: "완제품", item: "플랜지", lot: "LOT-P-8850", qty: 240, location: "W-C01", status: "정상" },
       ],
     },
+    deliveryMeta: {},
     climate: {
       rooms: [
         { id: "store-a", name: "원자재 창고", x: 3, y: 4, w: 34, h: 28, kind: "area" },

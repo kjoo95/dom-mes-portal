@@ -1,4 +1,4 @@
-import { STORAGE_KEY, defaultState, todayISO } from "./data.js?v=51";
+import { STORAGE_KEY, defaultState, todayISO } from "./data.js?v=52";
 import { seedJobs, parseProgram, toNc, looksBinaryText } from "./gcode.js?v=52";
 
 const BAK = `${STORAGE_KEY}-bak`;
@@ -68,6 +68,11 @@ function mergeModules(base, saved) {
   if (inbound) {
     inbound.desc = "월 폴더에 A4 한 장으로 적습니다. 날짜, 업체, 자재 품명, 개수, 자재 사이즈 순입니다.";
   }
+  const delivery = list.find((item) => item.id === "delivery");
+  if (delivery) {
+    delivery.title = "거래명세표";
+    delivery.desc = "날짜별 거래명세표에 그날 나가는 품목을 적고 한 장으로 인쇄합니다.";
+  }
   const lab5 = list.find((item) => item.id === "lab-5s");
   if (lab5) {
     lab5.title = "검사실 3정5S 관리";
@@ -111,6 +116,7 @@ function hydrate(parsed) {
       sheet: parsed.labClimate?.sheet || {},
     },
     dateFolders: parsed.dateFolders || {},
+    deliveryMeta: { ...(base.deliveryMeta || {}), ...(parsed.deliveryMeta || {}) },
     fiveS: { dates: {}, notes: {}, labNotes: {}, ...(parsed.fiveS || {}) },
     cam,
     equipment: parsed.equipment || {},

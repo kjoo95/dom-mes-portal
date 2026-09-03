@@ -1,15 +1,15 @@
 import { getSession, login, signup, logout, isInternalNetwork, pullUsers, isAdmin, listUsers, pendingCount, setUserStatus } from "./auth.js?v=45";
 import {
   CUSTOMERS, MILL_SHOPS, MACHINES, FIVE_S_SHOP, FIVE_S_LAB, QA_MEASURE_ITEMS,
-  EQ_ITEMS, EQ_MARKS,
+  EQ_ITEMS, EQ_MARKS, DOM_SUPPLIER,
   fieldsFor, flattenChecks, badgeClass, todayISO,
-} from "./data.js?v=51";
-import { loadState, saveState, uid } from "./store.js?v=57";
+} from "./data.js?v=52";
+import { loadState, saveState, uid } from "./store.js?v=58";
 import { saveBlob, loadBlob, readAsDataUrl, saveDirHandle, loadDirHandle, removeBlob } from "./files.js?v=39";
 import { parseProgram, decodeCamFile, mayBeCamFile } from "./gcode.js?v=52";
 import { boot, showRecover } from "./safety.js?v=39";
 import { chatView, bindChat } from "./comm.js?v=51";
-import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=60";
+import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=61";
 
 const WHOIS_MAIL = "https://email.whois.co.kr/v2/";
 
@@ -607,7 +607,7 @@ function sheetUsed(mod, r) {
 function recTitle(row, type) {
   if (type === "inbound") return [row.supplier, row.item, row.size].filter(Boolean).join(" · ");
   if (type === "process") return [row.partNo, row.partName, row.line].filter(Boolean).join(" · ");
-  if (type === "delivery") return [row.customer, row.partNo, row.partName].filter(Boolean).join(" · ");
+  if (type === "delivery") return [row.partNo, row.partName].filter(Boolean).join(" · ");
   if (type === "quality") return [row.partNo, row.partName, row.customer].filter(Boolean).join(" · ");
   if (type === "defect") return [row.partNo, row.partName, row.type].filter(Boolean).join(" · ");
   if (type === "inventory") return [row.kind, row.item, row.lot].filter(Boolean).join(" · ");
@@ -891,12 +891,11 @@ function deliveryBrowse(mod) {
   const blocks = dates.map((d) => {
     const rows = rowsOn(mod, d).filter(deliveryUsed);
     const body = rows.map((r) => `<tr>
-        <td>${h(r.customer || "—")}</td>
         <td>${h(r.partNo || "—")}</td>
         <td>${h(r.partName || "—")}</td>
-        <td>${h(r.lot || "—")}</td>
+        <td>${h(r.unit || "—")}</td>
         <td>${h(r.qty || "—")}</td>
-        <td>${h(t(r.status || "—"))}</td>
+        <td>${h(moneyText(deliveryAmount(r)) || "—")}</td>
         <td class="act"><a class="btn sm" href="#/${mod.id}/${d}">${ht("수정")}</a></td>
       </tr>`).join("");
     return `<section class="panel rec-pack">
@@ -906,9 +905,9 @@ function deliveryBrowse(mod) {
         <a class="btn sm red" href="#/${mod.id}/${d}">${ht("표 열기")}</a>
       </div>
       <div class="scroll"><table class="rows rec-table"><thead><tr>
-        <th>${ht("납품 회사")}</th><th>${ht("품번")}</th><th>${ht("품명")}</th><th>${ht("LOT")}</th><th>${ht("수량")}</th><th>${ht("상태")}</th><th></th>
+        <th>${ht("품번")}</th><th>${ht("품명")}</th><th>${ht("단위")}</th><th>${ht("수량")}</th><th>${ht("금액")}</th><th></th>
       </tr></thead>
-      <tbody>${body || `<tr><td colspan="7">${ht("이 날짜에 적힌 납품이 없습니다.")}</td></tr>`}</tbody></table></div>
+      <tbody>${body || `<tr><td colspan="6">${ht("이 날짜에 적힌 납품이 없습니다.")}</td></tr>`}</tbody></table></div>
     </section>`;
   }).join("");
   return `
@@ -992,7 +991,36 @@ function deliveryUsed(r) {
   return Boolean(
     String(r.partNo || r.partName || r.lot || r.note || "").trim()
     || r.qty
+    || r.price
   );
+}
+
+function deliveryAmount(r) {
+  const q = Number(r.qty) || 0;
+  const p = Number(r.price) || 0;
+  return Math.round(q * p);
+}
+
+function moneyText(n) {
+  const v = Number(n);
+  if (!v) return "";
+  return v.toLocaleString("ko-KR");
+}
+
+function deliveryHead(date) {
+  if (!state.deliveryMeta) state.deliveryMeta = {};
+  const cur = state.deliveryMeta[date] || {};
+  const rows = (state.records.delivery || []).filter((r) => r.date === date && deliveryUsed(r));
+  const fromRow = rows.find((r) => String(r.customer || "").trim())?.customer || "";
+  return {
+    docNo: cur.docNo || "",
+    jobTitle: cur.jobTitle || "",
+    customer: cur.customer || fromRow,
+    customerAddr: cur.customerAddr || "",
+    recvDept: cur.recvDept || "",
+    poNo: cur.poNo || "",
+    remark: cur.remark || "VAT별도",
+  };
 }
 
 function padInboundRows(mod, ym) {
@@ -1009,7 +1037,7 @@ function padInboundRows(mod, ym) {
 function padDeliveryRows(mod, date) {
   let n = rowsOn(mod, date).length;
   let added = 0;
-  while (n < 20) {
+  while (n < 16) {
     addBlank(mod, date);
     n += 1;
     added += 1;
@@ -1042,13 +1070,6 @@ function inboundCell(row, key, type, placeholder) {
 
 function deliveryCell(row, key, type, placeholder) {
   const val = row[key] ?? "";
-  if (type === "select") {
-    const opts = key === "customer" ? CUSTOMERS : ["예정", "출하준비", "출하완료"];
-    const extra = val && !opts.includes(val) ? `<option value="${h(val)}" selected>${h(val)}</option>` : "";
-    return `<select data-in="${h(row.id)}" data-k="${key}">
-      <option value=""></option>${extra}${opts.map((o) => `<option value="${h(o)}" ${o === val ? "selected" : ""}>${h(t(o))}</option>`).join("")}
-    </select>`;
-  }
   return `<input data-in="${h(row.id)}" data-k="${key}" type="${type}" value="${h(val)}"${placeholder ? ` placeholder="${h(placeholder)}"` : ""}>`;
 }
 
@@ -1098,43 +1119,89 @@ function inboundMonthView(mod, ym) {
 
 function deliveryDayView(mod, date, viewOnly = false) {
   const rows = rowsOn(mod, date);
+  const head = deliveryHead(date);
   const delHead = viewOnly ? "" : `<th class="no-print"></th>`;
-  const body = rows.map((r) => `<tr>
-      <td class="col-cust">${deliveryCell(r, "customer", "select")}</td>
-      <td class="col-no">${deliveryCell(r, "partNo", "text", t("품번"))}</td>
-      <td class="col-name">${deliveryCell(r, "partName", "text", t("품명"))}</td>
-      <td class="col-lot">${deliveryCell(r, "lot", "text", t("LOT"))}</td>
+  const custOpts = CUSTOMERS.includes(head.customer) || !head.customer
+    ? CUSTOMERS
+    : [head.customer, ...CUSTOMERS];
+  let no = 0;
+  const body = rows.map((r) => {
+    const used = deliveryUsed(r);
+    const num = used ? ++no : "";
+    const amt = used ? moneyText(deliveryAmount(r)) : "";
+    return `<tr>
+      <td class="col-n">${h(num)}</td>
+      <td class="col-no">${deliveryCell(r, "partNo", "text")}</td>
+      <td class="col-name">${deliveryCell(r, "partName", "text")}</td>
+      <td class="col-unit">${deliveryCell(r, "unit", "text", "EA")}</td>
       <td class="col-qty">${deliveryCell(r, "qty", "number")}</td>
-      <td class="col-st">${deliveryCell(r, "status", "select")}</td>
-      <td class="col-note">${deliveryCell(r, "note", "text", t("비고"))}</td>
+      <td class="col-price">${deliveryCell(r, "price", "number")}</td>
+      <td class="col-amt" data-amt="${h(r.id)}">${h(amt)}</td>
+      <td class="col-note">${deliveryCell(r, "note", "text")}</td>
       ${viewOnly ? "" : `<td class="act no-print"><button class="btn sm" data-del="${r.id}" type="button">${ht("삭제")}</button></td>`}
-    </tr>`).join("");
+    </tr>`;
+  }).join("");
+  const total = moneyText(rows.reduce((s, r) => s + (deliveryUsed(r) ? deliveryAmount(r) : 0), 0));
   const back = viewOnly ? `#/records/${mod.id}` : `#/${mod.id}`;
   const extra = viewOnly ? "" : `<button class="btn" id="add-row" type="button">${ht("가로줄 추가")}</button>`;
   return `
     <div class="print-page${viewOnly ? " view-only" : ""}">
       ${a4Tools(back, extra, viewOnly)}
       <div class="a4-wrap page">
-        <article class="a4-sheet inbound-sheet delivery-sheet">
-          ${a4Head(t("납품 명세서"), date, true)}
-          <p class="a4-sub">${ht("납품일")} ${h(printDateText(date))}</p>
+        <article class="a4-sheet delivery-sheet tx-sheet">
+          <div class="tx-top">
+            <span></span>
+            <div class="tx-id">
+              <input data-head="docNo" value="${h(head.docNo)}" placeholder="PA0000000" spellcheck="false">
+              <span>${h(printDateText(date))}</span>
+            </div>
+          </div>
+          <h1 class="tx-title">${ht("거래명세표")}</h1>
+          <div class="tx-parties">
+            <div class="tx-user">
+              <b>User</b>
+              <select data-head="customer">
+                <option value=""></option>
+                ${custOpts.map((o) => `<option value="${h(o)}" ${o === head.customer ? "selected" : ""}>${h(o)}</option>`).join("")}
+              </select>
+              <textarea data-head="customerAddr" rows="2" placeholder="${ht("주소")}">${h(head.customerAddr)}</textarea>
+              <label><span>${ht("인수부서명")}:</span><input data-head="recvDept" value="${h(head.recvDept)}"></label>
+              <label><span>${ht("발주번호")};</span><input data-head="poNo" value="${h(head.poNo)}"></label>
+            </div>
+            <div class="tx-sup">
+              <b>Supplier</b>
+              <p>${h(DOM_SUPPLIER.name)}</p>
+              <p>${ht("사업자등록번호")};${h(DOM_SUPPLIER.bizNo)}</p>
+              <p>${h(DOM_SUPPLIER.addr)}</p>
+              <p>${h(DOM_SUPPLIER.tel)}</p>
+              <p>${ht("대표자")};${h(DOM_SUPPLIER.ceo)}</p>
+            </div>
+          </div>
+          <input class="tx-job" data-head="jobTitle" value="${h(head.jobTitle)}" placeholder="${ht("건명")}">
           <div class="a4-grow month-scroll">
-            <table class="month-grid inbound-month delivery-day">
+            <table class="month-grid delivery-day">
               <thead><tr>
-                <th class="col-cust">${ht("납품 회사")}</th>
+                <th class="col-n">No</th>
                 <th class="col-no">${ht("품번")}</th>
                 <th class="col-name">${ht("품명")}</th>
-                <th class="col-lot">${ht("LOT")}</th>
+                <th class="col-unit">${ht("단위")}</th>
                 <th class="col-qty">${ht("수량")}</th>
-                <th class="col-st">${ht("상태")}</th>
+                <th class="col-price">${ht("단가")}</th>
+                <th class="col-amt">${ht("금액")}</th>
                 <th class="col-note">${ht("비고")}</th>
                 ${delHead}
               </tr></thead>
               <tbody>${body}</tbody>
             </table>
           </div>
-          <div class="a4-sign">
-            <span>${ht("담당")}</span><span>${ht("출하")}</span><span>${ht("인수")}</span>
+          <p class="tx-end">${ht("이 하 여 백")}</p>
+          <div class="tx-total">
+            <span>Sub-Total(KRW)</span>
+            <b data-total>${h(total)}</b>
+          </div>
+          <div class="tx-remark">
+            <label>Remark:<input data-head="remark" value="${h(head.remark)}"></label>
+            <span>1/1</span>
           </div>
         </article>
       </div>
@@ -1194,17 +1261,16 @@ function deliverySheet(rows, date, modId, quiet = false) {
   const body = rows.map((r) => `<tr class="qa-row">
       <td class="act"><a class="btn sm" href="#/${modId}/${date}">${ht("수정")}</a>
         <a class="btn sm red" href="#/${modId}/${date}">${ht("표 열기")}</a></td>
-      <td>${h(r.customer)}</td>
       <td>${h(r.partNo)}</td>
       <td>${h(r.partName)}</td>
-      <td>${h(r.lot)}</td>
+      <td>${h(r.unit)}</td>
       <td>${h(r.qty ?? "")}</td>
-      <td>${h(t(r.status || ""))}</td>
+      <td>${h(moneyText(deliveryAmount(r)))}</td>
     </tr>`).join("");
   return `${quiet ? "" : `<p class="mute pad">${ht("그날 나가는 품목을 한 장에 모아 적고 인쇄합니다.")}</p>`}
     <div class="scroll"><table class="rows">
-    <thead><tr><th></th><th>${ht("납품 회사")}</th><th>${ht("품번")}</th><th>${ht("품명")}</th><th>${ht("LOT")}</th><th>${ht("수량")}</th><th>${ht("상태")}</th></tr></thead>
-    <tbody>${body || `<tr><td colspan="7">${ht("이 날짜에 적힌 납품이 없습니다.")}</td></tr>`}</tbody>
+    <thead><tr><th></th><th>${ht("품번")}</th><th>${ht("품명")}</th><th>${ht("단위")}</th><th>${ht("수량")}</th><th>${ht("금액")}</th></tr></thead>
+    <tbody>${body || `<tr><td colspan="6">${ht("이 날짜에 적힌 납품이 없습니다.")}</td></tr>`}</tbody>
   </table></div>`;
 }
 
@@ -1261,7 +1327,6 @@ function printDocView(mod, date, id, viewOnly = false) {
 
 function a4For(mod, row) {
   if (mod.type === "quality") return qualityA4(row);
-  if (mod.type === "delivery") return deliveryA4(row);
   if (mod.type === "process") return processA4(row);
   if (mod.type === "defect") return defectA4(row);
   if (mod.type === "inventory") return inventoryA4(row);
@@ -1351,36 +1416,7 @@ function qualityA4(r) {
 }
 
 function deliveryA4(r) {
-  return `
-      <article class="a4-sheet">
-        ${a4Head("납품 명세서", r.date)}
-        <table class="a4-meta">
-          <tr><th>납품 회사</th><td>${fs("customer", r.customer, CUSTOMERS)}</td><th>납품일</th><td>${fi("date", r.date, "date")}</td></tr>
-          <tr><th>품번</th><td>${fi("partNo", r.partNo)}</td><th>품명</th><td>${fi("partName", r.partName)}</td></tr>
-          <tr><th>LOT 번호</th><td>${fi("lot", r.lot)}</td><th>납품 수량</th><td>${fi("qty", r.qty, "number")}</td></tr>
-          <tr><th>상태</th><td>${fs("status", r.status, ["예정", "출하준비", "출하완료"])}</td><th></th><td></td></tr>
-        </table>
-        <h2>납품 내역</h2>
-        <div class="a4-grow">
-          <table class="a4-meas">
-            <thead><tr><th>납품 회사</th><th>품번</th><th>품명</th><th>LOT</th><th>수량</th><th>상태</th></tr></thead>
-            <tbody>
-              <tr>
-                <td>${h(r.customer)}</td>
-                <td>${h(r.partNo)}</td>
-                <td>${h(r.partName)}</td>
-                <td>${h(r.lot)}</td>
-                <td>${h(r.qty ?? "")}</td>
-                <td>${h(r.status)}</td>
-              </tr>
-              <tr><td colspan="6" style="text-align:left;vertical-align:top">${ft("note", r.note)}</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="a4-sign">
-          <span>담당</span><span>출하</span><span>인수</span>
-        </div>
-      </article>`;
+  return deliveryDayView({ id: "delivery", type: "delivery" }, r.date || todayISO());
 }
 
 function processStamp(r) {
@@ -2420,16 +2456,49 @@ function bindDeliveryDay(mod, date) {
     persist();
     render();
   });
+  const saveHead = (el) => {
+    if (!state.deliveryMeta) state.deliveryMeta = {};
+    const cur = { ...deliveryHead(date) };
+    cur[el.dataset.head] = el.value;
+    state.deliveryMeta[date] = cur;
+    if (el.dataset.head === "customer") {
+      (state.records[mod.id] || []).filter((r) => r.date === date).forEach((r) => { r.customer = el.value; });
+    }
+    remember(mod.id, date);
+    persist();
+  };
+  root.querySelectorAll("[data-head]").forEach((el) => {
+    el.onchange = () => saveHead(el);
+    el.oninput = () => saveHead(el);
+  });
+  const refreshMoney = () => {
+    const list = state.records[mod.id] || [];
+    let sum = 0;
+    list.filter((r) => r.date === date).forEach((r) => {
+      const cell = root.querySelector(`[data-amt="${r.id}"]`);
+      if (cell) cell.textContent = deliveryUsed(r) ? moneyText(deliveryAmount(r)) : "";
+      if (deliveryUsed(r)) sum += deliveryAmount(r);
+    });
+    const tot = root.querySelector("[data-total]");
+    if (tot) tot.textContent = moneyText(sum);
+  };
   root.querySelectorAll("[data-in]").forEach((el) => {
     const save = () => {
       const row = (state.records[mod.id] || []).find((x) => x.id === el.dataset.in);
       if (!row) return;
       const key = el.dataset.k;
       if (!key) return;
-      row[key] = key === "qty" && el.value !== "" ? Number(el.value) : el.value;
+      row[key] = (key === "qty" || key === "price") && el.value !== "" ? Number(el.value) : el.value;
       row.date = date;
+      if ((key === "qty" || key === "price") && row.qty && !row.unit) {
+        row.unit = "EA";
+        const unitEl = root.querySelector(`[data-in="${row.id}"][data-k="unit"]`);
+        if (unitEl && !unitEl.value) unitEl.value = "EA";
+      }
+      if (key === "qty" || key === "price") row.amount = deliveryAmount(row);
       remember(mod.id, date);
       persist();
+      refreshMoney();
     };
     el.onchange = save;
     el.oninput = save;
@@ -2460,6 +2529,8 @@ function addBlank(mod, date) {
   if (mod.type === "delivery") {
     row.customer = "";
     row.status = "";
+    row.unit = "";
+    row.price = "";
     row.date = date || todayISO();
   }
   if (mod.type === "quality") {
