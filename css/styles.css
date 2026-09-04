@@ -1183,6 +1183,40 @@ table.checks .chk { width: 72px; text-align: center; }
 .a4-sign { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 6px; flex: 0 0 auto; }
 .a4-sign span { border: 1px solid #222; padding: 3px 0 0; text-align: center; font-size: 12px; height: 12mm; }
 .qa-a4 { overflow: hidden; }
+.defect-a4 { overflow: hidden; }
+.defect-a4 h2 { margin: 6px 0 4px; font-size: 14px; }
+.defect-a4 .qa-photos {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  flex: 0 0 auto;
+}
+.defect-a4 .qa-shot {
+  width: 56mm;
+  height: 38mm;
+  flex: 0 0 56mm;
+  display: grid;
+  place-items: center;
+}
+.defect-a4 .defect-fix {
+  flex: 1 1 auto;
+  min-height: 0;
+  table-layout: fixed;
+}
+.defect-a4 .defect-fix th {
+  width: 22mm;
+  vertical-align: top;
+}
+.defect-a4 .defect-fix tr { height: 50%; }
+.defect-a4 .defect-fix td { height: 50%; padding: 4px; }
+.defect-a4 .defect-fix textarea {
+  min-height: 24mm;
+  height: 100%;
+}
 .qa-a4 .a4-head { margin-bottom: 5px; padding-bottom: 3px; }
 .qa-a4 .a4-meta { font-size: 13px; }
 .qa-a4 .a4-meta th, .qa-a4 .a4-meta td { padding: 2px 5px; height: 7.2mm; }
@@ -2172,6 +2206,7 @@ table.checks .chk { width: 72px; text-align: center; }
   }
   .inbound-sheet,
   .qa-a4,
+  .defect-a4,
   .process-a4 {
     width: 210mm !important;
     height: 297mm !important;
@@ -2268,6 +2303,17 @@ table.checks .chk { width: 72px; text-align: center; }
   }
   .eq-sheet { overflow: hidden !important; }
   .qa-photos, .qa-shot { height: 22mm; min-height: 22mm; flex-basis: 22mm; }
+  .defect-a4 .qa-photos {
+    height: auto !important;
+    min-height: 0 !important;
+    flex-basis: auto !important;
+  }
+  .defect-a4 .qa-shot {
+    width: 56mm !important;
+    height: 38mm !important;
+    min-height: 38mm !important;
+    flex: 0 0 56mm !important;
+  }
   .qa-meas th, .qa-meas td { height: 6.8mm; }
   .clim-ym-print {
     display: block !important;

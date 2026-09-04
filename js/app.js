@@ -2025,15 +2025,8 @@ function processA4(r) {
 }
 
 function defectA4(r) {
-  const list = (r.photos || []).filter(Boolean);
-  const pics = list.length
-    ? `<div class="a4-photos">${list.map((s, i) => `<div class="pic-item">
-        <img src="${s}" alt="">
-        ${picDel(`data-pic-del="${i}"`)}
-      </div>`).join("")}</div>`
-    : `<p class="a4-empty">사진 없음 · 위 ‘사진’으로 첨부</p>`;
   return `
-      <article class="a4-sheet">
+      <article class="a4-sheet defect-a4">
         ${a4Head("불량 발생 보고서", r.date)}
         <table class="a4-meta">
           <tr><th>발생일</th><td>${fi("date", r.date, "date")}</td><th>상태</th><td>${fi("status", r.status)}</td></tr>
@@ -2041,13 +2034,13 @@ function defectA4(r) {
           <tr><th>LOT 번호</th><td>${fi("lot", r.lot)}</td><th>수량</th><td>${fi("qty", r.qty, "number")}</td></tr>
           <tr><th>불량 유형</th><td colspan="3">${fi("type", r.type)}</td></tr>
         </table>
+        <h2>사진</h2>
+        ${qaPhotos(r)}
         <h2>수정 조치 · 재발 방지</h2>
-        <table class="a4-meta">
+        <table class="a4-meta defect-fix">
           <tr><th>수정 조치</th><td colspan="3">${ft("action", r.action)}</td></tr>
           <tr><th>재발 방지</th><td colspan="3">${ft("prevent", r.prevent)}</td></tr>
         </table>
-        <h2>사진</h2>
-        <div class="a4-grow">${pics}</div>
         <div class="a4-sign">
           <span>발견</span><span>조치</span><span>승인</span>
         </div>
@@ -3158,7 +3151,7 @@ function bindSheet(mod, id) {
   });
   document.getElementById("sheet-photos")?.addEventListener("change", async (e) => {
     if (!row) return;
-    if (mod.type === "quality") {
+    if (mod.type === "quality" || mod.type === "defect") {
       row.photos = Array.from({ length: 3 }, (_, n) => (row.photos || [])[n] || "");
       for (const f of e.target.files) {
         const slot = row.photos.findIndex((p) => !p);
