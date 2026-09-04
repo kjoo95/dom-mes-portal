@@ -9,7 +9,16 @@ import { saveBlob, loadBlob, readAsDataUrl, removeBlob } from "./files.js?v=39";
 import { parseProgram, decodeCamFile, mayBeCamFile } from "./gcode.js?v=52";
 import { boot, showRecover } from "./safety.js?v=48";
 import { chatView, bindChat } from "./comm.js?v=51";
-import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=67";
+import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=75";
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.getRegistrations().then((regs) => {
+    regs.forEach((reg) => reg.unregister());
+  });
+}
+window.addEventListener("beforeinstallprompt", (event) => {
+  event.preventDefault();
+});
 
 const WHOIS_MAIL = "https://email.whois.co.kr/v2/";
 
@@ -421,6 +430,20 @@ function logo(sub = "") {
   return `<div class="logo">${brandMark()}${extra}</div>`;
 }
 
+function siteHead(navHtml = "") {
+  return `<header class="site-top">
+      <a class="site-brand" href="./index.html">${brandMark()}</a>
+      <nav class="site-nav"><a href="./index.html">${ht("회사 홈")}</a>${navHtml}${langBar()}</nav>
+    </header>`;
+}
+
+function siteFoot() {
+  return `<footer class="site-foot">
+      <p><strong>주식회사 디오엠(DOM)</strong> · ${ht("내부 운영 포털")}</p>
+      <p>경기도 평택시 서탄면 수월암길 61-9 · Tel 031-666-4356</p>
+    </footer>`;
+}
+
 function render() {
   revertUnsavedIfLeft();
   applyHtmlLang();
@@ -477,14 +500,15 @@ function render() {
 function renderLogin(mode = "login") {
   if (!isInternalNetwork()) {
     root.innerHTML = `
-      <div class="login">
-        <div class="card">
-          ${logo()}
-          <h1>${ht("내부 전용")}</h1>
-          <p>${ht("운영 포털과 가공 프로그램은 디오엠 내부 네트워크에서만 열 수 있습니다.")}</p>
-          <p><a href="./index.html" target="_blank" rel="noopener noreferrer">${ht("디오엠 회사 홈")}</a></p>
-          ${langBar()}
-        </div>
+      <div class="site-page">
+        ${siteHead()}
+        <main class="site-login">
+          <div class="site-blocked">
+            <h1>${ht("내부 전용")}</h1>
+            <p>${ht("운영 포털과 가공 프로그램은 디오엠 내부 네트워크에서만 열 수 있습니다.")}</p>
+          </div>
+        </main>
+        ${siteFoot()}
       </div>`;
     bindLang(() => renderLogin(mode));
     return;
@@ -492,34 +516,38 @@ function renderLogin(mode = "login") {
   const join = mode === "signup";
   pullUsers();
   root.innerHTML = `
-    <div class="login">
-      <div class="card auth-card">
-        ${logo()}
-        ${langBar()}
-        <h1>${ht("내부 운영 포털")}</h1>
-        <p>${ht("회사 메일로 가입 신청하면, 관리자가 승인한 뒤에만 들어갈 수 있습니다.")}</p>
-        <div class="auth-tabs">
-          <button class="auth-tab ${join ? "" : "on"}" id="tab-login" type="button">${ht("로그인")}</button>
-          <button class="auth-tab ${join ? "on" : ""}" id="tab-signup" type="button">${ht("회원가입")}</button>
+    <div class="site-page">
+      ${siteHead()}
+      <main class="site-login">
+        <div class="site-login-inner">
+          <div class="site-login-intro">
+            <h1>${ht("내부 운영 포털")}</h1>
+            <p>${ht("회사 메일로 가입 신청하면, 관리자가 승인한 뒤에만 들어갈 수 있습니다.")}</p>
+          </div>
+          <div class="site-login-form">
+            <div class="auth-tabs">
+              <button class="auth-tab ${join ? "" : "on"}" id="tab-login" type="button">${ht("로그인")}</button>
+              <button class="auth-tab ${join ? "on" : ""}" id="tab-signup" type="button">${ht("회원가입")}</button>
+            </div>
+            <form id="auth-form">
+              ${join ? `
+                <label>${ht("이름")}<input id="name" type="text" required autocomplete="name" /></label>
+                <label>${ht("부서")}<select id="team">
+                  <option value="office">${ht("사무")}</option>
+                  <option value="shop">${ht("현장")}</option>
+                  <option value="lab">${ht("검사실")}</option>
+                </select></label>
+              ` : ""}
+              <label>${ht("아이디")}<input id="email" type="text" required autocomplete="username" placeholder="thswlsvy1021" spellcheck="false" lang="en" /></label>
+              <label>${ht("비밀번호")}<input id="password" type="password" required lang="en" autocomplete="${join ? "new-password" : "current-password"}" /></label>
+              ${join ? `<label>${ht("비밀번호 확인")}<input id="confirm" type="password" required autocomplete="new-password" /></label>` : ""}
+              <p class="err" id="err"></p>
+              <button class="btn red" type="submit">${join ? ht("가입 신청") : ht("로그인")}</button>
+            </form>
+          </div>
         </div>
-        <form id="auth-form">
-          ${join ? `
-            <label>${ht("이름")}<input id="name" type="text" required autocomplete="name" /></label>
-            <label>${ht("부서")}<select id="team">
-              <option value="office">${ht("사무")}</option>
-              <option value="shop">${ht("현장")}</option>
-              <option value="lab">${ht("검사실")}</option>
-            </select></label>
-          ` : ""}
-          <label>${ht("아이디")}<input id="email" type="text" required autocomplete="username" placeholder="thswlsvy1021" spellcheck="false" lang="en" /></label>
-          <label>${ht("비밀번호")}<input id="password" type="password" required lang="en" autocomplete="${join ? "new-password" : "current-password"}" /></label>
-          ${join ? `<label>${ht("비밀번호 확인")}<input id="confirm" type="password" required autocomplete="new-password" /></label>` : ""}
-          <p class="err" id="err"></p>
-          <button class="btn red" type="submit">${join ? ht("가입 신청") : ht("로그인")}</button>
-        </form>
-        <p><a href="./index.html" target="_blank" rel="noopener noreferrer">${ht("디오엠 회사 홈")}</a></p>
-        <button class="btn" id="install" type="button">${ht("컴퓨터에 앱 설치")}</button>
-      </div>
+      </main>
+      ${siteFoot()}
     </div>`;
   document.getElementById("tab-login").onclick = () => renderLogin("login");
   document.getElementById("tab-signup").onclick = () => renderLogin("signup");
@@ -636,18 +664,18 @@ function shell(session, active, inner, printMode = false) {
   const foldOpen = navGroupOpen("folders") ? "open" : "";
   root.innerHTML = `
     <div class="app ${printMode ? "print-mode" : ""}">
-      <header>
-        <a href="#/home">${logo()}</a>
-        <div class="who">${langBar()}<span>${h(session.name)} · ${h(session.email)}</span> <button class="btn ghost" id="out" type="button">${ht("로그아웃")}</button></div>
-      </header>
-      <aside class="side">
-        <div class="side-block go">
-          <p class="side-label">${ht("바로가기")}</p>
+      <header class="site-top">
+        <a class="site-brand" href="#/home">${logo()}</a>
+        <nav class="site-nav">
           ${link("home", "운영 폴더")}
           ${link("manage", "수정·삭제")}
           ${isAdmin(session) ? `<a class="${"members" === active ? "on" : ""}" href="#/members">${ht("가입 승인")}${wait ? ` (${wait})` : ""}</a>` : ""}
           <a href="./cam-lab.html?v=37">${ht("가공 프로그램")}</a>
-        </div>
+          <a href="./index.html" target="_blank" rel="noopener noreferrer">${ht("회사 홈")}</a>
+        </nav>
+        <div class="who">${langBar()}<span>${h(session.name)}</span> <button class="btn ghost" id="out" type="button">${ht("로그아웃")}</button></div>
+      </header>
+      <aside class="side">
         <div class="side-block comm">
           <p class="side-label">${ht("소통")}</p>
           ${link("chat", "사내 메신저")}
@@ -783,7 +811,7 @@ function homeView() {
     <div class="page-head">
       <div>
         <h1>${ht("운영 폴더")}</h1>
-        <p>${ht("원하는 업무를 누르면 바로 열립니다.")}</p>
+        <p>${ht("업무를 고르면 해당 페이지가 열립니다.")}</p>
       </div>
       <input id="q" type="text" placeholder="${ht("검색")}" autocomplete="off" />
     </div>

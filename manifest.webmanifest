@@ -4,7 +4,7 @@
   "description": "디오엠(DOM) 내부 운영 포털",
   "start_url": "./portal.html",
   "scope": "./",
-  "display": "standalone",
+  "display": "browser",
   "background_color": "#c41e3a",
   "theme_color": "#c41e3a",
   "lang": "ko",
