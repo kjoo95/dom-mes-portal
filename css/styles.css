@@ -826,7 +826,7 @@ table.checks .chk { width: 72px; text-align: center; }
 .a4-head {
   position: relative;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: 10px;
   border-bottom: 2px solid #c41e3a;
@@ -838,22 +838,37 @@ table.checks .chk { width: 72px; text-align: center; }
 .a4-head b { color: #c41e3a; font-size: 22px; letter-spacing: -0.06em; }
 .a4-head > div span { color: #666; font-size: 12px; margin-left: 8px; }
 .a4-head h1 {
-  position: static;
-  flex: 1;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin: 0;
+  padding: 0 50mm;
   text-align: center;
   font-size: 20px;
   letter-spacing: 0.08em;
+  pointer-events: none;
+  z-index: 0;
 }
 .a4-head p { margin: 0; color: #666; font-size: 12px; z-index: 1; }
-.a4-head > div { z-index: 1; }
+.a4-head > div { position: relative; z-index: 1; flex: 0 0 auto; }
 .a4-head .brand-logo,
-.process-head .brand-logo {
+.process-head .brand-logo,
+.eq-head .brand-logo,
+.sheet-5s-head .brand-logo,
+.clim-head .brand-logo {
   height: 8mm;
   width: auto;
   max-width: 48mm;
   object-fit: contain;
   object-position: left center;
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
 }
 .a4-head-corp {
   position: relative;
@@ -868,13 +883,21 @@ table.checks .chk { width: 72px; text-align: center; }
 }
 .a4-head-corp b { color: var(--sheet-red); letter-spacing: 0.08em; }
 .a4-head-corp h1 {
-  position: static;
-  flex: 1;
-  align-self: center;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin: 0;
+  padding: 0 50mm;
   text-align: center;
   font-size: 20px;
   letter-spacing: 0.08em;
+  pointer-events: none;
+  z-index: 0;
 }
 .a4-head-corp > div p {
   display: block;
@@ -946,30 +969,37 @@ table.checks .chk { width: 72px; text-align: center; }
   margin-bottom: 6px;
 }
 .process-head-top {
-  display: grid;
-  grid-template-columns: 48mm minmax(0, 1fr) 62mm;
+  position: relative;
+  display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
-}
-.process-head .brand-logo {
-  height: 8mm;
-  max-width: 48mm;
-  justify-self: start;
+  min-height: 12mm;
 }
 .process-head h1 {
-  position: static;
-  display: block;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin: 0;
-  padding: 0;
+  padding: 0 66mm;
   text-align: center;
   font-size: 6.8mm;
   line-height: 1.1;
   letter-spacing: 0.08em;
   font-weight: 800;
+  pointer-events: none;
+  z-index: 0;
 }
 .process-head .a4-stamp {
   width: 62mm;
-  justify-self: end;
+  position: relative;
+  z-index: 1;
+  flex: 0 0 auto;
 }
 .process-a4 .a4-meta {
   table-layout: fixed;
@@ -1236,9 +1266,9 @@ table.checks .chk { width: 72px; text-align: center; }
 }
 .eq-head {
   position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  display: flex;
   align-items: center;
+  justify-content: space-between;
   min-height: 12mm;
   flex: 0 0 auto;
   column-gap: 8px;
@@ -1247,17 +1277,31 @@ table.checks .chk { width: 72px; text-align: center; }
   margin-bottom: 4px;
 }
 .eq-head-left {
-  justify-self: start;
+  position: relative;
   z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  max-width: 48mm;
 }
 .eq-head h1 {
-  grid-column: 2;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   margin: 0;
+  padding: 0 52mm;
   text-align: center;
   font-size: 20px;
   letter-spacing: 0.06em;
   white-space: nowrap;
   pointer-events: none;
+  z-index: 0;
 }
 .eq-ym {
   display: flex;
@@ -1274,8 +1318,9 @@ table.checks .chk { width: 72px; text-align: center; }
 .eq-ym-print { display: none; margin: 0; font-size: 13px; }
 .eq-stamp {
   width: 28mm;
-  justify-self: end;
+  position: relative;
   z-index: 1;
+  flex: 0 0 auto;
   table-layout: fixed;
   font-size: 11px;
 }
@@ -1462,32 +1507,35 @@ table.checks .chk { width: 72px; text-align: center; }
 .sheet-5s-grid tbody th, .sheet-5s-grid tbody td { height: 6.2mm; }
 .sheet-5s-head {
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   text-align: center;
   margin: 0 0 6px;
-  min-height: 12mm;
+  min-height: 14mm;
   border-bottom: 2px solid var(--sheet-red);
   padding-bottom: 6px;
 }
-.sheet-5s-head::before,
-.clim-head::before {
-  content: "DOM";
+.sheet-5s-head h1 {
   position: absolute;
   left: 0;
-  bottom: 6px;
-  color: var(--sheet-red);
-  font-size: 22px;
-  font-weight: 800;
-  letter-spacing: -0.06em;
-}
-.sheet-5s-head h1 {
-  margin: 0;
-  font-size: 20px;
-  letter-spacing: 0.08em;
-}
-.sheet-5s-ym {
-  position: absolute;
   right: 0;
   top: 0;
+  bottom: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0 52mm;
+  font-size: 18px;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+  pointer-events: none;
+  z-index: 0;
+}
+.sheet-5s-ym {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -1595,21 +1643,35 @@ table.checks .chk { width: 72px; text-align: center; }
 }
 .clim-head {
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   text-align: center;
-  min-height: 12mm;
+  min-height: 14mm;
   margin: 0 0 4px;
   border-bottom: 2px solid var(--sheet-red);
   padding-bottom: 6px;
 }
 .clim-head h1 {
-  margin: 0;
-  font-size: 20px;
-  letter-spacing: 0.08em;
-}
-.clim-ym {
   position: absolute;
+  left: 0;
   right: 0;
   top: 0;
+  bottom: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0 52mm;
+  font-size: 18px;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+  pointer-events: none;
+  z-index: 0;
+}
+.clim-ym {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -2137,9 +2199,8 @@ table.checks .chk { width: 72px; text-align: center; }
   .a4-sign span { height: 11mm; }
   .sheet-5s-ym-print {
     display: block !important;
-    position: absolute;
-    right: 0;
-    top: 2px;
+    position: relative !important;
+    z-index: 1;
     margin: 0;
   }
   .sheet-5s td.chk label .print-mark { display: inline !important; }
@@ -2210,9 +2271,8 @@ table.checks .chk { width: 72px; text-align: center; }
   .qa-meas th, .qa-meas td { height: 6.8mm; }
   .clim-ym-print {
     display: block !important;
-    position: absolute;
-    right: 0;
-    top: 2px;
+    position: relative !important;
+    z-index: 1;
     margin: 0;
   }
   .clim-grid th.sun, .clim-grid td.sun { color: #c41e3a !important; }

@@ -2247,6 +2247,7 @@ function shopClimateView(mod, ym) {
       <div class="a4-wrap page">
         <article class="a4-sheet month-sheet clim-sheet">
           <header class="clim-head">
+            ${brandMark()}
             <h1>${lab ? "완제품 창고 온,습도 점검 CHECK SHEET" : "생산라인 온,습도 점검 CHECK SHEET"}</h1>
             <div class="clim-ym no-print">
               <select id="clim-y">${years.map((y) => `<option value="${y}" ${y === year ? "selected" : ""}>${y}</option>`).join("")}</select>
@@ -2380,6 +2381,7 @@ function shopFiveSView(mod, ym) {
       <div class="a4-wrap page">
         <article class="a4-sheet month-sheet sheet-5s">
           <header class="sheet-5s-head">
+            ${brandMark()}
             <h1>${lab ? "검사실(완제품 창고) 3정 5S CHECK SHEET" : "생산라인 3정 5S CHECK SHEET"}</h1>
             <div class="sheet-5s-ym no-print">
               <select id="five-y" aria-label="년도">${years.map((y) => `<option value="${y}" ${y === year ? "selected" : ""}>${y}</option>`).join("")}</select>
@@ -2614,6 +2616,7 @@ function eqSheetView(mod, ym, machineId) {
         <article class="a4-sheet month-sheet eq-sheet">
           <header class="eq-head">
             <div class="eq-head-left">
+              ${brandMark()}
               <div class="eq-ym no-print">
                 <select id="eq-y">${years.map((y) => `<option value="${y}" ${y === year ? "selected" : ""}>${y}</option>`).join("")}</select>
                 <span>년</span>
