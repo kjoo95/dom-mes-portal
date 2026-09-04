@@ -425,6 +425,7 @@ const en = {
   "운영포털": "Portal",
   "오시는 길": "Location",
   "회사 소개": "About us",
+  "평택 · 서탄": "Seotan, Pyeongtaek",
   "서탄면에서 깎고 있습니다.": "We machine in Seotan.",
   "머시닝 센터로 가공하는 공장입니다.": "A machining-center shop.",
   "디오엠은 평택 서탄면에 있습니다. CNC로 깎는 일을 합니다.": "DOM is in Seotan, Pyeongtaek. We machine on CNC.",
