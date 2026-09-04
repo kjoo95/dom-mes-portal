@@ -80,7 +80,7 @@ html { scroll-behavior: smooth; }
   flex-direction: column;
   align-items: center;
   gap: 28px;
-  padding: 16px 16px 8px;
+  padding: 12px 12px 8px;
 }
 .home-board {
   display: grid;
@@ -136,7 +136,7 @@ html { scroll-behavior: smooth; }
 .home-lanes {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  width: calc(100% - 32px);
+  width: calc(100% - 24px);
   margin: 28px auto 64px;
   gap: 8px;
 }
@@ -268,6 +268,7 @@ html { scroll-behavior: smooth; }
 }
 .public > main {
   flex: 1;
+  padding: 0;
 }
 .page-work { padding: 36px 0 72px; }
 .page-inner {
