@@ -1,11 +1,13 @@
 let deferred;
 
-if ("serviceWorker" in navigator) {
+const onPortal = /portal\.html$/i.test(location.pathname);
+if (onPortal && "serviceWorker" in navigator) {
   navigator.serviceWorker.register("./sw.js", { updateViaCache: "none" }).then((reg) => reg.update());
 }
 
 window.addEventListener("beforeinstallprompt", (event) => {
   event.preventDefault();
+  if (!onPortal) return;
   deferred = event;
 });
 

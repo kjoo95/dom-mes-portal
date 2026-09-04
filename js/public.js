@@ -1,4 +1,13 @@
-import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=71";
+import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=72";
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.getRegistrations().then((regs) => {
+    regs.forEach((reg) => reg.unregister());
+  });
+}
+window.addEventListener("beforeinstallprompt", (event) => {
+  event.preventDefault();
+});
 
 applyHtmlLang();
 const nav = document.querySelector(".pub-top nav");
