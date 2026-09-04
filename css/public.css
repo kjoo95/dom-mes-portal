@@ -6,10 +6,7 @@ body.public {
   background: #fff;
   color: #111;
 }
-body.public .home-hero,
-body.public .page {
-  flex: 1 0 auto;
-}
+body.public .pub-foot { margin-top: auto; }
 .public a:focus-visible,
 .public button:focus-visible {
   outline: 2px solid #111;
