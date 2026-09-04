@@ -1,4 +1,4 @@
-import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=70";
+import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=71";
 
 applyHtmlLang();
 const nav = document.querySelector(".pub-top nav");
