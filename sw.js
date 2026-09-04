@@ -1,4 +1,4 @@
-const CACHE = "dom-v120";
+const CACHE = "dom-v121";
 const FILES = [
   "./",
   "./index.html",
@@ -10,6 +10,7 @@ const FILES = [
   "./js/app.js",
   "./js/auth.js",
   "./js/data.js",
+  "./js/eq-machines.js",
   "./js/store.js",
   "./js/files.js",
   "./js/gcode.js",

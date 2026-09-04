@@ -48,17 +48,7 @@ export const EQ_ITEMS = [
   { id: "pswitch", no: 6, name: "압력 스위치", item: "압력스위치", cycle: "1회/일", kind: "text", criteria: "최대 0.35MPA" },
 ];
 
-export const MACHINES = [
-  { id: "long-1", group: "장축 기계", name: "장축 1호기", no: "DOMG-PR-001", model: "PCV400", process: "MCT 가공" },
-  { id: "long-2", group: "장축 기계", name: "장축 2호기", no: "DOMG-PR-002", model: "PCV400", process: "MCT 가공" },
-  { id: "m5-1", group: "5호기", name: "5호기-1", no: "DOMG-PR-003", model: "PCV400", process: "MCT 가공" },
-  { id: "m5-2", group: "5호기", name: "5호기-2", no: "DOMG-PR-004", model: "PCV400", process: "MCT 가공" },
-  { id: "m5-3", group: "5호기", name: "5호기-3", no: "DOMG-PR-005", model: "PCV400", process: "MCT 가공" },
-  { id: "m5-4", group: "5호기", name: "5호기-4", no: "DOMG-PR-006", model: "PCV400", process: "MCT 가공" },
-  { id: "m5-5", group: "5호기", name: "5호기-5", no: "DOMG-PR-007", model: "PCV400", process: "MCT 가공" },
-  { id: "m6-1", group: "6호기", name: "6호기-1", no: "DOMG-PR-008", model: "PCV400", process: "MCT 가공" },
-  { id: "m4-1", group: "4호기", name: "4호기-1", no: "DOMG-PR-009", model: "PCV400", process: "MCT 가공" },
-];
+export { MACHINES } from "./eq-machines.js";
 
 export const FIVE_S_SHOP = [
   { group: "정리 정돈", items: [

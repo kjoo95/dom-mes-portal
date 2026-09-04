@@ -3,7 +3,7 @@ import {
   CUSTOMERS, MILL_SHOPS, MACHINES, FIVE_S_SHOP, FIVE_S_LAB, QA_MEASURE_ITEMS,
   EQ_ITEMS, EQ_MARKS, DOM_SUPPLIER,
   fieldsFor, flattenChecks, badgeClass, todayISO,
-} from "./data.js?v=57";
+} from "./data.js?v=58";
 import { loadState, loadStateAsync, shareState, uid } from "./store.js?v=65";
 import { saveBlob, loadBlob, readAsDataUrl, removeBlob } from "./files.js?v=39";
 import { parseProgram, decodeCamFile, mayBeCamFile } from "./gcode.js?v=52";
@@ -2477,14 +2477,14 @@ function eqView(mod, date) {
   const groups = [...new Set(MACHINES.map((m) => m.group))];
   const blocks = groups.map((g) => {
     const lines = MACHINES.filter((m) => m.group === g).map((m) => {
-      const pic = eqPhotoBag(m.id).machine;
+      const pic = eqPic(m, "machine");
       const thumb = pic
         ? `<img class="eq-thumb" src="${pic}" alt="">`
         : `<span class="eq-thumb empty">사진</span>`;
       return `<a class="date-line eq-line" href="#/${mod.id}/${ym}/${m.id}">
         ${thumb}
         <strong>${h(m.name)}</strong>
-        <span>${h(m.no || "")} · 점검표</span>
+        <span>${h(m.no || "")}${m.kind ? ` · ${h(m.kind)}` : ""}</span>
       </a>`;
     }).join("");
     return `<div class="bar compact-bar"><b>${h(g)}</b></div><div class="date-list">${lines}</div>`;
@@ -2518,16 +2518,35 @@ function eqPhotoBag(id) {
   return state.eqPhotos[id];
 }
 
+const EQ_CIRC = ["①", "②", "③", "④", "⑤", "⑥", "⑦", "⑧"];
+
+function eqItems(machine) {
+  return machine?.items?.length ? machine.items : EQ_ITEMS;
+}
+
+function eqUserPic(machine, key) {
+  const bag = eqPhotoBag(machine.id);
+  const v = key === "machine" ? bag.machine : bag.items?.[key];
+  return v && String(v).startsWith("data:") ? v : "";
+}
+
+function eqPic(machine, key) {
+  const user = eqUserPic(machine, key);
+  if (user) return user;
+  if (key === "machine") return machine.machinePhoto || "";
+  return eqItems(machine).find((item) => item.id === key)?.photo || "";
+}
+
 function eqPack(ym, id) {
-  const m = MACHINES.find((x) => x.id === id) || { name: "", no: "", model: "", process: "" };
+  const m = MACHINES.find((x) => x.id === id) || { name: "", no: "", model: "", process: "", kind: "" };
   if (!state.equipment[ym] || typeof state.equipment[ym] !== "object") state.equipment[ym] = {};
   let pack = state.equipment[ym][id];
   if (!pack || pack.checks) {
     pack = {
       no: pack?.no || m.no || "",
-      name: pack?.name || m.name || "",
+      name: pack?.name || m.kind || m.name || "",
       model: pack?.model || m.model || "",
-      process: pack?.process || m.process || "MCT 가공",
+      process: pack?.process || m.process || "",
       writer: pack?.writer || "",
       approver: pack?.approver || "",
       owner: pack?.owner || pack?.inspector || "",
@@ -2554,28 +2573,31 @@ function eqSheetView(mod, ym, machineId) {
   const machine = MACHINES.find((m) => m.id === machineId);
   if (!machine) return eqView(mod, month);
   const pack = eqPack(month, machineId);
-  const pics = eqPhotoBag(machineId);
+  const items = eqItems(machine);
+  const cols = items.length || 6;
   const y0 = new Date().getFullYear();
   const years = Array.from({ length: 8 }, (_, i) => y0 - 4 + i);
   if (!years.includes(year)) years.push(year);
   years.sort((a, b) => a - b);
   const days = Array.from({ length: 31 }, (_, i) => i + 1);
   const dayHeads = days.map((d) => `<th class="${d > n ? "off" : ""}">${d}</th>`).join("");
-  const guide = EQ_ITEMS.map((item) => {
-    const src = pics.items[item.id];
-    return `<td>
-      <b>${item.no} ${h(item.name)}</b>
+  const guide = items.map((item) => {
+    const src = eqPic(machine, item.id);
+    const user = eqUserPic(machine, item.id);
+    const label = `${EQ_CIRC[item.no - 1] || item.no} ${item.name}`;
+    return `<td style="width:${(100 / cols).toFixed(2)}%">
+      <b>${h(label)}</b>
       <div class="eq-shot-box">
         <label class="eq-shot">
           ${src ? `<img src="${src}" alt="">` : `<span>사진 넣기</span>`}
           <input data-eq-item-pic="${item.id}" type="file" accept="image/*" hidden>
         </label>
-        ${src ? picDel(`data-eq-del="${item.id}"`) : ""}
+        ${user ? picDel(`data-eq-del="${item.id}"`) : ""}
       </div>
       <p>${h(item.criteria)}</p>
     </td>`;
   }).join("");
-  const body = EQ_ITEMS.map((item) => {
+  const body = items.map((item) => {
     const cells = days.map((d) => {
       if (d > n) return `<td class="off"></td>`;
       const val = eqCell(pack, item.id, d);
@@ -2598,7 +2620,8 @@ function eqSheetView(mod, ym, machineId) {
     <td><input data-eq-issue="${i}" data-k="action" value="${h(row.action || "")}"></td>
     <td><input data-eq-issue="${i}" data-k="down" value="${h(row.down || "")}"></td>
   </tr>`).join("");
-  const machinePic = pics.machine;
+  const machinePic = eqPic(machine, "machine");
+  const machineUser = eqUserPic(machine, "machine");
   return `
     <div class="print-page">
       ${a4Tools(`#/${mod.id}/${ym}`, `
@@ -2618,7 +2641,7 @@ function eqSheetView(mod, ym, machineId) {
               </div>
               <p class="eq-ym-print">${year}년 ${mon}월</p>
             </div>
-            <h1>설비 일상점검표</h1>
+            <h1>설 비 일 상 점 검 표</h1>
             <table class="eq-stamp">
               <tr><th>작성</th><th>승인</th></tr>
               <tr><td><input data-eq-k="writer" value="${h(pack.writer || "")}"></td><td><input data-eq-k="approver" value="${h(pack.approver || "")}"></td></tr>
@@ -2633,7 +2656,7 @@ function eqSheetView(mod, ym, machineId) {
             </tr>
           </table>
           <table class="eq-guide">
-            <thead><tr><th colspan="6">점검항목 · 점검위치 (사진 칸을 누르면 넣고, ×로 뺍니다)</th></tr></thead>
+            <thead><tr><th colspan="${cols}">점검항목 · 점검위치 (사진 칸을 누르면 바꾸고, 올린 사진만 ×로 뺍니다)</th></tr></thead>
             <tbody><tr>${guide}</tr></tbody>
           </table>
           <table class="eq-grid">
@@ -2667,7 +2690,7 @@ function eqSheetView(mod, ym, machineId) {
                 ${machinePic ? `<img src="${machinePic}" alt="">` : `<span>사진을 넣으세요</span>`}
                 <input id="eq-photo" type="file" accept="image/*" hidden>
               </label>
-              ${machinePic ? picDel(`data-eq-del="machine"`) : ""}
+              ${machineUser ? picDel(`data-eq-del="machine"`) : ""}
             </div>
           </div>
         </article>
