@@ -423,6 +423,7 @@ const en = {
   "다시 열기": "Reload",
   "회사 홈으로": "Company home",
   "회사소개": "About",
+  "주식회사 디오엠": "DOM",
   "사업영역": "Business",
   "운영포털": "Portal",
   "오시는 길": "Location",
