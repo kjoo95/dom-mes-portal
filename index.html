@@ -23,7 +23,7 @@
     <link rel="icon" href="./assets/icon-192.png" type="image/png" sizes="192x192" />
     <link rel="manifest" href="./manifest.webmanifest?v=4" />
     <link rel="stylesheet" href="./css/styles.css?v=115" />
-    <link rel="stylesheet" href="./css/public.css?v=11" />
+    <link rel="stylesheet" href="./css/public.css?v=12" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -45,32 +45,26 @@
       }
     </script>
   </head>
-  <body class="public">
+  <body class="public home">
     <header class="pub-top">
       <a class="pub-brand" href="./">
         <img class="brand-logo" src="./assets/dom-logo.png?v=9" alt="주식회사 디오엠">
       </a>
       <nav>
-        <a href="#about" data-i18n="회사소개">회사소개</a>
-        <a href="#work" data-i18n="사업영역">사업영역</a>
-        <a href="#contact" data-i18n="오시는 길">오시는 길</a>
+        <a href="./about.html" data-i18n="회사소개">회사소개</a>
+        <a href="./work.html" data-i18n="사업영역">사업영역</a>
+        <a href="./contact.html" data-i18n="오시는 길">오시는 길</a>
         <a href="./portal.html" data-i18n="운영포털">운영포털</a>
       </nav>
     </header>
-    <section class="hero">
-      <div class="hero-stage">
-        <div class="hero-copy">
-          <p class="eyebrow" data-i18n="경기 평택">경기 평택</p>
-          <h1 data-i18n="정밀 가공">정밀 가공</h1>
-          <p class="lead" data-i18n="디오엠은 평택에서 CNC로 깎습니다. 면은 단정하게 두고, 날짜는 맞춰서 넘깁니다.">디오엠은 평택에서 CNC로 깎습니다. 면은 단정하게 두고, 날짜는 맞춰서 넘깁니다.</p>
-          <div class="cta">
-            <a class="btn pub-btn" href="#about" data-i18n="회사 소개">회사 소개</a>
-            <a class="btn pub-btn-ghost" href="#contact" data-i18n="오시는 길">오시는 길</a>
-          </div>
-        </div>
-        <div class="hero-plate">
-          <img src="./assets/public/mill-surface.jpg" alt="" width="1100" height="733">
-        </div>
+    <section class="home-stage">
+      <figure class="home-shot">
+        <img src="./assets/public/cnc-cut.jpg" alt="" width="1536" height="1024">
+      </figure>
+      <div class="home-copy">
+        <p class="eyebrow" data-i18n="경기 평택">경기 평택</p>
+        <h1 data-i18n="정밀 가공">정밀 가공</h1>
+        <p class="lead" data-i18n="디오엠은 평택에서 CNC로 깎습니다. 면은 단정하게 두고, 날짜는 맞춰서 넘깁니다.">디오엠은 평택에서 CNC로 깎습니다. 면은 단정하게 두고, 날짜는 맞춰서 넘깁니다.</p>
       </div>
       <ul class="hero-notes">
         <li>
@@ -87,72 +81,6 @@
         </li>
       </ul>
     </section>
-    <section id="about" class="block">
-      <h2 data-i18n="회사 소개">회사 소개</h2>
-      <p data-i18n="디오엠은 CNC 정밀 가공 제조 회사입니다. 가공면과 현장을 단정하게 유지하고, 약속한 납기를 지키며, 그 신뢰로 다음 일을 이어 갑니다. 원자재 입고부터 가공, 품질 검사, 납품까지 평택 현장에서 맞춥니다.">
-        디오엠은 CNC 정밀 가공 제조 회사입니다. 가공면과 현장을 단정하게 유지하고, 약속한 납기를 지키며, 그 신뢰로 다음 일을 이어 갑니다. 원자재 입고부터 가공, 품질 검사, 납품까지 평택 현장에서 맞춥니다.
-      </p>
-    </section>
-    <section id="work" class="work">
-      <div class="work-inner">
-        <header class="work-head">
-          <h2 data-i18n="사업 영역">사업 영역</h2>
-          <p data-i18n="입고부터 가공, 검사, 납품까지 한 현장에서 맞춥니다.">입고부터 가공, 검사, 납품까지 한 현장에서 맞춥니다.</p>
-        </header>
-        <div class="work-stage">
-          <figure class="work-shot">
-            <img src="./assets/public/cnc-cut.jpg" alt="CNC 가공 중인 현장" width="1536" height="1024">
-          </figure>
-          <ul class="work-cards">
-            <li>
-              <img src="./assets/public/mill-surface.jpg" alt="" width="1100" height="733">
-              <div>
-                <strong data-i18n="CNC 정밀 가공">CNC 정밀 가공</strong>
-                <p data-i18n="머시닝 센터로 깎습니다. 가공면을 단정하게 유지합니다.">머시닝 센터로 깎습니다. 가공면을 단정하게 유지합니다.</p>
-              </div>
-            </li>
-            <li>
-              <img src="./assets/public/inspect.jpg" alt="" width="1100" height="733">
-              <div>
-                <strong data-i18n="품질 검사">품질 검사</strong>
-                <p data-i18n="치수와 면 상태를 확인하고 성적서로 남깁니다.">치수와 면 상태를 확인하고 성적서로 남깁니다.</p>
-              </div>
-            </li>
-          </ul>
-        </div>
-        <ul class="work-rest">
-          <li>
-            <strong data-i18n="입고 · 납품">입고 · 납품</strong>
-            <p data-i18n="원자재를 받고, 약속한 날짜에 내보냅니다.">원자재를 받고, 약속한 날짜에 내보냅니다.</p>
-          </li>
-          <li>
-            <strong data-i18n="현장 관리">현장 관리</strong>
-            <p data-i18n="온습도, 3정 5S, 설비를 단정하게 유지합니다.">온습도, 3정 5S, 설비를 단정하게 유지합니다.</p>
-          </li>
-        </ul>
-      </div>
-    </section>
-    <section id="contact" class="block">
-      <h2 data-i18n="오시는 길">오시는 길</h2>
-      <dl class="pub-contact">
-        <div>
-          <dt data-i18n="주소">주소</dt>
-          <dd>경기도 평택시 서탄면 수월암길 61-9</dd>
-        </div>
-        <div>
-          <dt data-i18n="전화">전화</dt>
-          <dd>031-666-4356</dd>
-        </div>
-        <div>
-          <dt data-i18n="팩스">팩스</dt>
-          <dd>031-666-4357</dd>
-        </div>
-        <div>
-          <dt>E-mail</dt>
-          <dd>harry@domeng.co.kr</dd>
-        </div>
-      </dl>
-    </section>
     <footer class="pub-foot">
       <p><strong>주식회사 디오엠(DOM)</strong> · 사업자등록번호 124-86-65657</p>
       <p>경기도 평택시 서탄면 수월암길 61-9 · Tel 031-666-4356 · Fax 031-666-4357</p>
@@ -160,6 +88,6 @@
       <button class="btn pub-btn-ghost" id="install" type="button" data-i18n="컴퓨터에 앱 설치">컴퓨터에 앱 설치</button>
     </footer>
     <script src="./js/pwa.js?v=64"></script>
-    <script type="module" src="./js/public.js?v=46"></script>
+    <script type="module" src="./js/public.js?v=47"></script>
   </body>
 </html>

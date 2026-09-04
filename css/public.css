@@ -46,7 +46,36 @@ html { scroll-behavior: smooth; }
   white-space: nowrap;
 }
 .pub-top nav > a:hover { color: var(--red); }
+.pub-top nav > a[aria-current="page"] { color: var(--red); }
 .pub-top .lang-pick { margin-left: 8px; }
+
+.home-stage {
+  padding: 28px 0 0;
+}
+.home-shot {
+  width: min(1080px, calc(100% - 128px));
+  margin: 0 auto 28px;
+  overflow: hidden;
+  background: #f4f4f2;
+}
+.home-shot img {
+  display: block;
+  width: 100%;
+  height: min(56vh, 460px);
+  object-fit: cover;
+  object-position: center 42%;
+}
+.home-copy {
+  width: min(1080px, calc(100% - 128px));
+  margin: 0 auto 8px;
+}
+.home-copy h1 {
+  margin: 0 0 12px;
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.35;
+}
 
 .hero {
   position: relative;
@@ -176,6 +205,39 @@ html { scroll-behavior: smooth; }
   color: #444;
   max-width: 46em;
 }
+.page {
+  padding: 40px 0 80px;
+}
+.page-inner {
+  width: min(1080px, calc(100% - 128px));
+  margin: 0 auto;
+}
+.page-inner h1 {
+  margin: 0 0 22px;
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+.about-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(220px, 0.7fr);
+  gap: 40px;
+  align-items: start;
+}
+.about-body p {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.85;
+  color: #444;
+}
+.about-body figure { margin: 0; background: #f4f4f2; overflow: hidden; }
+.about-body img {
+  display: block;
+  width: 100%;
+  height: 240px;
+  object-fit: cover;
+}
+
 .work {
   padding: 12px 0 88px;
 }
@@ -190,6 +252,7 @@ html { scroll-behavior: smooth; }
   flex-wrap: wrap;
   margin: 0 0 18px;
 }
+.work-head h1,
 .work-head h2 {
   margin: 0;
   font-size: 18px;
@@ -311,6 +374,9 @@ html { scroll-behavior: smooth; }
   .pub-top, .block, .pub-foot { padding-left: 24px; padding-right: 24px; }
   .hero-stage,
   .hero-notes,
+  .home-shot,
+  .home-copy,
+  .page-inner,
   .work-inner { width: calc(100% - 48px); }
   .hero-stage {
     grid-template-columns: 1fr;
@@ -327,7 +393,9 @@ html { scroll-behavior: smooth; }
     border-bottom: 1px solid #ececec;
   }
   .hero-notes li:last-child { border-bottom: 0; }
-  .work-shot img { height: 220px; min-height: 0; }
+  .home-shot img { height: 240px; }
+  .about-body { grid-template-columns: 1fr; }
+  .about-body img { height: 200px; }
   .work-stage,
   .work-cards { grid-template-columns: 1fr; grid-template-rows: none; }
   .work-cards img { height: 160px; }

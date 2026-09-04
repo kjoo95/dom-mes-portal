@@ -1,7 +1,10 @@
-const CACHE = "dom-v124";
+const CACHE = "dom-v125";
 const FILES = [
   "./",
   "./index.html",
+  "./about.html",
+  "./work.html",
+  "./contact.html",
   "./portal.html",
   "./cam-lab.html",
   "./css/styles.css",
