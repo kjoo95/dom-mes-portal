@@ -1,4 +1,4 @@
-import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=74";
+import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=76";
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.getRegistrations().then((regs) => {
