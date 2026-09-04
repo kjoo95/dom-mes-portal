@@ -326,18 +326,64 @@ html { scroll-behavior: smooth; }
 }
 
 .contact-note {
-  margin: 0 0 28px;
+  margin: 0 0 20px;
   font-size: 16px;
   line-height: 1.7;
   color: #444;
 }
+.contact-map {
+  margin: 0 0 28px;
+}
+.contact-map iframe,
+.contact-map-canvas {
+  display: block;
+  width: 100%;
+  height: 380px;
+  border: 1px solid #ececec;
+  background: #f4f4f2;
+}
+.contact-map-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+  margin: 10px 0 0;
+  font-size: 14px;
+}
+.contact-map-links a { color: var(--ink); }
+.contact-map-links a:hover { color: var(--red); }
 .pub-contact {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 18px 48px;
-  margin: 0;
+  margin: 0 0 36px;
   max-width: 720px;
 }
+.pub-contact a { color: inherit; }
+.contact-way {
+  display: grid;
+  gap: 22px;
+  max-width: 46em;
+  padding-top: 8px;
+  border-top: 1px solid #ececec;
+}
+.contact-way h2 {
+  margin: 8px 0 0;
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+.contact-way h3 {
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.contact-way p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.75;
+  color: #444;
+}
+.contact-way p + p { margin-top: 6px; }
 .pub-contact div { display: grid; gap: 4px; }
 .pub-contact dt {
   margin: 0;
@@ -390,14 +436,8 @@ html { scroll-behavior: smooth; }
   .work-stage,
   .work-cards { grid-template-columns: 1fr; grid-template-rows: none; }
   .work-cards img { height: 160px; }
-  .work-rest { grid-template-columns: 1fr; }
-  .work-rest li,
-  .work-rest li + li {
-    padding: 14px 0;
-    border-left: 0;
-    border-bottom: 1px solid #ececec;
-  }
-  .work-rest li:last-child { border-bottom: 0; }
+  .contact-map iframe,
+  .contact-map-canvas { height: 260px; }
   .pub-contact { grid-template-columns: 1fr; }
 }
 @media (max-width: 800px) {
