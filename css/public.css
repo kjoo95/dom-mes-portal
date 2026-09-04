@@ -46,14 +46,6 @@ html { scroll-behavior: smooth; }
   white-space: nowrap;
 }
 .pub-top nav > a:hover { color: var(--red); }
-.pub-portal {
-  padding: 7px 14px !important;
-  border: 1px solid var(--red);
-  color: var(--red) !important;
-  border-radius: 0;
-  white-space: nowrap;
-}
-.pub-portal:hover { background: var(--rose); }
 .pub-top .lang-pick { margin-left: 8px; }
 
 .hero {
