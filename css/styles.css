@@ -1303,35 +1303,39 @@ table.checks .chk { width: 72px; text-align: center; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 12mm;
+  min-height: 10mm;
   flex: 0 0 auto;
   column-gap: 8px;
   border-bottom: 2px solid var(--sheet-red);
-  padding-bottom: 6px;
-  margin-bottom: 4px;
+  padding-bottom: 3px;
+  margin-bottom: 2px;
 }
 .eq-head-left {
   position: relative;
   z-index: 1;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  max-width: 48mm;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  max-width: 78mm;
+}
+.eq-head .brand-logo {
+  height: 7mm;
+  max-width: 34mm;
 }
 .eq-head h1 {
   position: absolute;
   left: 0;
   right: 0;
   top: 0;
-  bottom: 6px;
+  bottom: 3px;
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0;
-  padding: 0 52mm;
+  padding: 0 80mm;
   text-align: center;
-  font-size: 20px;
+  font-size: 18px;
   letter-spacing: 0.06em;
   white-space: nowrap;
   pointer-events: none;
@@ -1383,6 +1387,7 @@ table.checks .chk { width: 72px; text-align: center; }
   print-color-adjust: exact;
 }
 .eq-info td { padding: 0; }
+.eq-guide { flex: 0 1 auto; }
 .eq-guide th {
   background: var(--sheet-head);
   -webkit-print-color-adjust: exact;
@@ -1395,7 +1400,7 @@ table.checks .chk { width: 72px; text-align: center; }
 .eq-shot {
   display: grid;
   place-items: stretch;
-  height: 14mm;
+  height: 12mm;
   margin: 2px 0;
   border: 1px solid #888;
   background: #f4f4f2;
@@ -1418,7 +1423,7 @@ table.checks .chk { width: 72px; text-align: center; }
   color: #888;
   font-size: 11px;
 }
-.eq-grid { table-layout: fixed; font-size: 11px; }
+.eq-grid { table-layout: fixed; font-size: 11px; flex: 0 1 auto; }
 .eq-grid th { background: var(--sheet-head); font-weight: 700; }
 .eq-grid td.item { text-align: left; padding-left: 4px; }
 .eq-grid td.cyc { width: 18mm; font-size: 10px; }
@@ -1435,8 +1440,8 @@ table.checks .chk { width: 72px; text-align: center; }
   display: grid;
   grid-template-columns: 1.5fr 0.9fr;
   gap: 6px;
-  flex: 1 1 auto;
-  min-height: 0;
+  flex: 1 0 auto;
+  min-height: 40mm;
 }
 .eq-hist { display: flex; flex-direction: column; min-height: 0; }
 .eq-hist-h {
@@ -1450,11 +1455,11 @@ table.checks .chk { width: 72px; text-align: center; }
   print-color-adjust: exact;
 }
 .eq-hist-h span { font-weight: 400; font-size: 11px; }
-.eq-hist table { flex: 1; }
+.eq-hist table { flex: 1 1 auto; min-height: 0; }
 .eq-hist th { background: var(--sheet-head); font-size: 11px; }
-.eq-hist td { padding: 0; height: 6.6mm; }
-.eq-legend { margin: 4px 0 2px; font-size: 12px; }
-.eq-foot-fields { display: grid; grid-template-columns: 1fr 2fr; gap: 8px; align-items: center; }
+.eq-hist td { padding: 0; height: 6.2mm; }
+.eq-legend { margin: 3px 0 2px; font-size: 12px; flex: 0 0 auto; }
+.eq-foot-fields { display: grid; grid-template-columns: 1fr 2fr; gap: 8px; align-items: center; flex: 0 0 auto; }
 .eq-foot-fields label { display: flex; gap: 6px; align-items: center; margin: 0; }
 .eq-foot-fields input { border-bottom: 1px solid #111; }
 .eq-machine {
@@ -1498,7 +1503,7 @@ table.checks .chk { width: 72px; text-align: center; }
 .eq-machine span {
   place-self: center;
   color: #888;
-  min-height: 22mm;
+  min-height: 16mm;
   display: grid;
   place-items: center;
 }
@@ -2204,6 +2209,9 @@ table.checks .chk { width: 72px; text-align: center; }
     max-height: 210mm !important;
     padding: 6mm 8mm !important;
   }
+  .month-sheet.eq-sheet {
+    padding: 4mm 6mm 3mm !important;
+  }
   .inbound-sheet,
   .qa-a4,
   .defect-a4,
@@ -2301,7 +2309,22 @@ table.checks .chk { width: 72px; text-align: center; }
     border-left: 1px solid #000 !important;
     box-shadow: inset 1px 0 0 #000;
   }
-  .eq-sheet { overflow: hidden !important; }
+  .eq-sheet { overflow: hidden !important; gap: 2px; }
+  .eq-head {
+    min-height: 9mm !important;
+    padding-bottom: 2px !important;
+    margin-bottom: 1px !important;
+  }
+  .eq-head .brand-logo { height: 6.5mm; max-width: 32mm; }
+  .eq-guide td { padding: 1px 2px; }
+  .eq-guide p { margin: 1px 0 0; font-size: 9px; line-height: 1.15; }
+  .eq-shot { height: 10mm; margin: 1px 0; }
+  .eq-mark, .eq-grid input { height: 5.4mm; }
+  .eq-grid th, .eq-grid td { padding: 1px 2px; }
+  .eq-bottom { min-height: 38mm; gap: 4px; }
+  .eq-hist td { height: 5.6mm; }
+  .eq-legend { margin: 2px 0 1px; font-size: 11px; }
+  .eq-machine span { min-height: 0; }
   .qa-photos, .qa-shot { height: 22mm; min-height: 22mm; flex-basis: 22mm; }
   .defect-a4 .qa-photos {
     height: auto !important;
