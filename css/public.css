@@ -504,6 +504,8 @@ html { scroll-behavior: smooth; }
     grid-template-columns: minmax(140px, 0.85fr) minmax(0, 2.4fr) minmax(140px, 0.85fr);
   }
 }
+
+@media (max-width: 960px) {
   .pub-top, .pub-foot { padding-left: 24px; padding-right: 24px; }
   .page-inner,
   .work-note { width: calc(100% - 48px); }
