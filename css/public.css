@@ -1,7 +1,14 @@
 html { scroll-behavior: smooth; }
-.public {
+body.public {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
   background: #fff;
   color: #111;
+}
+body.public .home-hero,
+body.public .page {
+  flex: 1 0 auto;
 }
 .public a:focus-visible,
 .public button:focus-visible {
@@ -82,8 +89,8 @@ html { scroll-behavior: smooth; }
 }
 .home-frame {
   position: relative;
-  width: min(960px, 100%);
-  height: 420px;
+  width: min(880px, 100%);
+  height: 360px;
   overflow: hidden;
   background: #161616;
 }
