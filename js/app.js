@@ -3,8 +3,8 @@ import {
   CUSTOMERS, MILL_SHOPS, MACHINES, FIVE_S_SHOP, FIVE_S_LAB, QA_MEASURE_ITEMS,
   EQ_ITEMS, EQ_MARKS, DOM_SUPPLIER,
   fieldsFor, flattenChecks, badgeClass, todayISO,
-} from "./data.js?v=56";
-import { loadState, loadStateAsync, shareState, uid } from "./store.js?v=64";
+} from "./data.js?v=57";
+import { loadState, loadStateAsync, shareState, uid } from "./store.js?v=65";
 import { saveBlob, loadBlob, readAsDataUrl, removeBlob } from "./files.js?v=39";
 import { parseProgram, decodeCamFile, mayBeCamFile } from "./gcode.js?v=52";
 import { boot, showRecover } from "./safety.js?v=48";
@@ -1682,18 +1682,18 @@ function deliveryDayView(mod, date, viewOnly = false) {
                   </select>
                   <textarea data-head="customerAddr" rows="3" placeholder="${ht("주소")}">${h(head.customerAddr)}</textarea>
                   <label><span>인수부서명:</span><input data-head="recvDept" value="${h(head.recvDept)}"></label>
-                  <label><span>발주번호;</span><input data-head="poNo" value="${h(head.poNo)}"></label>
+                  <label><span>발주번호:</span><input data-head="poNo" value="${h(head.poNo)}"></label>
                 </td>
                 <td colspan="5" class="tx-sup tx-sup-logo">
                   ${brandMark()}
                 </td>
                 ${delEmpty}
               </tr>
-              <tr><td colspan="5" class="tx-sup">사업자등록번호;${h(DOM_SUPPLIER.bizNo)}</td>${delEmpty}</tr>
+              <tr><td colspan="5" class="tx-sup">사업자등록번호:${h(DOM_SUPPLIER.bizNo)}</td>${delEmpty}</tr>
               <tr><td colspan="5" class="tx-sup">${h(DOM_SUPPLIER.addr)}</td>${delEmpty}</tr>
               <tr><td colspan="5" class="tx-sup">${h(DOM_SUPPLIER.tel)}</td>${delEmpty}</tr>
               <tr>
-                <td colspan="5" class="tx-sup tx-ceo">대표자;${h(DOM_SUPPLIER.ceo)}<img class="tx-seal" src="./assets/dom-seal.png" alt=""></td>
+                <td colspan="5" class="tx-sup tx-ceo">대표자:${h(DOM_SUPPLIER.ceo)}<img class="tx-seal" src="./assets/dom-seal.png" alt=""></td>
                 ${delEmpty}
               </tr>
               <tr class="tx-cols">
