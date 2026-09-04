@@ -48,7 +48,7 @@ export const EQ_ITEMS = [
   { id: "pswitch", no: 6, name: "압력 스위치", item: "압력스위치", cycle: "1회/일", kind: "text", criteria: "최대 0.35MPA" },
 ];
 
-export { MACHINES } from "./eq-machines.js";
+export { MACHINES } from "./eq-machines.js?v=2";
 
 export const FIVE_S_SHOP = [
   { group: "정리 정돈", items: [

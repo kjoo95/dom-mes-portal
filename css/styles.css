@@ -1286,6 +1286,7 @@ table.checks .chk { width: 72px; text-align: center; }
   flex-direction: column;
   gap: 3px;
   font-size: 12px;
+  min-height: 0;
 }
 .eq-sheet table { width: 100%; border-collapse: collapse; }
 .eq-sheet table.eq-stamp {
@@ -1387,20 +1388,27 @@ table.checks .chk { width: 72px; text-align: center; }
   print-color-adjust: exact;
 }
 .eq-info td { padding: 0; }
-.eq-guide { flex: 0 1 auto; }
+.eq-info { flex: 0 0 auto; }
+.eq-guide { flex: 0 0 auto; }
 .eq-guide th {
   background: var(--sheet-head);
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
 .eq-guide td { width: auto; vertical-align: top; text-align: center; padding: 3px; }
-.eq-guide b { display: block; }
-.eq-guide p { margin: 2px 0 0; font-size: 10px; line-height: 1.3; }
+.eq-guide b { display: block; font-size: 11px; line-height: 1.2; }
+.eq-guide p {
+  margin: 2px 0 0;
+  font-size: 10px;
+  line-height: 1.25;
+  max-height: 7.5mm;
+  overflow: hidden;
+}
 .eq-shot-box { position: relative; }
 .eq-shot {
   display: grid;
   place-items: stretch;
-  height: 18mm;
+  height: 10mm;
   margin: 2px 0;
   border: 1px solid #888;
   background: #f4f4f2;
@@ -1423,7 +1431,7 @@ table.checks .chk { width: 72px; text-align: center; }
   color: #888;
   font-size: 11px;
 }
-.eq-grid { table-layout: fixed; font-size: 11px; flex: 0 1 auto; }
+.eq-grid { table-layout: fixed; font-size: 11px; flex: 0 0 auto; }
 .eq-grid th { background: var(--sheet-head); font-weight: 700; }
 .eq-grid td.item { text-align: left; padding-left: 4px; }
 .eq-grid td.cyc { width: 18mm; font-size: 10px; }
@@ -1440,10 +1448,17 @@ table.checks .chk { width: 72px; text-align: center; }
   display: grid;
   grid-template-columns: 1.5fr 0.9fr;
   gap: 6px;
-  flex: 1 0 auto;
-  min-height: 40mm;
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
 }
-.eq-hist { display: flex; flex-direction: column; min-height: 0; }
+.eq-hist {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
 .eq-hist-h {
   background: var(--sheet-head);
   border: 1px solid #222;
@@ -1468,7 +1483,9 @@ table.checks .chk { width: 72px; text-align: center; }
   flex-direction: column;
   border: 1px solid #111;
   min-height: 0;
+  height: 100%;
   margin: 0;
+  overflow: hidden;
 }
 .eq-machine b {
   background: var(--sheet-head);
@@ -1479,7 +1496,8 @@ table.checks .chk { width: 72px; text-align: center; }
   print-color-adjust: exact;
 }
 .eq-machine-body {
-  flex: 1;
+  position: relative;
+  flex: 1 1 auto;
   display: grid;
   place-items: stretch;
   min-width: 0;
@@ -1490,12 +1508,12 @@ table.checks .chk { width: 72px; text-align: center; }
   background: #f4f4f2;
 }
 .eq-machine img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   max-width: 100%;
   max-height: 100%;
-  min-width: 0;
-  min-height: 0;
   object-fit: contain;
   object-position: center;
   display: block;
@@ -1503,7 +1521,7 @@ table.checks .chk { width: 72px; text-align: center; }
 .eq-machine span {
   place-self: center;
   color: #888;
-  min-height: 16mm;
+  min-height: 0;
   display: grid;
   place-items: center;
 }
@@ -2318,12 +2336,13 @@ table.checks .chk { width: 72px; text-align: center; }
   .eq-head .brand-logo { height: 6.5mm; max-width: 32mm; }
   .eq-guide td { padding: 1px 2px; }
   .eq-guide p { margin: 1px 0 0; font-size: 9px; line-height: 1.15; }
-  .eq-shot { height: 14mm; margin: 1px 0; }
+  .eq-shot { height: 8mm; margin: 1px 0; }
   .eq-mark, .eq-grid input { height: 5.4mm; }
   .eq-grid th, .eq-grid td { padding: 1px 2px; }
-  .eq-bottom { min-height: 38mm; gap: 4px; }
+  .eq-bottom { min-height: 0; gap: 4px; flex: 1 1 0; overflow: hidden; }
   .eq-hist td { height: 5.6mm; }
   .eq-legend { margin: 2px 0 1px; font-size: 11px; }
+  .eq-machine, .eq-hist { height: 100%; overflow: hidden; }
   .eq-machine span { min-height: 0; }
   .qa-photos, .qa-shot { height: 22mm; min-height: 22mm; flex-basis: 22mm; }
   .defect-a4 .qa-photos {

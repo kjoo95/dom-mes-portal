@@ -16,7 +16,7 @@ export const MACHINES = [
         "kind": "text",
         "name": "절삭유",
         "criteria": "농도 하절기 8~12%, 농도 동절기 7~10%",
-        "photo": "./assets/eq/domg-pr-001/item-1.jpg"
+        "photo": "./assets/eq/domg-pr-001/item-1.jpg?v=2"
       },
       {
         "id": "i2",
@@ -26,7 +26,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "습동기 오일펌프",
         "criteria": "수동 작동점검 1.6MPA",
-        "photo": "./assets/eq/domg-pr-001/item-2.jpg"
+        "photo": "./assets/eq/domg-pr-001/item-2.jpg?v=2"
       },
       {
         "id": "i3",
@@ -36,7 +36,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "공압계",
         "criteria": "작동압력 4~6MPA",
-        "photo": "./assets/eq/domg-pr-001/item-3.jpg"
+        "photo": "./assets/eq/domg-pr-001/item-3.jpg?v=2"
       },
       {
         "id": "i4",
@@ -46,7 +46,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "습동유계",
         "criteria": "게이지 LOW~HIGH",
-        "photo": "./assets/eq/domg-pr-001/item-4.jpg"
+        "photo": "./assets/eq/domg-pr-001/item-4.jpg?v=2"
       },
       {
         "id": "i5",
@@ -56,7 +56,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "오일쿨러",
         "criteria": "게이지 LOW~HIGH",
-        "photo": "./assets/eq/domg-pr-001/item-5.jpg"
+        "photo": "./assets/eq/domg-pr-001/item-5.jpg?v=2"
       },
       {
         "id": "i6",
@@ -66,10 +66,10 @@ export const MACHINES = [
         "kind": "text",
         "name": "오일쿨러",
         "criteria": "온도 10℃±10℃",
-        "photo": "./assets/eq/domg-pr-001/item-6.jpg"
+        "photo": "./assets/eq/domg-pr-001/item-6.jpg?v=2"
       }
     ],
-    "machinePhoto": "./assets/eq/domg-pr-001/machine.jpg"
+    "machinePhoto": "./assets/eq/domg-pr-001/machine.jpg?v=2"
   },
   {
     "id": "domg-pr-002",
@@ -88,7 +88,7 @@ export const MACHINES = [
         "kind": "text",
         "name": "절삭유",
         "criteria": "농도 하절기 8~12%, 농도 동절기 7~10%",
-        "photo": "./assets/eq/domg-pr-002/item-1.jpg"
+        "photo": "./assets/eq/domg-pr-002/item-1.jpg?v=2"
       },
       {
         "id": "i2",
@@ -98,7 +98,7 @@ export const MACHINES = [
         "kind": "text",
         "name": "습동기 오일펌프",
         "criteria": "수동 작동점검 1.6MPA",
-        "photo": "./assets/eq/domg-pr-002/item-2.jpg"
+        "photo": "./assets/eq/domg-pr-002/item-2.jpg?v=2"
       },
       {
         "id": "i3",
@@ -108,7 +108,7 @@ export const MACHINES = [
         "kind": "text",
         "name": "공압계",
         "criteria": "작동압력 4~6MPA",
-        "photo": "./assets/eq/domg-pr-002/item-3.jpg"
+        "photo": "./assets/eq/domg-pr-002/item-3.jpg?v=2"
       },
       {
         "id": "i4",
@@ -118,7 +118,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "습동유계",
         "criteria": "게이지 LOW~HIGH",
-        "photo": "./assets/eq/domg-pr-002/item-4.jpg"
+        "photo": "./assets/eq/domg-pr-002/item-4.jpg?v=2"
       },
       {
         "id": "i5",
@@ -128,7 +128,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "오일쿨러",
         "criteria": "게이지 LOW~HIGH",
-        "photo": "./assets/eq/domg-pr-002/item-5.jpg"
+        "photo": "./assets/eq/domg-pr-002/item-5.jpg?v=2"
       },
       {
         "id": "i6",
@@ -138,10 +138,10 @@ export const MACHINES = [
         "kind": "text",
         "name": "오일쿨러",
         "criteria": "온도 10℃±10℃",
-        "photo": "./assets/eq/domg-pr-002/item-6.jpg"
+        "photo": "./assets/eq/domg-pr-002/item-6.jpg?v=2"
       }
     ],
-    "machinePhoto": "./assets/eq/domg-pr-002/machine.jpg"
+    "machinePhoto": "./assets/eq/domg-pr-002/machine.jpg?v=2"
   },
   {
     "id": "domg-pr-003",
@@ -160,7 +160,7 @@ export const MACHINES = [
         "kind": "text",
         "name": "절삭유",
         "criteria": "농도 하절기 8~12%, 농도 동절기 7~10%",
-        "photo": "./assets/eq/domg-pr-003/item-1.jpg"
+        "photo": "./assets/eq/domg-pr-003/item-1.jpg?v=2"
       },
       {
         "id": "i2",
@@ -170,7 +170,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "스위치",
         "criteria": "비상정지버튼 작동유무",
-        "photo": "./assets/eq/domg-pr-003/item-2.jpg"
+        "photo": "./assets/eq/domg-pr-003/item-2.jpg?v=2"
       },
       {
         "id": "i3",
@@ -180,7 +180,7 @@ export const MACHINES = [
         "kind": "text",
         "name": "공압계",
         "criteria": "작동압력 4~6MPA",
-        "photo": "./assets/eq/domg-pr-003/item-3.jpg"
+        "photo": "./assets/eq/domg-pr-003/item-3.jpg?v=2"
       },
       {
         "id": "i4",
@@ -190,7 +190,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "습동유계",
         "criteria": "게이지 LOW~HIGH",
-        "photo": "./assets/eq/domg-pr-003/item-4.jpg"
+        "photo": "./assets/eq/domg-pr-003/item-4.jpg?v=2"
       },
       {
         "id": "i5",
@@ -200,7 +200,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "오일쿨러",
         "criteria": "게이지 LOW~HIGH",
-        "photo": "./assets/eq/domg-pr-003/item-5.jpg"
+        "photo": "./assets/eq/domg-pr-003/item-5.jpg?v=2"
       },
       {
         "id": "i6",
@@ -210,10 +210,10 @@ export const MACHINES = [
         "kind": "text",
         "name": "압력 스위치",
         "criteria": "최대 0.35MPA",
-        "photo": "./assets/eq/domg-pr-003/item-6.jpg"
+        "photo": "./assets/eq/domg-pr-003/item-6.jpg?v=2"
       }
     ],
-    "machinePhoto": "./assets/eq/domg-pr-003/machine.jpg"
+    "machinePhoto": "./assets/eq/domg-pr-003/machine.jpg?v=2"
   },
   {
     "id": "domg-pr-004",
@@ -232,7 +232,7 @@ export const MACHINES = [
         "kind": "text",
         "name": "절삭유",
         "criteria": "농도 하절기 8~12%, 농도 동절기 7~10%",
-        "photo": "./assets/eq/domg-pr-004/item-1.jpg"
+        "photo": "./assets/eq/domg-pr-004/item-1.jpg?v=2"
       },
       {
         "id": "i2",
@@ -242,7 +242,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "스위치",
         "criteria": "비상정지버튼 작동유무",
-        "photo": "./assets/eq/domg-pr-004/item-2.jpg"
+        "photo": "./assets/eq/domg-pr-004/item-2.jpg?v=2"
       },
       {
         "id": "i3",
@@ -252,7 +252,7 @@ export const MACHINES = [
         "kind": "text",
         "name": "공압계",
         "criteria": "작동압력 4~6MPA",
-        "photo": "./assets/eq/domg-pr-004/item-3.jpg"
+        "photo": "./assets/eq/domg-pr-004/item-3.jpg?v=2"
       },
       {
         "id": "i4",
@@ -262,7 +262,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "습동유계",
         "criteria": "게이지 LOW~HIGH",
-        "photo": "./assets/eq/domg-pr-004/item-4.jpg"
+        "photo": "./assets/eq/domg-pr-004/item-4.jpg?v=2"
       },
       {
         "id": "i5",
@@ -272,7 +272,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "오일쿨러",
         "criteria": "게이지 LOW~HIGH",
-        "photo": "./assets/eq/domg-pr-004/item-5.jpg"
+        "photo": "./assets/eq/domg-pr-004/item-5.jpg?v=2"
       },
       {
         "id": "i6",
@@ -282,10 +282,10 @@ export const MACHINES = [
         "kind": "text",
         "name": "압력스위치",
         "criteria": "최대 0.35MPA",
-        "photo": "./assets/eq/domg-pr-004/item-6.jpg"
+        "photo": "./assets/eq/domg-pr-004/item-6.jpg?v=2"
       }
     ],
-    "machinePhoto": "./assets/eq/domg-pr-004/machine.jpg"
+    "machinePhoto": "./assets/eq/domg-pr-004/machine.jpg?v=2"
   },
   {
     "id": "domg-pr-005",
@@ -304,7 +304,7 @@ export const MACHINES = [
         "kind": "text",
         "name": "절삭유",
         "criteria": "농도 하절기 8~12%, 농도 동절기 7~10%",
-        "photo": "./assets/eq/domg-pr-005/item-1.jpg"
+        "photo": "./assets/eq/domg-pr-005/item-1.jpg?v=2"
       },
       {
         "id": "i2",
@@ -314,7 +314,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "스위치",
         "criteria": "비상정지버튼 작동유무",
-        "photo": "./assets/eq/domg-pr-005/item-2.jpg"
+        "photo": "./assets/eq/domg-pr-005/item-2.jpg?v=2"
       },
       {
         "id": "i3",
@@ -324,7 +324,7 @@ export const MACHINES = [
         "kind": "text",
         "name": "공압계",
         "criteria": "작동압력 0.4~0.6kg/cm2",
-        "photo": "./assets/eq/domg-pr-005/item-3.jpg"
+        "photo": "./assets/eq/domg-pr-005/item-3.jpg?v=2"
       },
       {
         "id": "i4",
@@ -334,7 +334,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "습동유계",
         "criteria": "게이지 L~H사이",
-        "photo": "./assets/eq/domg-pr-005/item-4.jpg"
+        "photo": "./assets/eq/domg-pr-005/item-4.jpg?v=2"
       },
       {
         "id": "i5",
@@ -344,7 +344,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "오일쿨러",
         "criteria": "게이지 L~H 사이",
-        "photo": "./assets/eq/domg-pr-005/item-5.jpg"
+        "photo": "./assets/eq/domg-pr-005/item-5.jpg?v=2"
       },
       {
         "id": "i6",
@@ -354,10 +354,10 @@ export const MACHINES = [
         "kind": "text",
         "name": "압력 스위치",
         "criteria": "최대 0.35MPA",
-        "photo": "./assets/eq/domg-pr-005/item-6.jpg"
+        "photo": "./assets/eq/domg-pr-005/item-6.jpg?v=2"
       }
     ],
-    "machinePhoto": "./assets/eq/domg-pr-005/machine.jpg"
+    "machinePhoto": "./assets/eq/domg-pr-005/machine.jpg?v=2"
   },
   {
     "id": "domg-pr-006",
@@ -376,7 +376,7 @@ export const MACHINES = [
         "kind": "text",
         "name": "절삭유",
         "criteria": "농도 하절기 8~12%, 농도 동절기 7~10%",
-        "photo": "./assets/eq/domg-pr-006/item-1.jpg"
+        "photo": "./assets/eq/domg-pr-006/item-1.jpg?v=2"
       },
       {
         "id": "i2",
@@ -386,7 +386,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "스위치",
         "criteria": "비상정지버튼 작동유무",
-        "photo": "./assets/eq/domg-pr-006/item-2.jpg"
+        "photo": "./assets/eq/domg-pr-006/item-2.jpg?v=2"
       },
       {
         "id": "i3",
@@ -396,7 +396,7 @@ export const MACHINES = [
         "kind": "text",
         "name": "공압계",
         "criteria": "작동압력 4~6kg/cm2",
-        "photo": "./assets/eq/domg-pr-006/item-3.jpg"
+        "photo": "./assets/eq/domg-pr-006/item-3.jpg?v=2"
       },
       {
         "id": "i4",
@@ -406,7 +406,7 @@ export const MACHINES = [
         "kind": "text",
         "name": "스캐일 필터",
         "criteria": "최대 0.5MPA",
-        "photo": "./assets/eq/domg-pr-006/item-4.jpg"
+        "photo": "./assets/eq/domg-pr-006/item-4.jpg?v=2"
       },
       {
         "id": "i5",
@@ -416,7 +416,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "습동유계",
         "criteria": "작동압력 45kgf/㎠",
-        "photo": "./assets/eq/domg-pr-006/item-5.jpg"
+        "photo": "./assets/eq/domg-pr-006/item-5.jpg?v=2"
       },
       {
         "id": "i6",
@@ -426,10 +426,10 @@ export const MACHINES = [
         "kind": "text",
         "name": "압력스위치",
         "criteria": "최대 0.35MPA",
-        "photo": "./assets/eq/domg-pr-006/item-6.jpg"
+        "photo": "./assets/eq/domg-pr-006/item-6.jpg?v=2"
       }
     ],
-    "machinePhoto": "./assets/eq/domg-pr-006/machine.jpg"
+    "machinePhoto": "./assets/eq/domg-pr-006/machine.jpg?v=2"
   },
   {
     "id": "domg-pr-007",
@@ -448,7 +448,7 @@ export const MACHINES = [
         "kind": "text",
         "name": "절삭유",
         "criteria": "농도 하절기 8~12%, 농도 동절기 7~10%",
-        "photo": "./assets/eq/domg-pr-007/item-1.jpg"
+        "photo": "./assets/eq/domg-pr-007/item-1.jpg?v=2"
       },
       {
         "id": "i2",
@@ -458,7 +458,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "스위치",
         "criteria": "비상정지버튼 작동유무",
-        "photo": "./assets/eq/domg-pr-007/item-2.jpg"
+        "photo": "./assets/eq/domg-pr-007/item-2.jpg?v=2"
       },
       {
         "id": "i3",
@@ -468,7 +468,7 @@ export const MACHINES = [
         "kind": "text",
         "name": "공압계",
         "criteria": "작동압력 4~6kg/cm2",
-        "photo": "./assets/eq/domg-pr-007/item-3.jpg"
+        "photo": "./assets/eq/domg-pr-007/item-3.jpg?v=2"
       },
       {
         "id": "i4",
@@ -478,7 +478,7 @@ export const MACHINES = [
         "kind": "text",
         "name": "스캐일 필터",
         "criteria": "최대 1.2MPA",
-        "photo": "./assets/eq/domg-pr-007/item-4.jpg"
+        "photo": "./assets/eq/domg-pr-007/item-4.jpg?v=2"
       },
       {
         "id": "i5",
@@ -488,7 +488,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "습동유계",
         "criteria": "작동압력 45kgf/㎠",
-        "photo": "./assets/eq/domg-pr-007/item-5.jpg"
+        "photo": "./assets/eq/domg-pr-007/item-5.jpg?v=2"
       },
       {
         "id": "i6",
@@ -498,10 +498,10 @@ export const MACHINES = [
         "kind": "text",
         "name": "압력스위치",
         "criteria": "최대 0.35MPA",
-        "photo": "./assets/eq/domg-pr-007/item-6.jpg"
+        "photo": "./assets/eq/domg-pr-007/item-6.jpg?v=2"
       }
     ],
-    "machinePhoto": "./assets/eq/domg-pr-007/machine.jpg"
+    "machinePhoto": "./assets/eq/domg-pr-007/machine.jpg?v=2"
   },
   {
     "id": "domg-pr-010",
@@ -520,7 +520,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "스위치 박스",
         "criteria": "비상정지버튼 작동유무",
-        "photo": "./assets/eq/domg-pr-010/item-1.jpg"
+        "photo": "./assets/eq/domg-pr-010/item-1.jpg?v=2"
       },
       {
         "id": "i2",
@@ -530,7 +530,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "습동유계 펌프",
         "criteria": "펌프게이지 LOW~HIGH",
-        "photo": "./assets/eq/domg-pr-010/item-2.jpg"
+        "photo": "./assets/eq/domg-pr-010/item-2.jpg?v=2"
       },
       {
         "id": "i3",
@@ -540,7 +540,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "스핀들 모터",
         "criteria": "모터 게이지 LOW~HIGH",
-        "photo": "./assets/eq/domg-pr-010/item-3.jpg"
+        "photo": "./assets/eq/domg-pr-010/item-3.jpg?v=2"
       },
       {
         "id": "i4",
@@ -550,7 +550,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "축 작동",
         "criteria": "축오일 게이지 LOW~HIGH",
-        "photo": "./assets/eq/domg-pr-010/item-4.jpg"
+        "photo": "./assets/eq/domg-pr-010/item-4.jpg?v=2"
       },
       {
         "id": "i5",
@@ -560,7 +560,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "베드 오일 공급량",
         "criteria": "베드게이지 LOW~HIGH",
-        "photo": "./assets/eq/domg-pr-010/item-5.jpg"
+        "photo": "./assets/eq/domg-pr-010/item-5.jpg?v=2"
       },
       {
         "id": "i6",
@@ -570,10 +570,10 @@ export const MACHINES = [
         "kind": "mark",
         "name": "레버 작동상태",
         "criteria": "회전시 테이블 이동확인",
-        "photo": "./assets/eq/domg-pr-010/item-6.jpg"
+        "photo": "./assets/eq/domg-pr-010/item-6.jpg?v=2"
       }
     ],
-    "machinePhoto": "./assets/eq/domg-pr-010/machine.jpg"
+    "machinePhoto": "./assets/eq/domg-pr-010/machine.jpg?v=2"
   },
   {
     "id": "domg-pr-011",
@@ -592,7 +592,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "스위치 박스",
         "criteria": "비상정지버튼 작동유무",
-        "photo": "./assets/eq/domg-pr-011/item-1.jpg"
+        "photo": "./assets/eq/domg-pr-011/item-1.jpg?v=2"
       },
       {
         "id": "i2",
@@ -602,7 +602,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "주축이송핸들",
         "criteria": "정상작동 및 파손여부",
-        "photo": "./assets/eq/domg-pr-011/item-2.jpg"
+        "photo": "./assets/eq/domg-pr-011/item-2.jpg?v=2"
       },
       {
         "id": "i3",
@@ -612,7 +612,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "모터 구동부",
         "criteria": "정상작동 및 파손여부",
-        "photo": "./assets/eq/domg-pr-011/item-3.jpg"
+        "photo": "./assets/eq/domg-pr-011/item-3.jpg?v=2"
       },
       {
         "id": "i4",
@@ -622,7 +622,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "테이블",
         "criteria": "정상작동 및 파손여부",
-        "photo": "./assets/eq/domg-pr-011/item-4.jpg"
+        "photo": "./assets/eq/domg-pr-011/item-4.jpg?v=2"
       },
       {
         "id": "i5",
@@ -632,10 +632,10 @@ export const MACHINES = [
         "kind": "mark",
         "name": "드릴 척",
         "criteria": "정상작동 및 파손여부",
-        "photo": "./assets/eq/domg-pr-011/item-5.jpg"
+        "photo": "./assets/eq/domg-pr-011/item-5.jpg?v=2"
       }
     ],
-    "machinePhoto": "./assets/eq/domg-pr-011/machine.jpg"
+    "machinePhoto": "./assets/eq/domg-pr-011/machine.jpg?v=2"
   },
   {
     "id": "domg-pr-013",
@@ -654,7 +654,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "스위치 박스",
         "criteria": "비상정지버튼 작동유무",
-        "photo": "./assets/eq/domg-pr-013/item-1.jpg"
+        "photo": "./assets/eq/domg-pr-013/item-1.jpg?v=2"
       },
       {
         "id": "i2",
@@ -664,7 +664,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "주축이송핸들",
         "criteria": "정상작동 및 파손여부",
-        "photo": "./assets/eq/domg-pr-013/item-2.jpg"
+        "photo": "./assets/eq/domg-pr-013/item-2.jpg?v=2"
       },
       {
         "id": "i3",
@@ -674,7 +674,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "모터 구동부",
         "criteria": "정상작동 및 파손여부",
-        "photo": "./assets/eq/domg-pr-013/item-3.jpg"
+        "photo": "./assets/eq/domg-pr-013/item-3.jpg?v=2"
       },
       {
         "id": "i4",
@@ -684,7 +684,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "테이블",
         "criteria": "정상작동 및 파손여부",
-        "photo": "./assets/eq/domg-pr-013/item-4.jpg"
+        "photo": "./assets/eq/domg-pr-013/item-4.jpg?v=2"
       },
       {
         "id": "i5",
@@ -694,10 +694,10 @@ export const MACHINES = [
         "kind": "mark",
         "name": "드릴 척",
         "criteria": "정상작동 및 파손여부",
-        "photo": "./assets/eq/domg-pr-013/item-5.jpg"
+        "photo": "./assets/eq/domg-pr-013/item-5.jpg?v=2"
       }
     ],
-    "machinePhoto": "./assets/eq/domg-pr-013/machine.jpg"
+    "machinePhoto": "./assets/eq/domg-pr-013/machine.jpg?v=2"
   },
   {
     "id": "domg-pr-014",
@@ -716,7 +716,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "CONTROL PANEL",
         "criteria": "정상 작동 및 파손여부",
-        "photo": "./assets/eq/domg-pr-014/item-1.jpg"
+        "photo": "./assets/eq/domg-pr-014/item-1.jpg?v=2"
       },
       {
         "id": "i2",
@@ -726,7 +726,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "주전원 차단기",
         "criteria": "정상 작동 및 파손여부",
-        "photo": "./assets/eq/domg-pr-014/item-2.jpg"
+        "photo": "./assets/eq/domg-pr-014/item-2.jpg?v=2"
       },
       {
         "id": "i3",
@@ -736,7 +736,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "수분분리기",
         "criteria": "정상 작동 및 파손여부",
-        "photo": "./assets/eq/domg-pr-014/item-3.jpg"
+        "photo": "./assets/eq/domg-pr-014/item-3.jpg?v=2"
       },
       {
         "id": "i4",
@@ -746,7 +746,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "라지에이터",
         "criteria": "그릴 상태",
-        "photo": "./assets/eq/domg-pr-014/item-4.jpg"
+        "photo": "./assets/eq/domg-pr-014/item-4.jpg?v=2"
       },
       {
         "id": "i5",
@@ -756,7 +756,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "세척조 내부",
         "criteria": "내부 상태",
-        "photo": "./assets/eq/domg-pr-014/item-5.jpg"
+        "photo": "./assets/eq/domg-pr-014/item-5.jpg?v=2"
       },
       {
         "id": "i6",
@@ -766,10 +766,10 @@ export const MACHINES = [
         "kind": "mark",
         "name": "설비 외관",
         "criteria": "청결 상태",
-        "photo": "./assets/eq/domg-pr-014/item-6.jpg"
+        "photo": "./assets/eq/domg-pr-014/item-6.jpg?v=2"
       }
     ],
-    "machinePhoto": "./assets/eq/domg-pr-014/machine.jpg"
+    "machinePhoto": "./assets/eq/domg-pr-014/machine.jpg?v=2"
   },
   {
     "id": "domg-pr-026",
@@ -788,7 +788,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "CONTROL PANEL",
         "criteria": "정상 작동 및 파손여부",
-        "photo": "./assets/eq/domg-pr-026/item-1.jpg"
+        "photo": "./assets/eq/domg-pr-026/item-1.jpg?v=2"
       },
       {
         "id": "i2",
@@ -798,7 +798,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "Round Plate 작동",
         "criteria": "정상 작동 및 파손여부",
-        "photo": "./assets/eq/domg-pr-026/item-2.jpg"
+        "photo": "./assets/eq/domg-pr-026/item-2.jpg?v=2"
       },
       {
         "id": "i3",
@@ -808,7 +808,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "BLOCK 고정",
         "criteria": "정상 작동 및 파손여부",
-        "photo": "./assets/eq/domg-pr-026/item-3.jpg"
+        "photo": "./assets/eq/domg-pr-026/item-3.jpg?v=2"
       },
       {
         "id": "i4",
@@ -818,7 +818,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "측면 조절레바 작동",
         "criteria": "정상 작동 및 파손여부",
-        "photo": "./assets/eq/domg-pr-026/item-4.jpg"
+        "photo": "./assets/eq/domg-pr-026/item-4.jpg?v=2"
       },
       {
         "id": "i5",
@@ -828,10 +828,10 @@ export const MACHINES = [
         "kind": "mark",
         "name": "설비 외관",
         "criteria": "청결 상태",
-        "photo": "./assets/eq/domg-pr-026/item-5.jpg"
+        "photo": "./assets/eq/domg-pr-026/item-5.jpg?v=2"
       }
     ],
-    "machinePhoto": "./assets/eq/domg-pr-026/machine.jpg"
+    "machinePhoto": "./assets/eq/domg-pr-026/machine.jpg?v=2"
   },
   {
     "id": "domg-pr-015",
@@ -850,7 +850,7 @@ export const MACHINES = [
         "kind": "text",
         "name": "절삭유",
         "criteria": "농도 하절기 8~12%, 농도 동절기 7~10%",
-        "photo": "./assets/eq/domg-pr-015/item-1.jpg"
+        "photo": "./assets/eq/domg-pr-015/item-1.jpg?v=2"
       },
       {
         "id": "i2",
@@ -860,7 +860,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "스위치",
         "criteria": "비상정지버튼 작동유무",
-        "photo": "./assets/eq/domg-pr-015/item-2.jpg"
+        "photo": "./assets/eq/domg-pr-015/item-2.jpg?v=2"
       },
       {
         "id": "i3",
@@ -870,7 +870,7 @@ export const MACHINES = [
         "kind": "text",
         "name": "공압계",
         "criteria": "작동압력 4~6kg/cm2",
-        "photo": "./assets/eq/domg-pr-015/item-3.jpg"
+        "photo": "./assets/eq/domg-pr-015/item-3.jpg?v=2"
       },
       {
         "id": "i4",
@@ -880,7 +880,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "습동유계",
         "criteria": "최대 1.2MPA",
-        "photo": "./assets/eq/domg-pr-015/item-4.jpg"
+        "photo": "./assets/eq/domg-pr-015/item-4.jpg?v=2"
       },
       {
         "id": "i5",
@@ -890,7 +890,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "오일쿨러",
         "criteria": "작동압력 45kgf/㎠",
-        "photo": "./assets/eq/domg-pr-015/item-5.jpg"
+        "photo": "./assets/eq/domg-pr-015/item-5.jpg?v=2"
       },
       {
         "id": "i6",
@@ -900,10 +900,10 @@ export const MACHINES = [
         "kind": "text",
         "name": "압력스위치",
         "criteria": "최대 0.35MPA",
-        "photo": "./assets/eq/domg-pr-015/item-6.jpg"
+        "photo": "./assets/eq/domg-pr-015/item-6.jpg?v=2"
       }
     ],
-    "machinePhoto": "./assets/eq/domg-pr-015/machine.jpg"
+    "machinePhoto": "./assets/eq/domg-pr-015/machine.jpg?v=2"
   },
   {
     "id": "domg-pr-016",
@@ -922,7 +922,7 @@ export const MACHINES = [
         "kind": "text",
         "name": "절삭유",
         "criteria": "농도 하절기 8~12%, 농도 동절기 7~10%",
-        "photo": "./assets/eq/domg-pr-016/item-1.jpg"
+        "photo": "./assets/eq/domg-pr-016/item-1.jpg?v=2"
       },
       {
         "id": "i2",
@@ -932,7 +932,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "스위치",
         "criteria": "비상정지버튼 작동유무",
-        "photo": "./assets/eq/domg-pr-016/item-2.jpg"
+        "photo": "./assets/eq/domg-pr-016/item-2.jpg?v=2"
       },
       {
         "id": "i3",
@@ -942,7 +942,7 @@ export const MACHINES = [
         "kind": "text",
         "name": "공압계",
         "criteria": "작동압력 4~6kg/cm2",
-        "photo": "./assets/eq/domg-pr-016/item-3.jpg"
+        "photo": "./assets/eq/domg-pr-016/item-3.jpg?v=2"
       },
       {
         "id": "i4",
@@ -952,7 +952,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "습동유계",
         "criteria": "최대 1.2MPA",
-        "photo": "./assets/eq/domg-pr-016/item-4.jpg"
+        "photo": "./assets/eq/domg-pr-016/item-4.jpg?v=2"
       },
       {
         "id": "i5",
@@ -962,7 +962,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "오일쿨러",
         "criteria": "작동압력 45kgf/㎠",
-        "photo": "./assets/eq/domg-pr-016/item-5.jpg"
+        "photo": "./assets/eq/domg-pr-016/item-5.jpg?v=2"
       },
       {
         "id": "i6",
@@ -972,10 +972,10 @@ export const MACHINES = [
         "kind": "text",
         "name": "압력스위치",
         "criteria": "최대 0.35MPA",
-        "photo": "./assets/eq/domg-pr-016/item-6.jpg"
+        "photo": "./assets/eq/domg-pr-016/item-6.jpg?v=2"
       }
     ],
-    "machinePhoto": "./assets/eq/domg-pr-016/machine.jpg"
+    "machinePhoto": "./assets/eq/domg-pr-016/machine.jpg?v=2"
   },
   {
     "id": "domg-pr-029",
@@ -994,7 +994,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "스위치 박스",
         "criteria": "정상 작동 및 파손여부",
-        "photo": "./assets/eq/domg-pr-029/item-1.jpg"
+        "photo": "./assets/eq/domg-pr-029/item-1.jpg?v=2"
       },
       {
         "id": "i2",
@@ -1004,7 +1004,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "드레인 밸브",
         "criteria": "드레인 수분배출 상태점검",
-        "photo": "./assets/eq/domg-pr-029/item-2.jpg"
+        "photo": "./assets/eq/domg-pr-029/item-2.jpg?v=2"
       },
       {
         "id": "i3",
@@ -1014,7 +1014,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "게이지 밸브",
         "criteria": "압력 게이지 점검",
-        "photo": "./assets/eq/domg-pr-029/item-3.jpg"
+        "photo": "./assets/eq/domg-pr-029/item-3.jpg?v=2"
       },
       {
         "id": "i4",
@@ -1024,7 +1024,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "OIL 밸브",
         "criteria": "OIL 누유 점검",
-        "photo": "./assets/eq/domg-pr-029/item-4.jpg"
+        "photo": "./assets/eq/domg-pr-029/item-4.jpg?v=2"
       },
       {
         "id": "i5",
@@ -1034,7 +1034,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "전기판넬",
         "criteria": "전기판넬 결선 점검",
-        "photo": "./assets/eq/domg-pr-029/item-5.jpg"
+        "photo": "./assets/eq/domg-pr-029/item-5.jpg?v=2"
       },
       {
         "id": "i6",
@@ -1044,7 +1044,7 @@ export const MACHINES = [
         "kind": "mark",
         "name": "설비 외관",
         "criteria": "청결상태",
-        "photo": "./assets/eq/domg-pr-029/item-6.jpg"
+        "photo": "./assets/eq/domg-pr-029/item-6.jpg?v=2"
       }
     ],
     "machinePhoto": ""
