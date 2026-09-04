@@ -424,6 +424,7 @@ const en = {
   "회사 홈으로": "Company home",
   "회사소개": "About",
   "주식회사 디오엠": "DOM",
+  "경기도 평택 · 정밀 가공": "Pyeongtaek · Precision machining",
   "사업영역": "Business",
   "운영포털": "Portal",
   "오시는 길": "Location",
