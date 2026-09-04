@@ -482,7 +482,7 @@ function renderLogin(mode = "login") {
           ${logo()}
           <h1>${ht("내부 전용")}</h1>
           <p>${ht("운영 포털과 가공 프로그램은 디오엠 내부 네트워크에서만 열 수 있습니다.")}</p>
-          <p><a href="./index.html">${ht("디오엠 회사 홈")}</a></p>
+          <p><a href="./index.html" target="_blank" rel="noopener noreferrer">${ht("디오엠 회사 홈")}</a></p>
           ${langBar()}
         </div>
       </div>`;
@@ -517,7 +517,7 @@ function renderLogin(mode = "login") {
           <p class="err" id="err"></p>
           <button class="btn red" type="submit">${join ? ht("가입 신청") : ht("로그인")}</button>
         </form>
-        <p><a href="./index.html">${ht("디오엠 회사 홈")}</a></p>
+        <p><a href="./index.html" target="_blank" rel="noopener noreferrer">${ht("디오엠 회사 홈")}</a></p>
         <button class="btn" id="install" type="button">${ht("컴퓨터에 앱 설치")}</button>
       </div>
     </div>`;

@@ -1,7 +1,7 @@
 {
-  "name": "디오엠",
-  "short_name": "디오엠",
-  "description": "디오엠(DOM) 제조 현장 운영 포털",
+  "name": "디오엠 운영 포털",
+  "short_name": "운영 포털",
+  "description": "디오엠(DOM) 내부 운영 포털",
   "start_url": "./portal.html",
   "scope": "./",
   "display": "standalone",

@@ -47,6 +47,7 @@ html { scroll-behavior: smooth; }
 }
 .pub-top nav > a:hover { color: var(--red); }
 .pub-top nav > a[aria-current="page"] { color: var(--red); }
+.pub-top nav > a.pub-to-portal { margin-left: 18px; }
 .pub-top .lang-pick { margin-left: 8px; }
 
 .home-stage {

@@ -8,6 +8,7 @@ if (nav && !document.getElementById("lang")) {
 const file = (location.pathname.split("/").pop() || "index.html").toLowerCase();
 const home = file === "" || file === "index.html";
 nav?.querySelectorAll("a").forEach((a) => {
+  if (a.target === "_blank") return;
   const href = (a.getAttribute("href") || "").replace(/^\.\//, "").toLowerCase();
   const isHome = !href || href === "./" || href === "index.html";
   if ((home && isHome) || (!home && href === file)) a.setAttribute("aria-current", "page");
