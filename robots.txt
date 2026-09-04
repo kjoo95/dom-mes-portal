@@ -5,4 +5,4 @@ Disallow: /cam-lab.html
 Disallow: /sync.html
 Disallow: /data/
 
-Sitemap: https://domeng.co.kr/sitemap.xml
+Sitemap: https://kjoo95.github.io/dom-mes-portal/sitemap.xml
