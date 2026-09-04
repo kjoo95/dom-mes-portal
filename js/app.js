@@ -7,7 +7,7 @@ import {
 import { loadState, loadStateAsync, shareState, uid } from "./store.js?v=64";
 import { saveBlob, loadBlob, readAsDataUrl, removeBlob } from "./files.js?v=39";
 import { parseProgram, decodeCamFile, mayBeCamFile } from "./gcode.js?v=52";
-import { boot, showRecover } from "./safety.js?v=46";
+import { boot, showRecover } from "./safety.js?v=47";
 import { chatView, bindChat } from "./comm.js?v=51";
 import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=67";
 
@@ -413,7 +413,7 @@ function isPrintPage(mod, extra, date) {
 }
 
 function brandMark() {
-  return `<img class="brand-logo" src="./assets/dom-logo.png?v=7" alt="주식회사 디오엠">`;
+  return `<img class="brand-logo" src="./assets/dom-logo.svg?v=8" alt="주식회사 디오엠">`;
 }
 
 function logo(sub = "") {
