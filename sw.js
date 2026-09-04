@@ -1,4 +1,4 @@
-const CACHE = "dom-v121";
+const CACHE = "dom-v122";
 const FILES = [
   "./",
   "./index.html",
