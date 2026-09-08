@@ -87,5 +87,59 @@ function revealOnScroll() {
   rest.forEach((el) => io.observe(el));
 }
 
+function smoothWheelScroll() {
+  if (reduceMotion) return;
+  if (window.matchMedia("(pointer: coarse)").matches) return;
+  const root = document.scrollingElement || document.documentElement;
+  let current = window.scrollY;
+  let target = current;
+  let running = false;
+  window.addEventListener("wheel", (event) => {
+    if (event.ctrlKey) return;
+    if (event.target.closest?.(".contact-map, .leaflet-container, select, textarea")) return;
+    event.preventDefault();
+    const max = Math.max(0, root.scrollHeight - window.innerHeight);
+    target = Math.max(0, Math.min(max, target + event.deltaY));
+    if (!running) {
+      running = true;
+      requestAnimationFrame(tick);
+    }
+  }, { passive: false });
+  function tick() {
+    current += (target - current) * 0.14;
+    if (Math.abs(target - current) < 0.5) {
+      current = target;
+      window.scrollTo(0, current);
+      running = false;
+      return;
+    }
+    window.scrollTo(0, current);
+    requestAnimationFrame(tick);
+  }
+}
+
+function parallaxHero() {
+  if (reduceMotion) return;
+  const hero = document.querySelector(".hx-hero");
+  const slides = document.querySelector(".hx-slides");
+  const pageHero = document.querySelector(".page-hero img");
+  if (!hero && !pageHero) return;
+  const update = () => {
+    if (hero && slides) {
+      const y = Math.max(0, Math.min(window.scrollY, hero.offsetHeight));
+      slides.style.transform = `translate3d(0, ${y * 0.28}px, 0)`;
+    }
+    if (pageHero) {
+      const box = pageHero.closest(".page-hero");
+      const top = box ? box.getBoundingClientRect().top : 0;
+      pageHero.style.transform = `scale(1.08) translate3d(0, ${Math.max(0, -top) * 0.18}px, 0)`;
+    }
+  };
+  update();
+  window.addEventListener("scroll", update, { passive: true });
+}
+
 playHomeHero();
 revealOnScroll();
+smoothWheelScroll();
+parallaxHero();
