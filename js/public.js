@@ -1,4 +1,4 @@
-import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=79";
+import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=80";
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.getRegistrations().then((regs) => {
@@ -29,37 +29,111 @@ bindLang(() => location.reload());
 
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-function playHomeHero() {
-  const slides = [...document.querySelectorAll(".hx-slide")];
-  if (slides.length < 2) return;
-  const dotsWrap = document.querySelector(".hx-dots");
-  const nextBtn = document.querySelector(".hx-next");
-  let i = 0;
-  const dots = slides.map((_, n) => {
-    const b = document.createElement("button");
-    b.type = "button";
-    b.setAttribute("aria-label", String(n + 1));
-    if (n === 0) b.classList.add("is-on");
-    b.addEventListener("click", () => go(n));
-    dotsWrap?.append(b);
-    return b;
-  });
-  function go(n) {
-    slides[i].classList.remove("is-on");
-    dots[i]?.classList.remove("is-on");
-    i = (n + slides.length) % slides.length;
-    const slide = slides[i];
-    const img = slide.querySelector("img");
-    if (img) {
-      img.style.animation = "none";
-      img.offsetWidth;
-      img.style.animation = "";
+function pinHeader() {
+  const top = document.querySelector(".pub-top");
+  if (!top || !document.body.classList.contains("home")) return;
+  const on = () => top.classList.toggle("is-scrolled", window.scrollY > 24);
+  on();
+  window.addEventListener("scroll", on, { passive: true });
+}
+
+function playField() {
+  const canvas = document.getElementById("sm-field");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+  let w = 0;
+  let h = 0;
+  let t = 0;
+  const specks = [];
+
+  function size() {
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    w = canvas.clientWidth;
+    h = canvas.clientHeight;
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    specks.length = 0;
+    const n = Math.round((w * h) / 14000);
+    for (let i = 0; i < Math.min(90, Math.max(36, n)); i += 1) {
+      specks.push({
+        x: Math.random() * w,
+        y: Math.random() * h,
+        r: 0.6 + Math.random() * 1.6,
+        v: 0.12 + Math.random() * 0.42,
+        red: Math.random() > 0.55,
+      });
     }
-    slide.classList.add("is-on");
-    dots[i]?.classList.add("is-on");
   }
-  nextBtn?.addEventListener("click", () => go(i + 1));
-  if (!reduceMotion) window.setInterval(() => go(i + 1), 7000);
+
+  function draw() {
+    ctx.clearRect(0, 0, w, h);
+    const waveT = t * 0.00105;
+    const cols = Math.max(36, Math.round(w / 22));
+    const rows = 22;
+    for (let r = 0; r < rows; r += 1) {
+      const depth = r / (rows - 1);
+      const rowY = h * 0.36 + depth * h * 0.58;
+      const sizeDot = 0.7 + depth * 1.9;
+      const alpha = 0.08 + depth * 0.5;
+      const spread = 0.42 + depth * 0.58;
+      for (let c = 0; c < cols; c += 1) {
+        const nx = c / (cols - 1);
+        const x = (nx - 0.5) * w * spread + w * 0.5;
+        const wave =
+          Math.sin(nx * 5.4 + waveT) * (48 - depth * 10) +
+          Math.sin(nx * 12.6 + waveT * 1.28) * (18 - depth * 6) +
+          Math.sin(nx * 2.7 - waveT * 0.48) * 24;
+        const y = rowY + wave * (0.28 + depth * 0.72);
+        ctx.beginPath();
+        ctx.fillStyle = (c + r) % 6 === 0
+          ? `rgba(196,30,58,${alpha})`
+          : `rgba(230,236,255,${alpha})`;
+        ctx.arc(x, y, sizeDot, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    const peaks = [0.28, 0.5, 0.72];
+    for (const px of peaks) {
+      const baseY = h * 0.58 + Math.sin(waveT + px * 8) * 26;
+      for (let i = 0; i < 34; i += 1) {
+        const rise = i / 34;
+        const y = baseY - rise * h * 0.42;
+        const a = 0.5 * (1 - rise);
+        const x = px * w + Math.sin(waveT * 1.2 + i * 0.35) * (4 + rise * 10);
+        ctx.beginPath();
+        ctx.fillStyle = i % 3 === 0
+          ? `rgba(196,30,58,${a})`
+          : `rgba(255,255,255,${a * 0.9})`;
+        ctx.arc(x, y, 1.15 + (1 - rise) * 0.6, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    for (const d of specks) {
+      ctx.beginPath();
+      ctx.fillStyle = d.red ? "rgba(196,30,58,.45)" : "rgba(255,255,255,.28)";
+      ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+      ctx.fill();
+      d.y -= d.v;
+      d.x += Math.sin(waveT + d.y * 0.01) * 0.15;
+      if (d.y < -4) {
+        d.y = h + 4;
+        d.x = Math.random() * w;
+      }
+    }
+    if (!reduceMotion) {
+      t += 16;
+      requestAnimationFrame(draw);
+    }
+  }
+
+  size();
+  draw();
+  window.addEventListener("resize", () => {
+    size();
+    if (reduceMotion) draw();
+  });
 }
 
 function revealOnScroll() {
@@ -120,14 +194,14 @@ function smoothWheelScroll() {
 
 function parallaxHero() {
   if (reduceMotion) return;
-  const hero = document.querySelector(".hx-hero");
-  const slides = document.querySelector(".hx-slides");
+  const hero = document.querySelector(".sm-hero");
+  const field = document.querySelector(".sm-field");
   const pageHero = document.querySelector(".page-hero img");
   if (!hero && !pageHero) return;
   const update = () => {
-    if (hero && slides) {
+    if (hero && field) {
       const y = Math.max(0, Math.min(window.scrollY, hero.offsetHeight));
-      slides.style.transform = `translate3d(0, ${y * 0.28}px, 0)`;
+      field.style.transform = `translate3d(0, ${y * 0.22}px, 0)`;
     }
     if (pageHero) {
       const box = pageHero.closest(".page-hero");
@@ -139,7 +213,8 @@ function parallaxHero() {
   window.addEventListener("scroll", update, { passive: true });
 }
 
-playHomeHero();
+pinHeader();
+playField();
 revealOnScroll();
 smoothWheelScroll();
 parallaxHero();

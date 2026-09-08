@@ -19,8 +19,11 @@
     <link rel="icon" href="./assets/favicon.svg?v=10" type="image/svg+xml" />
     <link rel="icon" href="./assets/favicon-32.png?v=10" type="image/png" sizes="32x32" />
     <link rel="icon" href="./assets/icon-192.png?v=10" type="image/png" sizes="192x192" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="./css/styles.css?v=115" />
-    <link rel="stylesheet" href="./css/public.css?v=35" />
+    <link rel="stylesheet" href="./css/public.css?v=39" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -55,79 +58,85 @@
       </nav>
     </header>
     <main>
-      <section class="hx-hero">
-        <div class="hx-slides">
-          <article class="hx-slide is-on">
-            <img src="./assets/public/mct-cut.jpg" alt="" width="1600" height="900">
-            <div class="hx-shade"></div>
-            <div class="hx-copy">
-              <p class="hx-kicker" data-i18n="주식회사 디오엠">주식회사 디오엠</p>
-              <h1 data-i18n="정밀 가공">정밀 가공</h1>
-              <a class="hx-more" href="./about.html" data-i18n="더 보기">더 보기</a>
-            </div>
-          </article>
-          <article class="hx-slide">
-            <img src="./assets/public/mct-5axis.jpg" alt="" width="1600" height="900">
-            <div class="hx-shade"></div>
-            <div class="hx-copy">
-              <p class="hx-kicker" data-i18n="사업영역">사업영역</p>
-              <h1 data-i18n="CNC 가공">CNC 가공</h1>
-              <a class="hx-more" href="./work.html" data-i18n="더 보기">더 보기</a>
-            </div>
-          </article>
-          <article class="hx-slide">
-            <img src="./assets/public/mct-cmm.jpg" alt="" width="1600" height="900">
-            <div class="hx-shade"></div>
-            <div class="hx-copy">
-              <p class="hx-kicker" data-i18n="품질 검사">품질 검사</p>
-              <h1 data-i18n="검사 · 성적서">검사 · 성적서</h1>
-              <a class="hx-more" href="./work.html" data-i18n="더 보기">더 보기</a>
-            </div>
-          </article>
+      <section class="sm-hero">
+        <canvas id="sm-field" class="sm-field" aria-hidden="true"></canvas>
+        <p class="sm-side" data-i18n="정밀 가공">정밀 가공</p>
+        <div class="sm-hero-copy">
+          <h1 data-i18n="주식회사 디오엠">주식회사 디오엠</h1>
         </div>
-        <div class="hx-dots" role="tablist" aria-label="슬라이드"></div>
-        <button class="hx-next" type="button" aria-label="다음">다음</button>
+        <a class="sm-scroll" href="#sm-intro">
+          <span>Scroll to discover</span>
+          <i class="sm-mouse" aria-hidden="true"></i>
+        </a>
       </section>
-      <nav class="hx-lineup" aria-label="주요 메뉴">
-        <a class="hx-card reveal" href="./about.html">
-          <figure><img src="./assets/public/mct-panel.jpg" alt="" width="1600" height="1200"></figure>
-          <span class="hx-card-kicker" data-i18n="회사소개">회사소개</span>
-          <strong data-i18n="주식회사 디오엠">주식회사 디오엠</strong>
+      <section class="sm-intro" id="sm-intro">
+        <p class="sm-intro-lead reveal" data-i18n="주식회사 디오엠은 경기도 평택에서 정밀 가공을 수행하는 제조 기업입니다.">주식회사 디오엠은 경기도 평택에서 정밀 가공을 수행하는 제조 기업입니다.</p>
+        <p class="sm-intro-body reveal" data-i18n="머시닝 센터를 중심으로 부품 가공과 품질 검사를 한 사업장에서 운영합니다.">머시닝 센터를 중심으로 부품 가공과 품질 검사를 한 사업장에서 운영합니다.</p>
+      </section>
+      <nav class="sm-tiles" aria-label="주요 메뉴">
+        <a class="sm-tile reveal" href="./about.html">
+          <img src="./assets/public/mct-shop.jpg" alt="" width="1600" height="900">
+          <span>
+            <em data-i18n="회사소개">회사소개</em>
+            <strong data-i18n="주식회사 디오엠">주식회사 디오엠</strong>
+          </span>
         </a>
-        <a class="hx-card reveal" href="./work.html">
-          <figure><img src="./assets/public/mct-parts.jpg" alt="" width="1600" height="1200"></figure>
-          <span class="hx-card-kicker" data-i18n="사업영역">사업영역</span>
-          <strong data-i18n="CNC 가공">CNC 가공</strong>
+        <a class="sm-tile reveal" href="./work.html">
+          <img src="./assets/public/mct-cut.jpg" alt="" width="1600" height="900">
+          <span>
+            <em data-i18n="사업영역">사업영역</em>
+            <strong data-i18n="CNC 가공">CNC 가공</strong>
+          </span>
         </a>
-        <a class="hx-card reveal" href="./contact.html">
-          <figure><img src="./assets/public/mct-shop.jpg" alt="" width="1600" height="900"></figure>
-          <span class="hx-card-kicker" data-i18n="오시는 길">오시는 길</span>
-          <strong data-i18n="경기도 평택 · 정밀 가공">경기도 평택 · 정밀 가공</strong>
+        <a class="sm-tile reveal" href="./contact.html">
+          <img src="./assets/public/mct-panel.jpg" alt="" width="1600" height="1200">
+          <span>
+            <em data-i18n="오시는 길">오시는 길</em>
+            <strong data-i18n="경기도 평택">경기도 평택</strong>
+          </span>
         </a>
       </nav>
-      <section class="hx-feature reveal">
+      <section class="sm-feature reveal">
         <figure><img src="./assets/public/mct-atc.jpg" alt="" width="1600" height="1200"></figure>
-        <div class="hx-feature-copy">
-          <p class="hx-kicker" data-i18n="사업영역">사업영역</p>
+        <div class="sm-feature-copy">
+          <p class="sm-kicker" data-i18n="사업영역">사업영역</p>
           <h2 data-i18n="CNC 가공">CNC 가공</h2>
           <p data-i18n="머시닝 센터를 이용한 정밀 부품 가공">머시닝 센터를 이용한 정밀 부품 가공</p>
-          <a class="hx-more" href="./work.html" data-i18n="더 보기">더 보기</a>
+          <a class="sm-more" href="./work.html" data-i18n="더 보기">더 보기</a>
         </div>
       </section>
-      <section class="hx-feature hx-feature-flip reveal">
+      <section class="sm-feature sm-feature-flip reveal">
         <figure><img src="./assets/public/mct-cmm.jpg" alt="" width="1600" height="1200"></figure>
-        <div class="hx-feature-copy">
-          <p class="hx-kicker" data-i18n="품질 검사">품질 검사</p>
+        <div class="sm-feature-copy">
+          <p class="sm-kicker" data-i18n="품질 검사">품질 검사</p>
           <h2 data-i18n="검사 · 성적서">검사 · 성적서</h2>
           <p data-i18n="가공 품질 확인 및 검사 성적서 대응">가공 품질 확인 및 검사 성적서 대응</p>
-          <a class="hx-more" href="./work.html" data-i18n="더 보기">더 보기</a>
+          <a class="sm-more" href="./work.html" data-i18n="더 보기">더 보기</a>
         </div>
       </section>
     </main>
     <footer class="pub-foot">
+      <nav class="sm-serv" aria-label="바로가기">
+        <a href="./about.html">
+          <strong data-i18n="회사소개">회사소개</strong>
+          <span data-i18n="경기도 평택의 정밀 가공 기업입니다.">경기도 평택의 정밀 가공 기업입니다.</span>
+        </a>
+        <a href="./work.html">
+          <strong data-i18n="사업영역">사업영역</strong>
+          <span data-i18n="머시닝 센터 가공과 품질 검사">머시닝 센터 가공과 품질 검사</span>
+        </a>
+        <a href="./contact.html">
+          <strong data-i18n="오시는 길">오시는 길</strong>
+          <span data-i18n="평택 서탄 사업장 위치를 안내합니다.">평택 서탄 사업장 위치를 안내합니다.</span>
+        </a>
+        <a href="./portal.html" target="_blank" rel="noopener noreferrer">
+          <strong data-i18n="운영포털">운영포털</strong>
+          <span data-i18n="현장 운영 화면입니다.">현장 운영 화면입니다.</span>
+        </a>
+      </nav>
       <p><strong>주식회사 디오엠(DOM)</strong> · 사업자등록번호 124-86-65657</p>
       <p>경기도 평택시 서탄면 수월암길 61-9 · Tel 031-666-4356 · Fax 031-666-4357</p>
     </footer>
-    <script type="module" src="./js/public.js?v=65"></script>
+    <script type="module" src="./js/public.js?v=67"></script>
   </body>
 </html>
