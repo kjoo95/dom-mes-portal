@@ -1,4 +1,4 @@
-import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=78";
+import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=79";
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.getRegistrations().then((regs) => {
@@ -29,19 +29,37 @@ bindLang(() => location.reload());
 
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-function playHomeFilm() {
-  const shots = [...document.querySelectorAll(".home-film img")];
-  if (shots.length < 2) return;
+function playHomeHero() {
+  const slides = [...document.querySelectorAll(".hx-slide")];
+  if (slides.length < 2) return;
+  const dotsWrap = document.querySelector(".hx-dots");
+  const nextBtn = document.querySelector(".hx-next");
   let i = 0;
-  window.setInterval(() => {
-    shots[i].classList.remove("is-on");
-    i = (i + 1) % shots.length;
-    const next = shots[i];
-    next.style.animation = "none";
-    next.classList.add("is-on");
-    next.offsetWidth;
-    next.style.animation = "";
-  }, 6200);
+  const dots = slides.map((_, n) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.setAttribute("aria-label", String(n + 1));
+    if (n === 0) b.classList.add("is-on");
+    b.addEventListener("click", () => go(n));
+    dotsWrap?.append(b);
+    return b;
+  });
+  function go(n) {
+    slides[i].classList.remove("is-on");
+    dots[i]?.classList.remove("is-on");
+    i = (n + slides.length) % slides.length;
+    const slide = slides[i];
+    const img = slide.querySelector("img");
+    if (img) {
+      img.style.animation = "none";
+      img.offsetWidth;
+      img.style.animation = "";
+    }
+    slide.classList.add("is-on");
+    dots[i]?.classList.add("is-on");
+  }
+  nextBtn?.addEventListener("click", () => go(i + 1));
+  if (!reduceMotion) window.setInterval(() => go(i + 1), 7000);
 }
 
 function revealOnScroll() {
@@ -69,5 +87,5 @@ function revealOnScroll() {
   rest.forEach((el) => io.observe(el));
 }
 
-if (!reduceMotion) playHomeFilm();
+playHomeHero();
 revealOnScroll();
