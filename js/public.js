@@ -1,4 +1,4 @@
-import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=82";
+import { t, langBar, bindLang, applyHtmlLang } from "./i18n.js?v=83";
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.getRegistrations().then((regs) => {
@@ -210,12 +210,14 @@ function parallaxHero() {
   if (reduceMotion) return;
   const hero = document.querySelector(".sm-hero");
   const field = document.querySelector(".sm-field");
+  const still = document.querySelector(".sm-hero-still");
   const pageHero = document.querySelector(".page-hero img");
   if (!hero && !pageHero) return;
   const update = () => {
-    if (hero && field) {
+    if (hero) {
       const y = Math.max(0, Math.min(window.scrollY, hero.offsetHeight));
-      field.style.transform = `translate3d(0, ${y * 0.22}px, 0)`;
+      if (field) field.style.transform = `translate3d(0, ${y * 0.18}px, 0)`;
+      if (still) still.style.transform = `scale(1.08) translate3d(0, ${y * 0.12}px, 0)`;
     }
     if (pageHero) {
       const box = pageHero.closest(".page-hero");
@@ -240,9 +242,9 @@ function bindHomePanels() {
     if (!map) {
       const here = [37.120341, 127.039361];
       map = L.map(el, { scrollWheelZoom: false }).setView(here, 16);
-      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
         maxZoom: 19,
-        attribution: "&copy; OpenStreetMap",
+        attribution: "&copy; OpenStreetMap &copy; CARTO",
       }).addTo(map);
       L.marker(here).addTo(map).bindPopup("디오엠 · 수월암길 61-9").openPopup();
       map.on("click", () => map.scrollWheelZoom.enable());

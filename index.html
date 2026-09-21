@@ -21,9 +21,9 @@
     <link rel="icon" href="./assets/icon-192.png?v=10" type="image/png" sizes="192x192" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@200;300;400;500;600&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="./css/styles.css?v=115" />
-    <link rel="stylesheet" href="./css/public.css?v=43" />
+    <link rel="stylesheet" href="./css/public.css?v=47" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script type="application/ld+json">
       {
@@ -72,16 +72,47 @@
       </section>
       <div class="sm-menu" id="sm-menu">
         <div class="sm-tiles" role="tablist" aria-label="주요 메뉴">
-          <button class="sm-tile reveal" type="button" data-panel="about" aria-expanded="false" aria-controls="about">
-            <img src="./assets/public/mct-shop.jpg" alt="" width="1600" height="900">
+          <button class="sm-tile" type="button" data-panel="about" aria-expanded="false" aria-controls="about">
+            <span class="sm-tile-art" aria-hidden="true">
+              <svg viewBox="0 0 240 240">
+                <circle cx="120" cy="120" r="96" />
+                <circle class="spin" cx="120" cy="120" r="64" />
+                <circle cx="120" cy="120" r="32" />
+                <circle class="dot" cx="120" cy="120" r="5" />
+                <line x1="120" y1="12" x2="120" y2="228" />
+                <line x1="12" y1="120" x2="228" y2="120" />
+              </svg>
+            </span>
             <strong data-i18n="회사소개">회사소개</strong>
           </button>
-          <button class="sm-tile reveal" type="button" data-panel="work" aria-expanded="false" aria-controls="work">
-            <img src="./assets/public/mct-cut.jpg" alt="" width="1600" height="900">
+          <button class="sm-tile" type="button" data-panel="work" aria-expanded="false" aria-controls="work">
+            <span class="sm-tile-art" aria-hidden="true">
+              <svg viewBox="0 0 240 240">
+                <rect class="plane p1" x="48" y="58" width="144" height="36" rx="2" />
+                <rect class="plane p2" x="48" y="102" width="144" height="36" rx="2" />
+                <rect class="plane p3" x="48" y="146" width="144" height="36" rx="2" />
+                <circle class="dot" cx="68" cy="76" r="4" />
+                <circle class="dot" cx="68" cy="120" r="4" />
+                <circle class="dot" cx="68" cy="164" r="4" />
+              </svg>
+            </span>
             <strong data-i18n="사업영역">사업영역</strong>
           </button>
-          <button class="sm-tile reveal" type="button" data-panel="contact" aria-expanded="false" aria-controls="contact">
-            <img src="./assets/public/mct-panel.jpg" alt="" width="1600" height="1200">
+          <button class="sm-tile" type="button" data-panel="contact" aria-expanded="false" aria-controls="contact">
+            <span class="sm-tile-art" aria-hidden="true">
+              <svg viewBox="0 0 240 240">
+                <g class="grid">
+                  <line x1="40" y1="40" x2="40" y2="200" /><line x1="80" y1="40" x2="80" y2="200" />
+                  <line x1="120" y1="40" x2="120" y2="200" /><line x1="160" y1="40" x2="160" y2="200" />
+                  <line x1="200" y1="40" x2="200" y2="200" />
+                  <line x1="40" y1="40" x2="200" y2="40" /><line x1="40" y1="80" x2="200" y2="80" />
+                  <line x1="40" y1="120" x2="200" y2="120" /><line x1="40" y1="160" x2="200" y2="160" />
+                  <line x1="40" y1="200" x2="200" y2="200" />
+                </g>
+                <circle class="pulse" cx="148" cy="108" r="22" />
+                <circle class="dot" cx="148" cy="108" r="6" />
+              </svg>
+            </span>
             <strong data-i18n="오시는 길">오시는 길</strong>
           </button>
         </div>
@@ -118,54 +149,61 @@
             <h2 data-i18n="회사 연혁">회사 연혁</h2>
             <ol class="sm-history">
               <li><time>2008</time><span data-i18n="화성시 반월동에서 설립">화성시 반월동에서 설립</span></li>
-              <li><time>2011</time><span data-i18n="벤처기업 인증, 설비 확충. 반도체 Spinner·열처리 장비 부품 가공">벤처기업 인증, 설비 확충. 반도체 Spinner·열처리 장비 부품 가공</span></li>
+              <li><time>2011</time><span data-i18n="벤처기업 인증, 설비 확충. 반도체 장비 부품 가공">벤처기업 인증, 설비 확충. 반도체 장비 부품 가공</span></li>
               <li><time>2013</time><span data-i18n="품질·환경 경영시스템 인증 획득">품질·환경 경영시스템 인증 획득</span></li>
-              <li><time>2014</time><span data-i18n="Display 제조설비 부품, 반도체 Gate Valve 부품 가공">Display 제조설비 부품, 반도체 Gate Valve 부품 가공</span></li>
-              <li><time>2015</time><span data-i18n="장축 설비 도입. Display Etcher 부품 가공">장축 설비 도입. Display Etcher 부품 가공</span></li>
+              <li><time>2014</time><span data-i18n="Display 제조설비 부품, 반도체 장비 부품 가공">Display 제조설비 부품, 반도체 장비 부품 가공</span></li>
+              <li><time>2015</time><span data-i18n="장축 설비 도입. Display 제조설비 부품 가공">장축 설비 도입. Display 제조설비 부품 가공</span></li>
               <li><time>2018</time><span data-i18n="평택 서탄 현위치로 이전. 장축 설비 추가">평택 서탄 현위치로 이전. 장축 설비 추가</span></li>
             </ol>
             <p class="sm-certs"><span data-i18n="인증">인증</span> · ISO 9001 · ISO 14001</p>
             <h2 data-i18n="앞으로의 전망">앞으로의 전망</h2>
             <p class="sm-intro-body" data-i18n="반도체 제조설비 부품과 방산 가공 수요에 맞춰, 치수와 납기를 지키는 현장을 이어 갑니다.">반도체 제조설비 부품과 방산 가공 수요에 맞춰, 치수와 납기를 지키는 현장을 이어 갑니다.</p>
             <ul class="sm-outlook">
-              <li data-i18n="반도체 제조설비·테스트 장비 부품과 방산 장비 Case 가공을 중심으로 대응합니다.">반도체 제조설비·테스트 장비 부품과 방산 장비 Case 가공을 중심으로 대응합니다.</li>
+              <li data-i18n="반도체 제조설비·테스트 장비 부품과 방산 장비 부품 가공을 중심으로 대응합니다.">반도체 제조설비·테스트 장비 부품과 방산 장비 부품 가공을 중심으로 대응합니다.</li>
               <li data-i18n="가공정밀도 ±0.01~0.02mm, 도면 입수부터 가공·외주·검사·표면처리까지 한 흐름으로 맞춥니다.">가공정밀도 ±0.01~0.02mm, 도면 입수부터 가공·외주·검사·표면처리까지 한 흐름으로 맞춥니다.</li>
               <li data-i18n="장축 설비와 ISO 9001·14001을 바탕으로 품질 요구와 납기 단축에 맞춰 갑니다.">장축 설비와 ISO 9001·14001을 바탕으로 품질 요구와 납기 단축에 맞춰 갑니다.</li>
             </ul>
-            <div class="sm-about-photos">
-              <figure>
-                <img src="./assets/public/shop-front.jpg" alt="" width="960" height="540">
-                <figcaption data-i18n="회사전경">회사전경</figcaption>
-              </figure>
-              <figure>
-                <img src="./assets/public/shop-mct.jpg" alt="" width="554" height="433">
-                <figcaption data-i18n="가공실">가공실</figcaption>
-              </figure>
-              <figure>
-                <img src="./assets/public/shop-ship.jpg" alt="" width="554" height="433">
-                <figcaption data-i18n="제품 출하실">제품 출하실</figcaption>
-              </figure>
-            </div>
           </div>
         </section>
         <section class="sm-panel" id="work" hidden>
           <div class="sm-panel-copy sm-panel-wide">
-            <p class="sm-intro-lead" data-i18n="반도체·디스플레이 제조설비 부품과 방산 장비 Case를 가공합니다.">반도체·디스플레이 제조설비 부품과 방산 장비 Case를 가공합니다.</p>
-            <div class="sm-work-cards">
+            <p class="sm-intro-lead" data-i18n="반도체·디스플레이 제조설비 부품과 방산 장비 부품을 가공합니다.">반도체·디스플레이 제조설비 부품과 방산 장비 부품을 가공합니다.</p>
+            <div class="sm-work-list">
               <article>
-                <img src="./assets/public/parts-semi.jpg" alt="" width="1024" height="718">
+                <span class="sm-work-mark" aria-hidden="true">
+                  <svg viewBox="0 0 120 120">
+                    <circle cx="60" cy="60" r="46" />
+                    <circle cx="60" cy="60" r="30" />
+                    <circle cx="60" cy="60" r="14" />
+                    <circle class="dot" cx="60" cy="60" r="4" />
+                  </svg>
+                </span>
                 <h2 data-i18n="반도체">반도체</h2>
-                <p data-i18n="TEST Equip 부품, Photo 공정 Bake Units, Shower Head 가공">TEST Equip 부품, Photo 공정 Bake Units, Shower Head 가공</p>
+                <p data-i18n="반도체 제조설비 및 테스트 장비 부품 가공">반도체 제조설비 및 테스트 장비 부품 가공</p>
               </article>
               <article>
-                <img src="./assets/public/parts-display.jpg" alt="" width="759" height="230">
+                <span class="sm-work-mark" aria-hidden="true">
+                  <svg viewBox="0 0 120 120">
+                    <rect x="22" y="28" width="76" height="48" rx="4" />
+                    <rect x="30" y="36" width="60" height="32" rx="2" />
+                    <line x1="22" y1="88" x2="98" y2="88" />
+                    <line x1="38" y1="88" x2="38" y2="96" />
+                    <line x1="82" y1="88" x2="82" y2="96" />
+                  </svg>
+                </span>
                 <h2 data-i18n="디스플레이">디스플레이</h2>
-                <p data-i18n="Gate Valve, Etcher 등 디스플레이 제조설비 부품 가공">Gate Valve, Etcher 등 디스플레이 제조설비 부품 가공</p>
+                <p data-i18n="디스플레이 제조설비 부품 가공">디스플레이 제조설비 부품 가공</p>
               </article>
               <article>
-                <img src="./assets/public/parts-case.jpg" alt="" width="728" height="436">
+                <span class="sm-work-mark" aria-hidden="true">
+                  <svg viewBox="0 0 120 120">
+                    <polygon points="60,18 100,40 100,80 60,102 20,80 20,40" />
+                    <polygon points="60,38 84,52 84,76 60,90 36,76 36,52" />
+                    <circle class="dot" cx="60" cy="64" r="4" />
+                  </svg>
+                </span>
                 <h2 data-i18n="방산">방산</h2>
-                <p data-i18n="통신·운용 장비 Case류 가공">통신·운용 장비 Case류 가공</p>
+                <p data-i18n="방산 장비 부품 가공">방산 장비 부품 가공</p>
               </article>
             </div>
             <h2 data-i18n="가공 설비">가공 설비</h2>
@@ -235,6 +273,6 @@
       <p>경기도 평택시 서탄면 수월암길 61-9 · Tel 031-666-4356 · Fax 031-666-4357</p>
     </footer>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script type="module" src="./js/public.js?v=70"></script>
+    <script type="module" src="./js/public.js?v=73"></script>
   </body>
 </html>
