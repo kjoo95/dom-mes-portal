@@ -23,7 +23,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@200;300;400;500;600&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="./css/styles.css?v=115" />
-    <link rel="stylesheet" href="./css/public.css?v=47" />
+    <link rel="stylesheet" href="./css/public.css?v=48" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script type="application/ld+json">
       {
@@ -73,46 +73,12 @@
       <div class="sm-menu" id="sm-menu">
         <div class="sm-tiles" role="tablist" aria-label="주요 메뉴">
           <button class="sm-tile" type="button" data-panel="about" aria-expanded="false" aria-controls="about">
-            <span class="sm-tile-art" aria-hidden="true">
-              <svg viewBox="0 0 240 240">
-                <circle cx="120" cy="120" r="96" />
-                <circle class="spin" cx="120" cy="120" r="64" />
-                <circle cx="120" cy="120" r="32" />
-                <circle class="dot" cx="120" cy="120" r="5" />
-                <line x1="120" y1="12" x2="120" y2="228" />
-                <line x1="12" y1="120" x2="228" y2="120" />
-              </svg>
-            </span>
             <strong data-i18n="회사소개">회사소개</strong>
           </button>
           <button class="sm-tile" type="button" data-panel="work" aria-expanded="false" aria-controls="work">
-            <span class="sm-tile-art" aria-hidden="true">
-              <svg viewBox="0 0 240 240">
-                <rect class="plane p1" x="48" y="58" width="144" height="36" rx="2" />
-                <rect class="plane p2" x="48" y="102" width="144" height="36" rx="2" />
-                <rect class="plane p3" x="48" y="146" width="144" height="36" rx="2" />
-                <circle class="dot" cx="68" cy="76" r="4" />
-                <circle class="dot" cx="68" cy="120" r="4" />
-                <circle class="dot" cx="68" cy="164" r="4" />
-              </svg>
-            </span>
             <strong data-i18n="사업영역">사업영역</strong>
           </button>
           <button class="sm-tile" type="button" data-panel="contact" aria-expanded="false" aria-controls="contact">
-            <span class="sm-tile-art" aria-hidden="true">
-              <svg viewBox="0 0 240 240">
-                <g class="grid">
-                  <line x1="40" y1="40" x2="40" y2="200" /><line x1="80" y1="40" x2="80" y2="200" />
-                  <line x1="120" y1="40" x2="120" y2="200" /><line x1="160" y1="40" x2="160" y2="200" />
-                  <line x1="200" y1="40" x2="200" y2="200" />
-                  <line x1="40" y1="40" x2="200" y2="40" /><line x1="40" y1="80" x2="200" y2="80" />
-                  <line x1="40" y1="120" x2="200" y2="120" /><line x1="40" y1="160" x2="200" y2="160" />
-                  <line x1="40" y1="200" x2="200" y2="200" />
-                </g>
-                <circle class="pulse" cx="148" cy="108" r="22" />
-                <circle class="dot" cx="148" cy="108" r="6" />
-              </svg>
-            </span>
             <strong data-i18n="오시는 길">오시는 길</strong>
           </button>
         </div>
@@ -170,40 +136,25 @@
             <p class="sm-intro-lead" data-i18n="반도체·디스플레이 제조설비 부품과 방산 장비 부품을 가공합니다.">반도체·디스플레이 제조설비 부품과 방산 장비 부품을 가공합니다.</p>
             <div class="sm-work-list">
               <article>
-                <span class="sm-work-mark" aria-hidden="true">
-                  <svg viewBox="0 0 120 120">
-                    <circle cx="60" cy="60" r="46" />
-                    <circle cx="60" cy="60" r="30" />
-                    <circle cx="60" cy="60" r="14" />
-                    <circle class="dot" cx="60" cy="60" r="4" />
-                  </svg>
-                </span>
-                <h2 data-i18n="반도체">반도체</h2>
-                <p data-i18n="반도체 제조설비 및 테스트 장비 부품 가공">반도체 제조설비 및 테스트 장비 부품 가공</p>
+                <span class="sm-work-no" aria-hidden="true">01</span>
+                <div>
+                  <h2 data-i18n="반도체">반도체</h2>
+                  <p data-i18n="반도체 제조설비 및 테스트 장비 부품 가공">반도체 제조설비 및 테스트 장비 부품 가공</p>
+                </div>
               </article>
               <article>
-                <span class="sm-work-mark" aria-hidden="true">
-                  <svg viewBox="0 0 120 120">
-                    <rect x="22" y="28" width="76" height="48" rx="4" />
-                    <rect x="30" y="36" width="60" height="32" rx="2" />
-                    <line x1="22" y1="88" x2="98" y2="88" />
-                    <line x1="38" y1="88" x2="38" y2="96" />
-                    <line x1="82" y1="88" x2="82" y2="96" />
-                  </svg>
-                </span>
-                <h2 data-i18n="디스플레이">디스플레이</h2>
-                <p data-i18n="디스플레이 제조설비 부품 가공">디스플레이 제조설비 부품 가공</p>
+                <span class="sm-work-no" aria-hidden="true">02</span>
+                <div>
+                  <h2 data-i18n="디스플레이">디스플레이</h2>
+                  <p data-i18n="디스플레이 제조설비 부품 가공">디스플레이 제조설비 부품 가공</p>
+                </div>
               </article>
               <article>
-                <span class="sm-work-mark" aria-hidden="true">
-                  <svg viewBox="0 0 120 120">
-                    <polygon points="60,18 100,40 100,80 60,102 20,80 20,40" />
-                    <polygon points="60,38 84,52 84,76 60,90 36,76 36,52" />
-                    <circle class="dot" cx="60" cy="64" r="4" />
-                  </svg>
-                </span>
-                <h2 data-i18n="방산">방산</h2>
-                <p data-i18n="방산 장비 부품 가공">방산 장비 부품 가공</p>
+                <span class="sm-work-no" aria-hidden="true">03</span>
+                <div>
+                  <h2 data-i18n="방산">방산</h2>
+                  <p data-i18n="방산 장비 부품 가공">방산 장비 부품 가공</p>
+                </div>
               </article>
             </div>
             <h2 data-i18n="가공 설비">가공 설비</h2>
