@@ -335,6 +335,20 @@ html { scroll-behavior: auto; }
   letter-spacing: 0.06em;
   color: rgba(255, 255, 255, 0.72);
 }
+.sm-outlook {
+  margin: 20px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 14px;
+}
+.sm-outlook li {
+  padding-left: 16px;
+  border-left: 2px solid #c41e3a;
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.7;
+  word-break: keep-all;
+}
 .sm-about-photos {
   display: grid;
   grid-template-columns: 1.2fr 0.9fr 0.9fr;
