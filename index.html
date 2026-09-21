@@ -23,7 +23,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="./css/styles.css?v=115" />
-    <link rel="stylesheet" href="./css/public.css?v=41" />
+    <link rel="stylesheet" href="./css/public.css?v=42" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script type="application/ld+json">
       {
@@ -86,25 +86,85 @@
           </button>
         </div>
         <section class="sm-panel" id="about" hidden>
-          <div class="sm-panel-copy">
-            <p class="sm-intro-lead" data-i18n="주식회사 디오엠은 경기도 평택에서 정밀 가공을 수행하는 제조 기업입니다.">주식회사 디오엠은 경기도 평택에서 정밀 가공을 수행하는 제조 기업입니다.</p>
-            <p class="sm-intro-body" data-i18n="머시닝 센터를 중심으로 부품 가공과 품질 검사를 한 사업장에서 운영합니다.">머시닝 센터를 중심으로 부품 가공과 품질 검사를 한 사업장에서 운영합니다.</p>
+          <div class="sm-panel-copy sm-panel-wide">
+            <p class="sm-intro-lead" data-i18n="주식회사 디오엠은 2008년 설립된 반도체 제조설비 부품·방산 기계 가공 기업입니다.">주식회사 디오엠은 2008년 설립된 반도체 제조설비 부품·방산 기계 가공 기업입니다.</p>
+            <p class="sm-intro-body" data-i18n="경기도 평택시 서탄면에서 머시닝 센터 가공과 품질 검사를 수행합니다.">경기도 평택시 서탄면에서 머시닝 센터 가공과 품질 검사를 수행합니다.</p>
+            <dl class="sm-facts">
+              <div>
+                <dt data-i18n="회사명">회사명</dt>
+                <dd>(주)디오엠 (DOM CO.LTD)</dd>
+              </div>
+              <div>
+                <dt data-i18n="설립일">설립일</dt>
+                <dd>2008. 4. 7.</dd>
+              </div>
+              <div>
+                <dt data-i18n="대표이사">대표이사</dt>
+                <dd data-i18n="손홍욱">손홍욱</dd>
+              </div>
+              <div>
+                <dt data-i18n="사업분야">사업분야</dt>
+                <dd data-i18n="반도체 제조설비 부품 / 방산 기계 가공">반도체 제조설비 부품 / 방산 기계 가공</dd>
+              </div>
+              <div>
+                <dt data-i18n="주소">주소</dt>
+                <dd>경기도 평택시 서탄면 수월암길 61-9</dd>
+              </div>
+              <div>
+                <dt data-i18n="회사규모">회사규모</dt>
+                <dd data-i18n="총면적 574평, 가공 Shop 229평">총면적 574평, 가공 Shop 229평</dd>
+              </div>
+            </dl>
+            <h2 data-i18n="회사 연혁">회사 연혁</h2>
+            <ol class="sm-history">
+              <li><time>2008</time><span data-i18n="화성시 반월동에서 설립">화성시 반월동에서 설립</span></li>
+              <li><time>2011</time><span data-i18n="벤처기업 인증, 설비 확충. 반도체 Spinner·열처리 장비 부품 가공">벤처기업 인증, 설비 확충. 반도체 Spinner·열처리 장비 부품 가공</span></li>
+              <li><time>2013</time><span data-i18n="품질·환경 경영시스템 인증 획득">품질·환경 경영시스템 인증 획득</span></li>
+              <li><time>2014</time><span data-i18n="Display 제조설비 부품, 반도체 Gate Valve 부품 가공">Display 제조설비 부품, 반도체 Gate Valve 부품 가공</span></li>
+              <li><time>2015</time><span data-i18n="장축 설비 도입. Display Etcher 부품 가공">장축 설비 도입. Display Etcher 부품 가공</span></li>
+              <li><time>2018</time><span data-i18n="평택 서탄 현위치로 이전. 장축 설비 추가">평택 서탄 현위치로 이전. 장축 설비 추가</span></li>
+            </ol>
+            <p class="sm-certs"><span data-i18n="인증">인증</span> · ISO 9001 · ISO 14001</p>
+            <div class="sm-about-photos">
+              <figure>
+                <img src="./assets/public/shop-front.jpg" alt="" width="960" height="540">
+                <figcaption data-i18n="회사전경">회사전경</figcaption>
+              </figure>
+              <figure>
+                <img src="./assets/public/shop-mct.jpg" alt="" width="554" height="433">
+                <figcaption data-i18n="가공실">가공실</figcaption>
+              </figure>
+              <figure>
+                <img src="./assets/public/shop-ship.jpg" alt="" width="554" height="433">
+                <figcaption data-i18n="제품 출하실">제품 출하실</figcaption>
+              </figure>
+            </div>
           </div>
         </section>
         <section class="sm-panel" id="work" hidden>
-          <div class="sm-feature">
-            <figure><img src="./assets/public/mct-atc.jpg" alt="" width="1600" height="1200"></figure>
-            <div class="sm-feature-copy">
-              <h2 data-i18n="CNC 가공">CNC 가공</h2>
-              <p data-i18n="머시닝 센터를 이용한 정밀 부품 가공">머시닝 센터를 이용한 정밀 부품 가공</p>
+          <div class="sm-panel-copy sm-panel-wide">
+            <p class="sm-intro-lead" data-i18n="반도체·디스플레이 제조설비 부품과 방산 장비 Case를 가공합니다.">반도체·디스플레이 제조설비 부품과 방산 장비 Case를 가공합니다.</p>
+            <div class="sm-work-cards">
+              <article>
+                <img src="./assets/public/parts-semi.jpg" alt="" width="1024" height="718">
+                <h2 data-i18n="반도체">반도체</h2>
+                <p data-i18n="TEST Equip 부품, Photo 공정 Bake Units, Shower Head 가공">TEST Equip 부품, Photo 공정 Bake Units, Shower Head 가공</p>
+              </article>
+              <article>
+                <img src="./assets/public/parts-display.jpg" alt="" width="759" height="230">
+                <h2 data-i18n="디스플레이">디스플레이</h2>
+                <p data-i18n="Gate Valve, Etcher 등 디스플레이 제조설비 부품 가공">Gate Valve, Etcher 등 디스플레이 제조설비 부품 가공</p>
+              </article>
+              <article>
+                <img src="./assets/public/parts-case.jpg" alt="" width="728" height="436">
+                <h2 data-i18n="방산">방산</h2>
+                <p data-i18n="통신·운용 장비 Case류 가공">통신·운용 장비 Case류 가공</p>
+              </article>
             </div>
-          </div>
-          <div class="sm-feature sm-feature-flip">
-            <figure><img src="./assets/public/mct-cmm.jpg" alt="" width="1600" height="1200"></figure>
-            <div class="sm-feature-copy">
-              <h2 data-i18n="품질 검사">품질 검사</h2>
-              <p data-i18n="가공 품질 확인 및 검사 성적서 대응">가공 품질 확인 및 검사 성적서 대응</p>
-            </div>
+            <h2 data-i18n="가공 설비">가공 설비</h2>
+            <p class="sm-intro-body" data-i18n="머시닝 센터와 장축 설비를 보유하고 있습니다. 화천 HIREX4000, 두산 Mynx5400, 현대위아 VX·VESTA, SMEC PCV400, 현대위아 NSM-T를 운용합니다.">머시닝 센터와 장축 설비를 보유하고 있습니다. 화천 HIREX4000, 두산 Mynx5400, 현대위아 VX·VESTA, SMEC PCV400, 현대위아 NSM-T를 운용합니다.</p>
+            <h2 data-i18n="검사 설비">검사 설비</h2>
+            <p class="sm-intro-body" data-i18n="TESA 마이크로 하이트, 석정반, 미쓰토요 마이크로미터·캘리퍼스로 치수를 확인합니다.">TESA 마이크로 하이트, 석정반, 미쓰토요 마이크로미터·캘리퍼스로 치수를 확인합니다.</p>
           </div>
         </section>
         <section class="sm-panel" id="contact" hidden>
@@ -168,6 +228,6 @@
       <p>경기도 평택시 서탄면 수월암길 61-9 · Tel 031-666-4356 · Fax 031-666-4357</p>
     </footer>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script type="module" src="./js/public.js?v=68"></script>
+    <script type="module" src="./js/public.js?v=69"></script>
   </body>
 </html>

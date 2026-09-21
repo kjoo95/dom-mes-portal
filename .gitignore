@@ -4,3 +4,4 @@ data/users.json
 data/*.xls
 data/*.html
 data/*.files/
+_tmp-brochure/
