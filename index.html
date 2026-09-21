@@ -23,7 +23,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="./css/styles.css?v=115" />
-    <link rel="stylesheet" href="./css/public.css?v=39" />
+    <link rel="stylesheet" href="./css/public.css?v=41" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -51,9 +52,9 @@
         <img class="brand-logo" src="./assets/dom-logo.png?v=9" alt="주식회사 디오엠">
       </a>
       <nav>
-        <a href="./about.html" data-i18n="회사소개">회사소개</a>
-        <a href="./work.html" data-i18n="사업영역">사업영역</a>
-        <a href="./contact.html" data-i18n="오시는 길">오시는 길</a>
+        <a href="#about" data-i18n="회사소개">회사소개</a>
+        <a href="#work" data-i18n="사업영역">사업영역</a>
+        <a href="#contact" data-i18n="오시는 길">오시는 길</a>
         <a class="pub-to-portal" href="./portal.html" target="_blank" rel="noopener noreferrer" data-i18n="운영포털">운영포털</a>
       </nav>
     </header>
@@ -64,79 +65,109 @@
         <div class="sm-hero-copy">
           <h1 data-i18n="주식회사 디오엠">주식회사 디오엠</h1>
         </div>
-        <a class="sm-scroll" href="#sm-intro">
+        <a class="sm-scroll" href="#sm-menu">
           <span>Scroll to discover</span>
           <i class="sm-mouse" aria-hidden="true"></i>
         </a>
       </section>
-      <section class="sm-intro" id="sm-intro">
-        <p class="sm-intro-lead reveal" data-i18n="주식회사 디오엠은 경기도 평택에서 정밀 가공을 수행하는 제조 기업입니다.">주식회사 디오엠은 경기도 평택에서 정밀 가공을 수행하는 제조 기업입니다.</p>
-        <p class="sm-intro-body reveal" data-i18n="머시닝 센터를 중심으로 부품 가공과 품질 검사를 한 사업장에서 운영합니다.">머시닝 센터를 중심으로 부품 가공과 품질 검사를 한 사업장에서 운영합니다.</p>
-      </section>
-      <nav class="sm-tiles" aria-label="주요 메뉴">
-        <a class="sm-tile reveal" href="./about.html">
-          <img src="./assets/public/mct-shop.jpg" alt="" width="1600" height="900">
-          <span>
-            <em data-i18n="회사소개">회사소개</em>
-            <strong data-i18n="주식회사 디오엠">주식회사 디오엠</strong>
-          </span>
-        </a>
-        <a class="sm-tile reveal" href="./work.html">
-          <img src="./assets/public/mct-cut.jpg" alt="" width="1600" height="900">
-          <span>
-            <em data-i18n="사업영역">사업영역</em>
-            <strong data-i18n="CNC 가공">CNC 가공</strong>
-          </span>
-        </a>
-        <a class="sm-tile reveal" href="./contact.html">
-          <img src="./assets/public/mct-panel.jpg" alt="" width="1600" height="1200">
-          <span>
-            <em data-i18n="오시는 길">오시는 길</em>
-            <strong data-i18n="경기도 평택">경기도 평택</strong>
-          </span>
-        </a>
-      </nav>
-      <section class="sm-feature reveal">
-        <figure><img src="./assets/public/mct-atc.jpg" alt="" width="1600" height="1200"></figure>
-        <div class="sm-feature-copy">
-          <p class="sm-kicker" data-i18n="사업영역">사업영역</p>
-          <h2 data-i18n="CNC 가공">CNC 가공</h2>
-          <p data-i18n="머시닝 센터를 이용한 정밀 부품 가공">머시닝 센터를 이용한 정밀 부품 가공</p>
-          <a class="sm-more" href="./work.html" data-i18n="더 보기">더 보기</a>
+      <div class="sm-menu" id="sm-menu">
+        <div class="sm-tiles" role="tablist" aria-label="주요 메뉴">
+          <button class="sm-tile reveal" type="button" data-panel="about" aria-expanded="false" aria-controls="about">
+            <img src="./assets/public/mct-shop.jpg" alt="" width="1600" height="900">
+            <strong data-i18n="회사소개">회사소개</strong>
+          </button>
+          <button class="sm-tile reveal" type="button" data-panel="work" aria-expanded="false" aria-controls="work">
+            <img src="./assets/public/mct-cut.jpg" alt="" width="1600" height="900">
+            <strong data-i18n="사업영역">사업영역</strong>
+          </button>
+          <button class="sm-tile reveal" type="button" data-panel="contact" aria-expanded="false" aria-controls="contact">
+            <img src="./assets/public/mct-panel.jpg" alt="" width="1600" height="1200">
+            <strong data-i18n="오시는 길">오시는 길</strong>
+          </button>
         </div>
-      </section>
-      <section class="sm-feature sm-feature-flip reveal">
-        <figure><img src="./assets/public/mct-cmm.jpg" alt="" width="1600" height="1200"></figure>
-        <div class="sm-feature-copy">
-          <p class="sm-kicker" data-i18n="품질 검사">품질 검사</p>
-          <h2 data-i18n="검사 · 성적서">검사 · 성적서</h2>
-          <p data-i18n="가공 품질 확인 및 검사 성적서 대응">가공 품질 확인 및 검사 성적서 대응</p>
-          <a class="sm-more" href="./work.html" data-i18n="더 보기">더 보기</a>
-        </div>
-      </section>
+        <section class="sm-panel" id="about" hidden>
+          <div class="sm-panel-copy">
+            <p class="sm-intro-lead" data-i18n="주식회사 디오엠은 경기도 평택에서 정밀 가공을 수행하는 제조 기업입니다.">주식회사 디오엠은 경기도 평택에서 정밀 가공을 수행하는 제조 기업입니다.</p>
+            <p class="sm-intro-body" data-i18n="머시닝 센터를 중심으로 부품 가공과 품질 검사를 한 사업장에서 운영합니다.">머시닝 센터를 중심으로 부품 가공과 품질 검사를 한 사업장에서 운영합니다.</p>
+          </div>
+        </section>
+        <section class="sm-panel" id="work" hidden>
+          <div class="sm-feature">
+            <figure><img src="./assets/public/mct-atc.jpg" alt="" width="1600" height="1200"></figure>
+            <div class="sm-feature-copy">
+              <h2 data-i18n="CNC 가공">CNC 가공</h2>
+              <p data-i18n="머시닝 센터를 이용한 정밀 부품 가공">머시닝 센터를 이용한 정밀 부품 가공</p>
+            </div>
+          </div>
+          <div class="sm-feature sm-feature-flip">
+            <figure><img src="./assets/public/mct-cmm.jpg" alt="" width="1600" height="1200"></figure>
+            <div class="sm-feature-copy">
+              <h2 data-i18n="품질 검사">품질 검사</h2>
+              <p data-i18n="가공 품질 확인 및 검사 성적서 대응">가공 품질 확인 및 검사 성적서 대응</p>
+            </div>
+          </div>
+        </section>
+        <section class="sm-panel" id="contact" hidden>
+          <div class="sm-panel-copy sm-panel-contact">
+            <p class="contact-note" data-i18n="방문 전 연락 주시면 안내해 드립니다.">방문 전 연락 주시면 안내해 드립니다.</p>
+            <div class="contact-map">
+              <div id="dom-map" class="contact-map-canvas" role="img" aria-label="디오엠 위치"></div>
+              <p class="contact-map-links">
+                <a href="https://map.naver.com/p/search/%EA%B2%BD%EA%B8%B0%EB%8F%84%20%ED%8F%89%ED%83%9D%EC%8B%9C%20%EC%84%9C%ED%83%84%EB%A9%B4%20%EC%88%98%EC%9B%94%EC%95%94%EA%B8%B8%2061-9" target="_blank" rel="noopener noreferrer" data-i18n="네이버 지도에서 보기">네이버 지도에서 보기</a>
+                <a href="https://map.naver.com/p/directions/-/-/%EA%B2%BD%EA%B8%B0%EB%8F%84%20%ED%8F%89%ED%83%9D%EC%8B%9C%20%EC%84%9C%ED%83%84%EB%A9%B4%20%EC%88%98%EC%9B%94%EC%95%94%EA%B8%B8%2061-9" target="_blank" rel="noopener noreferrer" data-i18n="네이버 길찾기">네이버 길찾기</a>
+                <a href="https://map.kakao.com/link/search/%EA%B2%BD%EA%B8%B0%EB%8F%84%20%ED%8F%89%ED%83%9D%EC%8B%9C%20%EC%84%9C%ED%83%84%EB%A9%B4%20%EC%88%98%EC%9B%94%EC%95%94%EA%B8%B8%2061-9" target="_blank" rel="noopener noreferrer" data-i18n="카카오맵">카카오맵</a>
+              </p>
+            </div>
+            <dl class="pub-contact">
+              <div>
+                <dt data-i18n="주소">주소</dt>
+                <dd>경기도 평택시 서탄면 수월암길 61-9</dd>
+              </div>
+              <div>
+                <dt data-i18n="전화">전화</dt>
+                <dd><a href="tel:031-666-4356">031-666-4356</a></dd>
+              </div>
+              <div>
+                <dt data-i18n="팩스">팩스</dt>
+                <dd>031-666-4357</dd>
+              </div>
+              <div>
+                <dt>E-mail</dt>
+                <dd><a href="mailto:harry@domeng.co.kr">harry@domeng.co.kr</a></dd>
+              </div>
+            </dl>
+            <section class="contact-way">
+              <h2 data-i18n="찾아오시는 길">찾아오시는 길</h2>
+              <div>
+                <h3 data-i18n="자가용">자가용</h3>
+                <p data-i18n="내비게이션에 경기도 평택시 서탄면 수월암길 61-9를 입력해 주십시오.">내비게이션에 경기도 평택시 서탄면 수월암길 61-9를 입력해 주십시오.</p>
+                <p data-i18n="인근에 경동나비엔 서탄공장(수월암길 95)이 있습니다.">인근에 경동나비엔 서탄공장(수월암길 95)이 있습니다.</p>
+              </div>
+              <div>
+                <h3 data-i18n="대중교통">대중교통</h3>
+                <p data-i18n="1호선 진위역에서 마을버스 88A 또는 88B를 이용하면 수월암리·경동나비엔 방면입니다.">1호선 진위역에서 마을버스 88A 또는 88B를 이용하면 수월암리·경동나비엔 방면입니다.</p>
+                <p data-i18n="송탄역에서도 같은 노선을 이용할 수 있습니다. 정류장에서 사업장까지는 도보 거리가 있어, 방문 전 연락 주시면 위치를 안내해 드립니다.">송탄역에서도 같은 노선을 이용할 수 있습니다. 정류장에서 사업장까지는 도보 거리가 있어, 방문 전 연락 주시면 위치를 안내해 드립니다.</p>
+              </div>
+              <div>
+                <h3 data-i18n="주차">주차</h3>
+                <p data-i18n="사업장 내 주차 가능합니다.">사업장 내 주차 가능합니다.</p>
+              </div>
+            </section>
+          </div>
+        </section>
+      </div>
     </main>
     <footer class="pub-foot">
       <nav class="sm-serv" aria-label="바로가기">
-        <a href="./about.html">
-          <strong data-i18n="회사소개">회사소개</strong>
-          <span data-i18n="경기도 평택의 정밀 가공 기업입니다.">경기도 평택의 정밀 가공 기업입니다.</span>
-        </a>
-        <a href="./work.html">
-          <strong data-i18n="사업영역">사업영역</strong>
-          <span data-i18n="머시닝 센터 가공과 품질 검사">머시닝 센터 가공과 품질 검사</span>
-        </a>
-        <a href="./contact.html">
-          <strong data-i18n="오시는 길">오시는 길</strong>
-          <span data-i18n="평택 서탄 사업장 위치를 안내합니다.">평택 서탄 사업장 위치를 안내합니다.</span>
-        </a>
-        <a href="./portal.html" target="_blank" rel="noopener noreferrer">
-          <strong data-i18n="운영포털">운영포털</strong>
-          <span data-i18n="현장 운영 화면입니다.">현장 운영 화면입니다.</span>
-        </a>
+        <a href="#about"><strong data-i18n="회사소개">회사소개</strong></a>
+        <a href="#work"><strong data-i18n="사업영역">사업영역</strong></a>
+        <a href="#contact"><strong data-i18n="오시는 길">오시는 길</strong></a>
+        <a href="./portal.html" target="_blank" rel="noopener noreferrer"><strong data-i18n="운영포털">운영포털</strong></a>
       </nav>
       <p><strong>주식회사 디오엠(DOM)</strong> · 사업자등록번호 124-86-65657</p>
       <p>경기도 평택시 서탄면 수월암길 61-9 · Tel 031-666-4356 · Fax 031-666-4357</p>
     </footer>
-    <script type="module" src="./js/public.js?v=67"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script type="module" src="./js/public.js?v=68"></script>
   </body>
 </html>

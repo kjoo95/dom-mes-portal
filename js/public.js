@@ -16,12 +16,21 @@ if (nav && !document.getElementById("lang")) {
 }
 const file = (location.pathname.split("/").pop() || "index.html").toLowerCase();
 const home = file === "" || file === "index.html";
-nav?.querySelectorAll("a").forEach((a) => {
-  if (a.target === "_blank") return;
-  const href = (a.getAttribute("href") || "").replace(/^\.\//, "").toLowerCase();
-  const isHome = !href || href === "./" || href === "index.html";
-  if ((home && isHome) || (!home && href === file)) a.setAttribute("aria-current", "page");
-});
+function markNav(hash = location.hash) {
+  const id = String(hash || "").replace(/^#/, "");
+  nav?.querySelectorAll("a").forEach((a) => {
+    if (a.target === "_blank") return;
+    a.removeAttribute("aria-current");
+    const href = (a.getAttribute("href") || "").replace(/^\.\//, "");
+    const hashId = href.includes("#") ? href.split("#")[1] : "";
+    const fileHref = href.split("#")[0].toLowerCase();
+    const isHome = !fileHref || fileHref === "./" || fileHref === "index.html";
+    if (id && hashId === id) a.setAttribute("aria-current", "page");
+    else if (!id && !home && fileHref === file) a.setAttribute("aria-current", "page");
+    else if (!id && home && isHome && !hashId) a.setAttribute("aria-current", "page");
+  });
+}
+markNav();
 document.querySelectorAll("[data-i18n]").forEach((el) => {
   el.textContent = t(el.getAttribute("data-i18n"));
 });
@@ -168,6 +177,11 @@ function smoothWheelScroll() {
   let current = window.scrollY;
   let target = current;
   let running = false;
+  window.addEventListener("scroll", () => {
+    if (running) return;
+    current = window.scrollY;
+    target = current;
+  }, { passive: true });
   window.addEventListener("wheel", (event) => {
     if (event.ctrlKey) return;
     if (event.target.closest?.(".contact-map, .leaflet-container, select, textarea")) return;
@@ -213,8 +227,99 @@ function parallaxHero() {
   window.addEventListener("scroll", update, { passive: true });
 }
 
+function bindHomePanels() {
+  if (!home) return;
+  const tiles = [...document.querySelectorAll(".sm-tile[data-panel]")];
+  if (!tiles.length) return;
+  const ids = tiles.map((btn) => btn.getAttribute("data-panel")).filter(Boolean);
+  let map = null;
+
+  function initMap() {
+    const el = document.getElementById("dom-map");
+    if (!el || typeof L === "undefined") return;
+    if (!map) {
+      const here = [37.120341, 127.039361];
+      map = L.map(el, { scrollWheelZoom: false }).setView(here, 16);
+      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 19,
+        attribution: "&copy; OpenStreetMap",
+      }).addTo(map);
+      L.marker(here).addTo(map).bindPopup("디오엠 · 수월암길 61-9").openPopup();
+      map.on("click", () => map.scrollWheelZoom.enable());
+    }
+    requestAnimationFrame(() => map.invalidateSize());
+  }
+
+  function closeAll() {
+    tiles.forEach((btn) => {
+      btn.classList.remove("is-on");
+      btn.setAttribute("aria-expanded", "false");
+    });
+    ids.forEach((id) => {
+      const panel = document.getElementById(id);
+      if (!panel) return;
+      panel.hidden = true;
+      panel.classList.remove("is-open");
+    });
+  }
+
+  function open(id, scroll = true) {
+    if (!ids.includes(id)) return;
+    const already = document.getElementById(id)?.classList.contains("is-open");
+    closeAll();
+    if (already) {
+      history.replaceState(null, "", location.pathname + location.search);
+      markNav("");
+      return;
+    }
+    const panel = document.getElementById(id);
+    const tile = tiles.find((btn) => btn.getAttribute("data-panel") === id);
+    if (!panel || !tile) return;
+    panel.hidden = false;
+    panel.classList.add("is-open");
+    tile.classList.add("is-on");
+    tile.setAttribute("aria-expanded", "true");
+    history.replaceState(null, "", `#${id}`);
+    markNav(id);
+    if (id === "contact") initMap();
+    if (scroll) {
+      requestAnimationFrame(() => {
+        panel.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+      });
+    }
+  }
+
+  tiles.forEach((btn) => {
+    btn.addEventListener("click", () => open(btn.getAttribute("data-panel")));
+  });
+  nav?.querySelectorAll("a[href^='#']").forEach((a) => {
+    a.addEventListener("click", (event) => {
+      const id = (a.getAttribute("href") || "").replace("#", "");
+      if (!ids.includes(id)) return;
+      event.preventDefault();
+      const panel = document.getElementById(id);
+      if (panel?.classList.contains("is-open")) {
+        panel.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+        return;
+      }
+      open(id);
+    });
+  });
+  document.querySelectorAll(".sm-serv a[href^='#']").forEach((a) => {
+    a.addEventListener("click", (event) => {
+      const id = (a.getAttribute("href") || "").replace("#", "");
+      if (!ids.includes(id)) return;
+      event.preventDefault();
+      open(id);
+    });
+  });
+  const start = (location.hash || "").replace("#", "");
+  if (ids.includes(start)) open(start, true);
+}
+
 pinHeader();
 playField();
 revealOnScroll();
 smoothWheelScroll();
 parallaxHero();
+bindHomePanels();
