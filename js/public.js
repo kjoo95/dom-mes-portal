@@ -171,28 +171,41 @@ function revealOnScroll() {
 }
 
 function smoothWheelScroll() {
-  if (reduceMotion) return;
-  if (window.matchMedia("(pointer: coarse)").matches) return;
   const root = document.scrollingElement || document.documentElement;
   let current = window.scrollY;
   let target = current;
   let running = false;
+  function clamp(y) {
+    const max = Math.max(0, root.scrollHeight - window.innerHeight);
+    return Math.max(0, Math.min(max, y));
+  }
+  function go(y) {
+    target = clamp(y);
+    current = window.scrollY;
+    if (reduceMotion) {
+      current = target;
+      window.scrollTo(0, target);
+      running = false;
+      return;
+    }
+    if (!running) {
+      running = true;
+      requestAnimationFrame(tick);
+    }
+  }
   window.addEventListener("scroll", () => {
     if (running) return;
     current = window.scrollY;
     target = current;
   }, { passive: true });
-  window.addEventListener("wheel", (event) => {
-    if (event.ctrlKey) return;
-    if (event.target.closest?.(".contact-map, .leaflet-container, select, textarea")) return;
-    event.preventDefault();
-    const max = Math.max(0, root.scrollHeight - window.innerHeight);
-    target = Math.max(0, Math.min(max, target + event.deltaY));
-    if (!running) {
-      running = true;
-      requestAnimationFrame(tick);
-    }
-  }, { passive: false });
+  if (!reduceMotion && !window.matchMedia("(pointer: coarse)").matches) {
+    window.addEventListener("wheel", (event) => {
+      if (event.ctrlKey) return;
+      if (event.target.closest?.(".contact-map, .leaflet-container, select, textarea")) return;
+      event.preventDefault();
+      go(target + event.deltaY);
+    }, { passive: false });
+  }
   function tick() {
     current += (target - current) * 0.14;
     if (Math.abs(target - current) < 0.5) {
@@ -204,6 +217,7 @@ function smoothWheelScroll() {
     window.scrollTo(0, current);
     requestAnimationFrame(tick);
   }
+  return go;
 }
 
 function parallaxHero() {
@@ -229,27 +243,37 @@ function parallaxHero() {
   window.addEventListener("scroll", update, { passive: true });
 }
 
-function bindHomePanels() {
+function bindHomePanels(goScroll) {
   if (!home) return;
   const tiles = [...document.querySelectorAll(".sm-tile[data-panel]")];
   if (!tiles.length) return;
   const ids = tiles.map((btn) => btn.getAttribute("data-panel")).filter(Boolean);
   let map = null;
 
+  function jumpTo(panel) {
+    if (!panel) return;
+    const top = Math.max(0, panel.getBoundingClientRect().top + window.scrollY - 88);
+    if (goScroll) goScroll(top);
+    else window.scrollTo({ top, behavior: reduceMotion ? "auto" : "smooth" });
+  }
+
   function initMap() {
     const el = document.getElementById("dom-map");
     if (!el || typeof L === "undefined") return;
     if (!map) {
       const here = [37.120341, 127.039361];
-      map = L.map(el, { scrollWheelZoom: false }).setView(here, 16);
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+      map = L.map(el, { scrollWheelZoom: false, attributionControl: true }).setView(here, 16);
+      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
         maxZoom: 19,
-        attribution: "&copy; OpenStreetMap &copy; CARTO",
+        attribution: "&copy; OpenStreetMap",
       }).addTo(map);
       L.marker(here).addTo(map).bindPopup("디오엠 · 수월암길 61-9").openPopup();
       map.on("click", () => map.scrollWheelZoom.enable());
     }
-    requestAnimationFrame(() => map.invalidateSize());
+    requestAnimationFrame(() => {
+      map.invalidateSize();
+      requestAnimationFrame(() => map.invalidateSize());
+    });
   }
 
   function closeAll() {
@@ -285,9 +309,7 @@ function bindHomePanels() {
     markNav(id);
     if (id === "contact") initMap();
     if (scroll) {
-      requestAnimationFrame(() => {
-        panel.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
-      });
+      requestAnimationFrame(() => jumpTo(panel));
     }
   }
 
@@ -301,7 +323,7 @@ function bindHomePanels() {
       event.preventDefault();
       const panel = document.getElementById(id);
       if (panel?.classList.contains("is-open")) {
-        panel.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+        jumpTo(panel);
         return;
       }
       open(id);
@@ -322,6 +344,6 @@ function bindHomePanels() {
 pinHeader();
 playField();
 revealOnScroll();
-smoothWheelScroll();
+const goScroll = smoothWheelScroll();
 parallaxHero();
-bindHomePanels();
+bindHomePanels(goScroll);
