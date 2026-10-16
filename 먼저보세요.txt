@@ -1,0 +1,11 @@
+사이트가 깨져 보이면, ZIP 안에서 파일을 바로 연 것입니다.
+
+이렇게 하세요.
+
+1. ZIP을 우클릭 → "압축 풀기" 또는 "모두 추출"
+2. 풀린 폴더에서 open-site.bat 을 더블클릭
+
+또는 브라우저에서 이 주소를 여세요.
+
+회사 홈: https://kjoo95.github.io/dom-mes-portal/
+운영 포털: https://kjoo95.github.io/dom-mes-portal/portal.html

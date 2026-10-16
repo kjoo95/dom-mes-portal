@@ -18,6 +18,8 @@
 
 ## 로컬에서 보기
 
+ZIP 안에서 `index.html`을 바로 누르면 화면이 깨집니다. 반드시 압축을 푼 뒤 `open-site.bat`을 실행하세요.
+
 ```bash
 python -m http.server 4173
 ```
