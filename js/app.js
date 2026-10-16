@@ -1,4 +1,4 @@
-import { getSession, login, signup, logout, isInternalNetwork, pullUsers, isAdmin, listUsers, pendingCount, setUserStatus } from "./auth.js?v=47";
+import { getSession, login, signup, logout, isInternalNetwork, pullUsers, isAdmin, listUsers, pendingCount, setUserStatus, OPEN_REVIEW } from "./auth.js?v=48";
 import {
   CUSTOMERS, MILL_SHOPS, MACHINES, FIVE_S_SHOP, FIVE_S_LAB, QA_MEASURE_ITEMS,
   EQ_ITEMS, EQ_MARKS, DOM_SUPPLIER,
@@ -140,6 +140,7 @@ function isVaultId(id) {
 }
 
 function vaultUnlocked(id) {
+  if (OPEN_REVIEW) return true;
   return sessionStorage.getItem(`${VAULT_SESSION}${id}`) === "1";
 }
 
@@ -673,7 +674,7 @@ function shell(session, active, inner, printMode = false) {
           <a href="./cam-lab.html?v=37">${ht("가공 프로그램")}</a>
           <a href="./index.html" target="_blank" rel="noopener noreferrer">${ht("회사 홈")}</a>
         </nav>
-        <div class="who">${langBar()}<span>${h(session.name)}</span> <button class="btn ghost" id="out" type="button">${ht("로그아웃")}</button></div>
+        <div class="who">${langBar()}<span>${h(session.name)}</span>${OPEN_REVIEW ? "" : ` <button class="btn ghost" id="out" type="button">${ht("로그아웃")}</button>`}</div>
       </header>
       <aside class="side">
         <div class="side-block comm">
@@ -694,7 +695,7 @@ function shell(session, active, inner, printMode = false) {
       <main>${inner}</main>
     </div>
     <div id="modal"></div>`;
-  document.getElementById("out").onclick = () => { logout(); location.hash = ""; render(); };
+  document.getElementById("out")?.addEventListener("click", () => { logout(); location.hash = ""; render(); });
   bindShell();
   bindLang(render);
 }
@@ -703,6 +704,10 @@ function vaultView(vault, session) {
   const bag = vaultBag(vault.id);
   const hasPin = Boolean(bag.pin);
   const admin = isAdmin(session);
+  if (OPEN_REVIEW) {
+    return `<div class="head"><div><h1>${ht(vault.title)}</h1><p>${h(t(vault.desc))}</p></div></div>
+      <section class="panel"><p class="mute pad">${ht("아직 이 폴더에 넣은 업무가 없습니다. 나중에 영업·회계 항목을 여기로 나누면 됩니다.")}</p></section>`;
+  }
   const setup = !hasPin || vaultResetId === vault.id;
   if (setup && !admin) {
     return `<div class="head"><div><h1>${ht(vault.title)}</h1><p>${ht("관리자가 비밀번호를 정한 뒤에 열 수 있습니다.")}</p></div></div>
@@ -792,8 +797,11 @@ function folderRow(m) {
   const href = mail ? WHOIS_MAIL : `#/${m.id}`;
   const extra = mail ? " target=\"_blank\" rel=\"noopener noreferrer\"" : "";
   return `<a class="home-row" href="${h(href)}"${extra} data-name="${h(`${t(m.title)} ${t(m.desc)} ${m.id}`)}">
-      <b>${h(t(m.title))}</b>
-      <span>${h(t(m.desc))}</span>
+      <i class="ico" aria-hidden="true"></i>
+      <span class="home-row-text">
+        <b>${h(t(m.title))}</b>
+        <span>${h(t(m.desc))}</span>
+      </span>
     </a>`;
 }
 

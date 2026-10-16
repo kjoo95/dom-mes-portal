@@ -3,6 +3,9 @@ const USERS_KEY = "dom-users-v1";
 const DOMAIN = "domeng.co.kr";
 const SESSION_MS = 12 * 60 * 60 * 1000;
 
+/** 학원 제출 평가용. 끝나면 false로 되돌리면 로그인이 다시 뜹니다. */
+export const OPEN_REVIEW = true;
+
 try { localStorage.removeItem("dom-login-lock"); } catch { /* unlock leftover */ }
 
 const HARRY = {
@@ -206,7 +209,34 @@ function startSession(user) {
   sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
 }
 
+function reviewSession() {
+  const user = ensureSeed().find((u) => isSeedAdmin(u)) || HARRY;
+  startSession(user);
+  return {
+    email: user.email,
+    name: user.name,
+    id: user.id,
+    team: user.team || "office",
+    role: userRole(user),
+    at: Date.now(),
+  };
+}
+
 export function getSession() {
+  if (OPEN_REVIEW) {
+    try {
+      const session = JSON.parse(sessionStorage.getItem(SESSION_KEY) || "null");
+      if (session?.email) {
+        const user = findUser(session.email);
+        if (user && userStatus(user) === "approved") {
+          session.role = userRole(user);
+          session.name = user.name;
+          return session;
+        }
+      }
+    } catch { /* fall through */ }
+    return reviewSession();
+  }
   if (!isInternalNetwork()) return null;
   try {
     const session = JSON.parse(sessionStorage.getItem(SESSION_KEY) || "null");

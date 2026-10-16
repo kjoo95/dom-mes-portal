@@ -1,4 +1,4 @@
-import { getSession, logout, isInternalNetwork } from "./auth.js?v=47";
+import { getSession, logout, isInternalNetwork, OPEN_REVIEW } from "./auth.js?v=48";
 import { loadState, saveState, uid } from "./store.js?v=63";
 import { collectStats, parseProgram, toNc, toJson, accTime, toolOps, toolSpec, decodeCamFile, mayBeCamFile } from "./gcode.js?v=52";
 import { boot } from "./safety.js";
@@ -234,7 +234,7 @@ function formatMin(min) {
 }
 
 function render() {
-  if (!isInternalNetwork() || !getSession()) {
+  if (!OPEN_REVIEW && (!isInternalNetwork() || !getSession())) {
     location.href = "./portal.html?v=42";
     return;
   }
@@ -261,7 +261,7 @@ function render() {
     <div class="app lab">
       <header>
         <a href="./portal.html?v=42#/home"><div class="logo"><img class="brand-logo" src="./assets/dom-logo.png?v=9" alt="주식회사 디오엠"><span class="logo-sub">${h(t("가공 프로그램"))}</span></div></a>
-        <div class="who">${langBar()}<span>${h(session.name)}</span> <button class="btn ghost" id="out" type="button">${h(t("로그아웃"))}</button></div>
+        <div class="who">${langBar()}<span>${h(session.name)}</span>${OPEN_REVIEW ? "" : ` <button class="btn ghost" id="out" type="button">${h(t("로그아웃"))}</button>`}</div>
       </header>
       <aside class="side">
         <p class="side-label">프로그램</p>
@@ -323,7 +323,7 @@ function render() {
     </div>`;
   applyHtmlLang();
   bindLang(render);
-  document.getElementById("out").onclick = () => { logout(); location.href = "./portal.html?v=42"; };
+  document.getElementById("out")?.addEventListener("click", () => { logout(); location.href = "./portal.html?v=42"; });
   document.getElementById("open-prog")?.addEventListener("click", () => {
     document.getElementById("open-nc")?.click();
   });
